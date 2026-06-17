@@ -1,0 +1,56 @@
+﻿services:
+  webapi:
+    image: ${DOCKER_REGISTRY-}webapi
+    build:
+      context: ../
+      dockerfile: WebApi/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetcore-localhost-D2475902A49C332EC8BDF515C0135E428961C637.pfx  # MacOS. Comment this line if you are using Windows
+    volumes:
+      - ~/.aspnet/dev-certs/https:/https # MacOS. Comment this line if you are using Windows
+    ports:
+      - "5501:8080"
+      - "7501:8081"
+    depends_on:
+      - postgres
+      - minio
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: Password@1234
+      POSTGRES_USER: postgres
+    volumes:
+      - "./data/postgres:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/data
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=Password@1234
+    command: server --console-address ":9001" /data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

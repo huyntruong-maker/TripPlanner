@@ -1,0 +1,12 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApi.Models.Requests.User;
+
+public class ChangeProfileReq
+{
+    [MaxLength(100)] public required string UserName { get; set; }
+    [MaxLength(100)] public required string FirstName { get; set; }
+    [MaxLength(100)] public string? LastName { get; set; }
+    [MaxLength(100)] public required string Email { get; set; }
+    [MaxLength(20)] public string? PhoneNumber { get; set; }
+}
