@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore TripPlanner.sln
+
+      - name: Build
+        run: dotnet build TripPlanner.sln --no-restore --configuration Release
+
+      - name: Format check
+        run: dotnet format TripPlanner.sln --verify-no-changes --verbosity diagnostic
+        continue-on-error: true
+
+      - name: Test
+        run: |
+          # No-op gracefully until test projects are added to the solution
+          TEST_PROJECTS=$(find . -name "*.Tests.csproj" -o -name "*Tests.csproj" -o -name "*.Test.csproj" 2>/dev/null | head -1)
+          if [ -z "$TEST_PROJECTS" ]; then
+            echo "No test projects found — skipping dotnet test"
+          else
+            dotnet test TripPlanner.sln --no-build --configuration Release
+          fi
