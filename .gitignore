@@ -236,3 +236,7 @@ Logs
 **/data
 .vscode
 .angular
+
+.claude/
+docs/
+CLAUDE.md
