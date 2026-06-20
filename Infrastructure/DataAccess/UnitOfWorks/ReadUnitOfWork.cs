@@ -32,7 +32,7 @@ public class ReadUnitOfWork : IReadUnitOfWork
 
         return (IBaseReadRepository<TEntity>)value;
     }
-    
+
     public void ChangeDatabase(string connectionString)
     {
         _context.Database.SetConnectionString(connectionString);

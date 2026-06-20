@@ -27,7 +27,7 @@ public class GetUsersQueryHandler(
         {
             return (userContextErrorCode, null);
         }
-        
+
         var userQuery = await unitOfWork.GetRepository<User>().QueryAll();
         var userRoleQuery = await unitOfWork.GetRepository<UserRole>().QueryAll();
         var roleQuery = await unitOfWork.GetRepository<Role>().QueryAll();

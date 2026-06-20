@@ -45,7 +45,7 @@ public class Pagination<T> where T : class
     private void ExecutePaginate()
     {
         if (Query == null) return;
-        
+
         if (PageNumber <= 0) PageNumber = GlobalConstants.PageConfig.Start;
 
         if (PageSize <= 0) PageSize = GlobalConstants.PageConfig.Length;
@@ -60,7 +60,7 @@ public class Pagination<T> where T : class
     private void ExecutePaginate2()
     {
         if (QueryEnumerable == null) return;
-        
+
         if (PageNumber <= 0) PageNumber = GlobalConstants.PageConfig.Start;
 
         if (PageSize <= 0) PageSize = GlobalConstants.PageConfig.Length;

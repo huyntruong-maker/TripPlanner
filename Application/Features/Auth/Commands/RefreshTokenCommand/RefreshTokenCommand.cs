@@ -66,9 +66,9 @@ public class RefreshTokenCommandHandler(
                                        select rc.ClaimValue).Distinct().ToArray();
 
             var roleData = (from ur in userRoleQuery
-                           join r in roleQuery on ur.RoleId equals r.Id
-                           where ur.UserId == user.Id
-                           select new { r.Id, r.Level }).Distinct().ToArray();
+                            join r in roleQuery on ur.RoleId equals r.Id
+                            where ur.UserId == user.Id
+                            select new { r.Id, r.Level }).Distinct().ToArray();
 
             userClaims.AddRange(authorizationClaims.Select(ac => new Claim(RolePolicyConstants.ClaimType, ac))
                 .ToList());

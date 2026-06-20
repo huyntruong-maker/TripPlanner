@@ -166,7 +166,7 @@ public class UpdateUserCommandHandler(
         {
             return UserControllerMsg.Update.InvalidRolePermission;
         }
-        
+
         return string.Empty;
     }
 }

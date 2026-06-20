@@ -8,6 +8,6 @@ public interface IReadUnitOfWork : IDisposable
 
     IBaseReadRepository<TEntity> GetRepository<TEntity>()
         where TEntity : class;
-    
+
     void ChangeDatabase(string connectionString);
 }

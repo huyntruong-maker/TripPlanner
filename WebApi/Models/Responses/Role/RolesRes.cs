@@ -1,4 +1,5 @@
 ﻿namespace WebApi.Models.Responses.Role;
+
 public class RolesRes
 {
     public Guid Id { get; set; }

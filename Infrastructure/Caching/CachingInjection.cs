@@ -38,7 +38,7 @@ public static class CachingInjection
             return connectionMultiplexer;
 #pragma warning restore CS8603 // Possible null reference return.
         });
-        
+
         collection.AddScoped<ICacheManager, CacheManager>();
     }
 }
