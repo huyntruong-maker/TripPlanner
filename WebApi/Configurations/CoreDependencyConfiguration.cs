@@ -1,7 +1,6 @@
 ﻿using Application.Common;
 using Application.Features.Auth;
 using Application.MediatR;
-using Infrastructure.BackgroundHandler;
 using Infrastructure.Caching;
 using Infrastructure.DataAccess;
 using Infrastructure.Email;
@@ -23,7 +22,6 @@ public static class CoreDependencyConfiguration
         collection.AddRestfulService();
         collection.AddObjectStorage(configuration);
         collection.AddRedis(configuration);
-        collection.AddBackgroundHandler(configuration);
         collection.AddHealthChecks();
         collection.AddSecurity(configuration);
         collection.AddEmail();

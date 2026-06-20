@@ -8,6 +8,8 @@
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - ConnectionStrings__ReadDatabase=Host=postgres;Port=5432;Database=trip-planner;Username=postgres;Password=Password@1234
+      - ConnectionStrings__WriteDatabase=Host=postgres;Port=5432;Database=trip-planner;Username=postgres;Password=Password@1234
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetcore-localhost-D2475902A49C332EC8BDF515C0135E428961C637.pfx  # MacOS. Comment this line if you are using Windows
     volumes:
       - ~/.aspnet/dev-certs/https:/https # MacOS. Comment this line if you are using Windows
@@ -27,7 +29,7 @@
       POSTGRES_PASSWORD: Password@1234
       POSTGRES_USER: postgres
     volumes:
-      - "./data/postgres:/var/lib/postgresql/data"
+      - "pgdata:/var/lib/postgresql/data"
     ports:
       - "5432:5432"
     extra_hosts:
@@ -47,10 +49,14 @@
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - ./data/minio:/data
+      - "miniodata:/data"
     environment:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=Password@1234
     command: server --console-address ":9001" /data
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+volumes:
+  pgdata:
+  miniodata:
