@@ -52,10 +52,10 @@ public class AuthShareService(
     public string RefreshTokeCommand { get; } =
         configuration.GetSection(ConfigKeys.Security.Jwt.RefreshSecret).Get<string>()!;
 
-    public string Secret { get; } = 
+    public string Secret { get; } =
         configuration.GetSection(ConfigKeys.Security.Jwt.Secret).Get<string>()!;
 
-    public int ResetPasswordExpirationHours { get; } = 
+    public int ResetPasswordExpirationHours { get; } =
         configuration.GetSection(ConfigKeys.Security.Jwt.ResetPasswordExpirationHours).Get<int>()!;
 
     public async Task<User?> VerifyToken(string token, string secret)
@@ -65,7 +65,7 @@ public class AuthShareService(
         var jwtToken = ReadJwtToken(token);
 
         var userId = jwtToken.Claims.GetUserId();
-  
+
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user == null) return null;
 

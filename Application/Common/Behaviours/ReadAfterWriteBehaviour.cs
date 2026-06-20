@@ -23,7 +23,7 @@ public class ReadAfterWriteBehaviour<TRequest, TResponse>(
         {
             return await next();
         }
-        
+
         var userContext = userContextService.GetCurrentUserContext();
         if (!await cacheManager.GetData<bool>(string.Format(CacheKeys.ReadAfterWrite.UserWrote, userContext.UserId)))
         {

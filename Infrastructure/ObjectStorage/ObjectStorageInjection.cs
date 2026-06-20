@@ -22,7 +22,7 @@ public static class ObjectStorageInjection
             .WithSSL(secure)
             .WithRegion(region)
             .Build());
-        
+
         collection.AddScoped<IStorageService, StorageService>();
     }
 }

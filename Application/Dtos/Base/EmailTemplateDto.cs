@@ -1,4 +1,5 @@
 ﻿namespace Application.Dtos.Base;
+
 public class EmailTemplateDto
 {
     public string? Path { get; set; }

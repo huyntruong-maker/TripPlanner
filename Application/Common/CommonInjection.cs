@@ -11,7 +11,7 @@ public static class CommonInjection
     {
         collection.AddScoped<IUserContextService, UserContextService>();
     }
-    
+
     public static void AddBehaviours(this IServiceCollection collection)
     {
         collection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ReadAfterWriteBehaviour<,>));

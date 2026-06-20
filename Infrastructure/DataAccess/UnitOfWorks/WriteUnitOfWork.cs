@@ -59,7 +59,7 @@ public class WriteUnitOfWork : IWriteUnitOfWork
 
         var userId = _httpContextAccessor.HttpContext?.User.Claims.GetUserIdNullable();
         if (userId == null || userId == Guid.Empty) return result;
-            
+
         var readDelayMs = _configuration.GetSection(ConfigKeys.Replication.ReadDelay).Get<int>();
         await _cacheManager.SetData(
             key: string.Format(CacheKeys.ReadAfterWrite.UserWrote, userId),
@@ -94,18 +94,18 @@ public class WriteUnitOfWork : IWriteUnitOfWork
     {
         // Enforce type defaults for all entities
         foreach (var item in entries)
-        foreach (var p in item.Properties)
-        {
-            if (p.CurrentValue == null) continue;
-
-            switch (p.Metadata.ClrType.Name)
+            foreach (var p in item.Properties)
             {
-                case "String": // Replace all empty strings with null
-                    var emptyString = string.IsNullOrWhiteSpace(p.CurrentValue.ToString());
-                    p.CurrentValue = emptyString ? null : p.CurrentValue;
-                    break;
+                if (p.CurrentValue == null) continue;
+
+                switch (p.Metadata.ClrType.Name)
+                {
+                    case "String": // Replace all empty strings with null
+                        var emptyString = string.IsNullOrWhiteSpace(p.CurrentValue.ToString());
+                        p.CurrentValue = emptyString ? null : p.CurrentValue;
+                        break;
+                }
             }
-        }
 
         foreach (var item in entries.Where(t => t.State == state))
         {
