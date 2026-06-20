@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(WriteDbContext))]
-    [Migration("20260620130456_AddMvpTripPlannerSchema")]
-    partial class AddMvpTripPlannerSchema
+    [Migration("20260620133234_InitialSchema")]
+    partial class InitialSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,13 +56,25 @@ namespace Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -86,13 +98,28 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
                     b.Property<int>("DayIndex")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("TripId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id")
@@ -154,36 +181,6 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            ConcurrencyStamp = "6AAFFB84-E49A-468D-9153-2DA282AC0CDA",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            DisplayName = "Super Admin",
-                            IsDeleted = false,
-                            Level = 1024,
-                            Name = "SuperAdmin",
-                            NormalizedName = "SuperAdmin",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = new Guid("de31cffb-9af8-41d0-b7d8-8fb1780f6560"),
-                            ConcurrencyStamp = "6AAFFB84-E49A-468D-9153-2DA282AC0CDA",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            DisplayName = "System Admin",
-                            IsDeleted = false,
-                            Level = 512,
-                            Name = "SystemAdmin",
-                            NormalizedName = "SystemAdmin",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.RoleClaim", b =>
@@ -219,145 +216,11 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id")
-                        .HasName("UserClaimId");
+                        .HasName("RoleClaimId");
 
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "ManageAssignRoles",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "ViewUsers",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "CreateUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "UpdateUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 5,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "DeactivateUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 6,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "ResetPassUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 7,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "ViewUsers",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("de31cffb-9af8-41d0-b7d8-8fb1780f6560"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "CreateUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("de31cffb-9af8-41d0-b7d8-8fb1780f6560"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 9,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "UpdateUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("de31cffb-9af8-41d0-b7d8-8fb1780f6560"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 10,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "DeactivateUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("de31cffb-9af8-41d0-b7d8-8fb1780f6560"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        },
-                        new
-                        {
-                            Id = 11,
-                            ClaimType = "RolePolicy",
-                            ClaimValue = "ResetPassUser",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            RoleId = new Guid("de31cffb-9af8-41d0-b7d8-8fb1780f6560"),
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Trip", b =>
@@ -374,6 +237,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -415,6 +281,12 @@ namespace Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("ItineraryDayId")
                         .HasColumnType("uuid");
 
@@ -442,6 +314,12 @@ namespace Infrastructure.Migrations
                         .HasColumnType("character varying(1000)");
 
                     b.Property<Guid>("TripId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id")
@@ -556,28 +434,6 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("PhoneNumberIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "616f1653-48e9-4a6f-81b3-1bdd52e565b5",
-                            CreatedAt = new DateTimeOffset(new DateTime(2023, 10, 9, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EmailConfirmed = false,
-                            FirstName = "Admin",
-                            IsDeleted = false,
-                            LockoutEnabled = true,
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAEAACcQAAAAEELKNErj+EBVy3yZwAI32HSAQILEj5UAOooOEHTMPYU/yp0E28xNH1BjU/SEBw8kuA==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "ZY5BGSWBARTE74T6ZLO7WKKMMILBEB2E",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTimeOffset(new DateTime(2023, 10, 9, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            UserName = "admin"
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.UserClaim", b =>
@@ -686,18 +542,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            RoleId = new Guid("0f34236c-5a49-44ee-8e61-2992b0308ab9"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5"),
-                            IsDeleted = false,
-                            UpdatedAt = new DateTimeOffset(new DateTime(2025, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified).AddTicks(8363), new TimeSpan(0, 0, 0, 0, 0)),
-                            UpdatedBy = new Guid("bb9f6603-1c9f-4933-9f66-031c9fb933a5")
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.UserToken", b =>

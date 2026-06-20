@@ -1,5 +1,4 @@
 using Domain.Constants;
-using Infrastructure.BackgroundHandler.DbContext;
 using Infrastructure.DataAccess;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
@@ -36,12 +35,13 @@ builder.Services.AddApiVersionings();
 builder.Services.AddSwaggers();
 builder.Services.AddHealthChecks();
 
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options => options
     .AddDefaultPolicy(policy => policy
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials()
-        .SetIsOriginAllowed(_ => true)
+        .WithOrigins(allowedOrigins)
     ));
 
 builder.Services.Configure<KestrelServerOptions>(options => { options.Limits.MaxRequestBodySize = int.MaxValue; });
@@ -72,7 +72,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.RunMigration();
-app.RunBackgroundMigration();
 
 app.MapHealthChecks("/healthz", new HealthCheckOptions
 {

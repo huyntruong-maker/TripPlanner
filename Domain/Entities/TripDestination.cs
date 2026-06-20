@@ -1,15 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Domain.IEntities;
 
 namespace Domain.Entities;
 
 [Table("TripDestinations")]
-public class TripDestination
+public class TripDestination : BaseEntity, IIsDeletedEntity
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public Guid Id { get; set; }
-
     public Guid TripId { get; set; }
 
     /// <summary>
@@ -38,7 +35,7 @@ public class TripDestination
     /// </summary>
     public int Position { get; set; }
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public bool IsDeleted { get; set; }
 
     public virtual Trip Trip { get; set; } = null!;
 

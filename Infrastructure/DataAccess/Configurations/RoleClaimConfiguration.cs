@@ -9,7 +9,7 @@ public class RoleClaimConfiguration : IEntityTypeConfiguration<RoleClaim>
 {
     public void Configure(EntityTypeBuilder<RoleClaim> builder)
     {
-        builder.HasKey(userClaim => userClaim.Id).HasName("UserClaimId");
+        builder.HasKey(roleClaim => roleClaim.Id).HasName("RoleClaimId");
 
         builder
             .HasOne(roleClaim => roleClaim.Role)

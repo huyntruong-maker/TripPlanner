@@ -37,6 +37,8 @@ public class TripDestinationConfiguration : IEntityTypeConfiguration<TripDestina
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.HasQueryFilter(d => !d.IsDeleted);
+
         // Supports efficient board-ordering queries (NFR-1: search ≤500ms)
         builder.HasIndex(d => new { d.TripId, d.ItineraryDayId, d.Position })
             .HasDatabaseName("IX_TripDestinations_TripId_ItineraryDayId_Position");

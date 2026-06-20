@@ -38,7 +38,7 @@ public static class DataAccessInjection
 
         collection.AddDbContext<ReadDbContext>(options =>
         {
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure());
         });
     }
 
@@ -50,7 +50,7 @@ public static class DataAccessInjection
 
         collection.AddDbContext<WriteDbContext>(options =>
         {
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure());
         });
     }
 }

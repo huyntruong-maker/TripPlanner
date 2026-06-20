@@ -23,6 +23,8 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             .HasConstraintName("FK_Trips_Users")
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasQueryFilter(t => !t.IsDeleted);
+
         // Optional: prevent a user from having two trips with the same name
         builder.HasIndex(t => new { t.UserId, t.Name })
             .HasDatabaseName("IX_Trips_UserId_Name")

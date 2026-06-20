@@ -1,15 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Domain.IEntities;
 
 namespace Domain.Entities;
 
 [Table("EmailVerificationTokens")]
-public class EmailVerificationToken
+public class EmailVerificationToken : BaseEntity, IIsDeletedEntity
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public Guid Id { get; set; }
-
     public Guid UserId { get; set; }
 
     [MaxLength(512)]
@@ -19,7 +16,7 @@ public class EmailVerificationToken
 
     public DateTimeOffset? ConsumedAt { get; set; }
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public bool IsDeleted { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

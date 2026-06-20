@@ -75,7 +75,7 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider)
     {
         var info = new OpenApiInfo
         {
-            Title = "AFusion.Rpa.Orchestrator.Api",
+            Title = "TripPlanner.Api",
             Version = desc.ApiVersion.ToString()
         };
 

@@ -19,6 +19,8 @@ public class ItineraryDayConfiguration : IEntityTypeConfiguration<ItineraryDay>
             .HasConstraintName("FK_ItineraryDays_Trips")
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasQueryFilter(d => !d.IsDeleted);
+
         // Enforce a single ItineraryDay per (trip, day-index) pair
         builder.HasIndex(d => new { d.TripId, d.DayIndex })
             .HasDatabaseName("IX_ItineraryDays_TripId_DayIndex")
