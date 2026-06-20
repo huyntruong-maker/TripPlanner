@@ -3,6 +3,7 @@ using Application.Features.Auth.Commands.ForgotPasswordCommand;
 using Application.Features.Auth.Commands.LoginCommand;
 using Application.Features.Auth.Commands.LogoutCommand;
 using Application.Features.Auth.Commands.RefreshTokenCommand;
+using Application.Features.Auth.Commands.RegisterCommand;
 using Application.Features.Auth.Commands.ResetPasswordCommand;
 using AutoMapper;
 using WebApi.Models.Requests.Auth;
@@ -25,5 +26,7 @@ public class AuthMapper : Profile
 
         CreateMap<ForgotPasswordReq, ForgotPasswordCommand>();
         CreateMap<ResetPasswordReq, ResetPasswordCommand>();
+
+        CreateMap<RegisterReq, RegisterCommand>();
     }
 }

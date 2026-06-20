@@ -45,7 +45,14 @@ public class LoginCommandHandler(
     {
         var loginResult = new LoginResultDto();
 
-        var user = await userManager.FindByNameAsync(request.Username!);
+        // Accept email in the username field: try email lookup first, then fall back to username.
+        User? user = null;
+        if (!string.IsNullOrWhiteSpace(request.Username) && request.Username.Contains('@'))
+        {
+            user = await userManager.FindByEmailAsync(request.Username);
+        }
+
+        user ??= await userManager.FindByNameAsync(request.Username!);
         if (user == null) return (AuthControllerMsg.Login.InvalidCredential, loginResult);
 
         var result = await signInManager.PasswordSignInAsync(request.Username!, request.Password!, true, true);

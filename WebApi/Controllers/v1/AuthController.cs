@@ -3,7 +3,9 @@ using Application.Features.Auth.Commands.ForgotPasswordCommand;
 using Application.Features.Auth.Commands.LoginCommand;
 using Application.Features.Auth.Commands.LogoutCommand;
 using Application.Features.Auth.Commands.RefreshTokenCommand;
+using Application.Features.Auth.Commands.RegisterCommand;
 using Application.Features.Auth.Commands.ResetPasswordCommand;
+using Application.Features.Auth.Commands.VerifyEmailCommand;
 using Asp.Versioning;
 using AutoMapper;
 using Domain.Helpers;
@@ -262,6 +264,104 @@ public class AuthController(
             response.ErrorCode = AuthControllerMsg.ResetPassword.Exception;
 
             return BadRequest(response);
+        }
+    }
+
+    [HttpPost]
+    [Route("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ResultRes<string>), StatusCodes.Status201Created)]
+    public async Task<IActionResult> Register(ISender sender, RegisterReq request)
+    {
+        var response = new ResultRes<string>();
+
+        try
+        {
+            response.Success = false;
+            request.TrimData(logger);
+
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                response.ErrorCode = AuthControllerMsg.Register.EmailRequired;
+                return BadRequest(response);
+            }
+
+            if (!request.Email.IsValidEmail())
+            {
+                response.ErrorCode = AuthControllerMsg.Register.InvalidEmail;
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+            {
+                response.ErrorCode = AuthControllerMsg.Register.PasswordRequired;
+                return BadRequest(response);
+            }
+
+            if (!request.Password.ValidatePasswordPolicy())
+            {
+                response.ErrorCode = AuthControllerMsg.Register.PasswordTooWeak;
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrWhiteSpace(request.FirstName))
+            {
+                response.ErrorCode = AuthControllerMsg.Register.FirstNameRequired;
+                return BadRequest(response);
+            }
+
+            var errorCode = await sender.Send(Mapper.Map<RegisterCommand>(request));
+            if (!string.IsNullOrWhiteSpace(errorCode))
+            {
+                response.ErrorCode = errorCode;
+                return BadRequest(response);
+            }
+
+            response.Success = true;
+            return StatusCode(StatusCodes.Status201Created, response);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("Register failed: {ex}", ex);
+            response.ErrorCode = AuthControllerMsg.Register.Exception;
+            return InternalServerError(response);
+        }
+    }
+
+    [HttpGet]
+    [Route("verify-email")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ResultRes<string>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> VerifyEmail(ISender sender, [FromQuery] string? token)
+    {
+        var response = new ResultRes<string>();
+
+        try
+        {
+            response.Success = false;
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                response.ErrorCode = AuthControllerMsg.VerifyEmail.TokenRequired;
+                return BadRequest(response);
+            }
+
+            var errorCode = await sender.Send(new VerifyEmailCommand { Token = token });
+            if (!string.IsNullOrWhiteSpace(errorCode))
+            {
+                response.ErrorCode = errorCode;
+                return BadRequest(response);
+            }
+
+            response.Success = true;
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            // Token value is intentionally not logged.
+            Logger.LogError("VerifyEmail failed: {ex}", ex);
+            response.ErrorCode = AuthControllerMsg.VerifyEmail.Exception;
+            return InternalServerError(response);
         }
     }
 }
