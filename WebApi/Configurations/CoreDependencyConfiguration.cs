@@ -1,11 +1,13 @@
 ﻿using Application.Common;
 using Application.Features.Auth;
+using Application.Features.Destinations;
 using Application.MediatR;
 using Infrastructure.Caching;
 using Infrastructure.DataAccess;
 using Infrastructure.Email;
 using Infrastructure.Identity;
 using Infrastructure.ObjectStorage;
+using Infrastructure.Providers;
 using Infrastructure.Restful;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +24,7 @@ public static class CoreDependencyConfiguration
         collection.AddRestfulService();
         collection.AddObjectStorage(configuration);
         collection.AddRedis(configuration);
+        collection.AddProviders();
         collection.AddHealthChecks();
         collection.AddSecurity(configuration);
         collection.AddEmail();
@@ -35,5 +38,6 @@ public static class CoreDependencyConfiguration
     private static void AddFeatures(this IServiceCollection collection)
     {
         collection.AddAuthFeatures();
+        collection.AddDestinationsFeature();
     }
 }
