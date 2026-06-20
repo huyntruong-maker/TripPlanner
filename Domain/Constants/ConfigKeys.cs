@@ -76,4 +76,19 @@ public static class ConfigKeys
     {
         public const string ReadDelay = "Replication:ReadDelay";
     }
+
+    public struct Providers
+    {
+        public struct OpenTripMap
+        {
+            public const string BaseUrl = "Providers:OpenTripMap:BaseUrl";
+            public const string ApiKey = "Providers:OpenTripMap:ApiKey";
+        }
+
+        public struct Foursquare
+        {
+            public const string BaseUrl = "Providers:Foursquare:BaseUrl";
+            public const string ApiKey = "Providers:Foursquare:ApiKey";
+        }
+    }
 }
