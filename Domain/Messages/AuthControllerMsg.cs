@@ -54,4 +54,25 @@ public static class AuthControllerMsg
         public const string PasswordsDoNotMatch = "Auth.ResetPassword.PasswordsDoNotMatch";
         public const string SendEmailFailed = "Auth.ResetPassword.SendEmailFailed";
     }
+
+    public struct Register
+    {
+        public const string EmailRequired = "Auth.Register.EmailRequired";
+        public const string PasswordRequired = "Auth.Register.PasswordRequired";
+        public const string FirstNameRequired = "Auth.Register.FirstNameRequired";
+        public const string InvalidEmail = "Auth.Register.InvalidEmail";
+        public const string PasswordTooWeak = "Auth.Register.PasswordTooWeak";
+        public const string EmailTaken = "Auth.Register.EmailTaken";
+        public const string RegistrationFailed = "Auth.Register.RegistrationFailed";
+        public const string Exception = "Auth.Register.Exception";
+    }
+
+    public struct VerifyEmail
+    {
+        public const string TokenRequired = "Auth.VerifyEmail.TokenRequired";
+        public const string TokenInvalid = "Auth.VerifyEmail.TokenInvalid";
+        public const string TokenExpired = "Auth.VerifyEmail.TokenExpired";
+        public const string AlreadyVerified = "Auth.VerifyEmail.AlreadyVerified";
+        public const string Exception = "Auth.VerifyEmail.Exception";
+    }
 }

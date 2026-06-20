@@ -40,6 +40,7 @@ public static class ConfigKeys
             public const string ChangePasswordNotification = "Security:Email:ChangePasswordNotification";
             public const string ResetPasswordNotification = "Security:Email:ResetPasswordNotification";
             public const string ResetPasswordSuccessNotification = "Security:Email:ResetPasswordSuccessNotification";
+            public const string EmailVerificationNotification = "Security:Email:EmailVerificationNotification";
         }
     }
 
