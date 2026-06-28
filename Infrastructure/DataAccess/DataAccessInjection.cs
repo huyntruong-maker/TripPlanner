@@ -25,8 +25,17 @@ public static class DataAccessInjection
         var autoMigration = app.Configuration.GetSection(ConfigKeys.AutoMigration).Get<bool>();
         if (!autoMigration) return;
 
-        using var scope = app.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<WriteDbContext>();
+        var connectionString = app.Configuration.GetSection(ConfigKeys.Databases.WriteDatabase).Value;
+        if (string.IsNullOrEmpty(connectionString))
+            throw new ArgumentNullException(nameof(connectionString), "Write database connection string is null");
+
+        // EnableRetryOnFailure is incompatible with EF migrations (which use internal transactions).
+        // Use a plain context without retry for the migration step.
+        var options = new DbContextOptionsBuilder<WriteDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+
+        using var context = new WriteDbContext(options);
         context.Database.Migrate();
     }
 
