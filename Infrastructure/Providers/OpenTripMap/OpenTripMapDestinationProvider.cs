@@ -180,11 +180,15 @@ public class OpenTripMapDestinationProvider(
             if (point.TryGetProperty("lon", out var lonProp)) lon = lonProp.GetDouble();
         }
 
+        // Thumbnail — kept for list-compat; also added as the first Photos entry.
         string? thumbnail = null;
+        var photos = new List<string>();
         if (root.TryGetProperty("preview", out var preview)
             && preview.TryGetProperty("source", out var sourceProp))
         {
             thumbnail = sourceProp.GetString();
+            if (!string.IsNullOrWhiteSpace(thumbnail))
+                photos.Add(thumbnail);
         }
 
         string? address = null;
@@ -201,6 +205,20 @@ public class OpenTripMapDestinationProvider(
             ? rateProp.GetDouble()
             : null;
 
+        // Description — OpenTripMap returns "wikipedia_extracts.text" on detail calls.
+        string? description = null;
+        if (root.TryGetProperty("wikipedia_extracts", out var extracts)
+            && extracts.TryGetProperty("text", out var textProp))
+        {
+            description = textProp.GetString();
+        }
+
+        // Website — returned as "url" on OpenTripMap detail responses.
+        string? website = null;
+        if (root.TryGetProperty("url", out var urlProp))
+            website = urlProp.GetString();
+
+        // OpenTripMap does not provide structured opening hours.
         return new AttractionDto
         {
             ProviderPlaceId = xid,
@@ -211,7 +229,11 @@ public class OpenTripMapDestinationProvider(
             Latitude = lat,
             Longitude = lon,
             ThumbnailUrl = thumbnail,
-            Address = address
+            Address = address,
+            Description = description,
+            Photos = photos,
+            Website = website,
+            OpeningHours = null
         };
     }
 }

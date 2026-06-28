@@ -1,3 +1,4 @@
+using Application.Features.Destinations.Queries.GetAttractionDetailQuery;
 using Application.Features.Destinations.Queries.GetAttractionsQuery;
 using Application.Features.Destinations.Queries.SearchLocationsQuery;
 using Asp.Versioning;
@@ -130,6 +131,60 @@ public class DestinationController(
         {
             response.ErrorCode = DestinationControllerMsg.GetAttractions.Exception;
             Logger.LogError("GetAttractions failed: {Ex}", ex);
+            return InternalServerError(response);
+        }
+    }
+
+    /// <summary>
+    /// Returns full detail for a single destination identified by its provider-specific ID.
+    /// Optional fields (description, photos, address, website, openingHours) are null or empty
+    /// when the provider does not supply them — the response is always returned (graceful partial data).
+    /// NFR-3: response within 2 s; repeated requests are served from the 24-hour Redis cache.
+    /// </summary>
+    /// <param name="sender">Injected by ASP.NET Core endpoint DI per-request.</param>
+    /// <param name="providerPlaceId">Provider-specific place identifier (OpenTripMap xid or Foursquare fsq_id).</param>
+    /// <param name="cancellationToken">Propagates request cancellation.</param>
+    [HttpGet("{providerPlaceId}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.DestinationDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.DestinationDetailDto>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.DestinationDetailDto>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDestinationDetail(
+        ISender sender,
+        [FromRoute] string? providerPlaceId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = new ResultRes<Application.Dtos.Destinations.DestinationDetailDto>();
+
+        try
+        {
+            response.Success = false;
+
+            if (string.IsNullOrWhiteSpace(providerPlaceId))
+            {
+                response.ErrorCode = DestinationControllerMsg.GetDetail.ProviderPlaceIdRequired;
+                return BadRequest(response);
+            }
+
+            var result = await sender.Send(new GetAttractionDetailQuery
+            {
+                ProviderPlaceId = providerPlaceId.Trim()
+            }, cancellationToken);
+
+            if (result is null)
+            {
+                response.ErrorCode = DestinationControllerMsg.GetDetail.NotFound;
+                return NotFound(response);
+            }
+
+            response.Result = result;
+            response.Success = true;
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            response.ErrorCode = DestinationControllerMsg.GetDetail.Exception;
+            Logger.LogError("GetDestinationDetail failed for providerPlaceId '{Id}': {Ex}", providerPlaceId, ex);
             return InternalServerError(response);
         }
     }

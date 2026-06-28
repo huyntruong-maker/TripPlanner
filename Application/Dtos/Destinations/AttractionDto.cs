@@ -28,4 +28,23 @@ public class AttractionDto
 
     /// <summary>Street address when available.</summary>
     public string? Address { get; set; }
+
+    // -------------------------------------------------------------------------
+    // Detail-only fields — populated by GetAttractionDetailAsync; null/empty
+    // when returned from list queries (GetAttractionsAsync).
+    // -------------------------------------------------------------------------
+
+    /// <summary>Short description or editorial summary when available.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Ordered list of photo URLs. Empty for list results; populated for detail calls.
+    /// </summary>
+    public IReadOnlyList<string> Photos { get; set; } = [];
+
+    /// <summary>Official website URL when available.</summary>
+    public string? Website { get; set; }
+
+    /// <summary>Structured opening-hours data. Null when unavailable.</summary>
+    public OpeningHoursDto? OpeningHours { get; set; }
 }
