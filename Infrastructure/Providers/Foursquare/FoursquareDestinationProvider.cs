@@ -140,16 +140,23 @@ public class FoursquareDestinationProvider(
             if (main.TryGetProperty("longitude", out var lonProp)) lon = lonProp.GetDouble();
         }
 
+        // Photos — build full URLs from prefix+size+suffix; collect all available.
         string? thumbnail = null;
-        if (place.TryGetProperty("photos", out var photos))
+        var photoUrls = new List<string>();
+        if (place.TryGetProperty("photos", out var photosEl))
         {
-            var firstPhoto = photos.EnumerateArray().FirstOrDefault();
-            if (firstPhoto.ValueKind == JsonValueKind.Object
-                && firstPhoto.TryGetProperty("prefix", out var prefix)
-                && firstPhoto.TryGetProperty("suffix", out var suffix))
+            foreach (var photo in photosEl.EnumerateArray())
             {
-                thumbnail = $"{prefix.GetString()}300x300{suffix.GetString()}";
+                if (photo.ValueKind == JsonValueKind.Object
+                    && photo.TryGetProperty("prefix", out var prefix)
+                    && photo.TryGetProperty("suffix", out var suffix))
+                {
+                    var photoUrl = $"{prefix.GetString()}300x300{suffix.GetString()}";
+                    photoUrls.Add(photoUrl);
+                }
             }
+
+            thumbnail = photoUrls.FirstOrDefault();
         }
 
         string? address = null;
@@ -162,6 +169,64 @@ public class FoursquareDestinationProvider(
             address = parts.Count > 0 ? string.Join(", ", parts) : null;
         }
 
+        // Description — Foursquare returns "description" directly on detail calls.
+        string? description = null;
+        if (place.TryGetProperty("description", out var descProp))
+            description = descProp.GetString();
+
+        // Website — Foursquare returns "website" on detail calls.
+        string? website = null;
+        if (place.TryGetProperty("website", out var websiteProp))
+            website = websiteProp.GetString();
+
+        // Opening hours — Foursquare returns "hours" with "display", "regular", and "open_now".
+        OpeningHoursDto? openingHours = null;
+        if (place.TryGetProperty("hours", out var hours))
+        {
+            var weekdayText = new List<string>();
+            if (hours.TryGetProperty("regular", out var regular))
+            {
+                foreach (var day in regular.EnumerateArray())
+                {
+                    if (day.TryGetProperty("open", out var openTime)
+                        && day.TryGetProperty("close", out var closeTime)
+                        && day.TryGetProperty("day", out var dayNum))
+                    {
+                        var dayName = dayNum.GetInt32() switch
+                        {
+                            1 => "Monday",
+                            2 => "Tuesday",
+                            3 => "Wednesday",
+                            4 => "Thursday",
+                            5 => "Friday",
+                            6 => "Saturday",
+                            7 => "Sunday",
+                            _ => "Unknown"
+                        };
+                        weekdayText.Add($"{dayName}: {openTime.GetString()} – {closeTime.GetString()}");
+                    }
+                }
+            }
+
+            string? displayText = null;
+            if (hours.TryGetProperty("display", out var displayProp))
+                displayText = displayProp.GetString();
+
+            bool? isOpenNow = null;
+            if (hours.TryGetProperty("open_now", out var openNowProp)
+                && (openNowProp.ValueKind == JsonValueKind.True || openNowProp.ValueKind == JsonValueKind.False))
+            {
+                isOpenNow = openNowProp.GetBoolean();
+            }
+
+            openingHours = new OpeningHoursDto
+            {
+                DisplayText = displayText,
+                WeekdayText = weekdayText,
+                IsOpenNow = isOpenNow
+            };
+        }
+
         return new AttractionDto
         {
             ProviderPlaceId = fsqId,
@@ -172,7 +237,11 @@ public class FoursquareDestinationProvider(
             Latitude = lat,
             Longitude = lon,
             ThumbnailUrl = thumbnail,
-            Address = address
+            Address = address,
+            Description = description,
+            Photos = photoUrls,
+            Website = website,
+            OpeningHours = openingHours
         };
     }
 }

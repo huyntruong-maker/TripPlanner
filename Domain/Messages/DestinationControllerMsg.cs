@@ -15,4 +15,11 @@ public static class DestinationControllerMsg
         public const string InvalidCoordinates = "Destination.GetAttractions.InvalidCoordinates";
         public const string Exception = "Destination.GetAttractions.Exception";
     }
+
+    public struct GetDetail
+    {
+        public const string ProviderPlaceIdRequired = "Destination.GetDetail.ProviderPlaceIdRequired";
+        public const string NotFound = "Destination.GetDetail.NotFound";
+        public const string Exception = "Destination.GetDetail.Exception";
+    }
 }
