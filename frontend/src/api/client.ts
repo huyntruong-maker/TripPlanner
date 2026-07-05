@@ -58,6 +58,13 @@ interface RetriableRequestConfig extends InternalAxiosRequestConfig {
   _retriedAfterRefresh?: boolean;
 }
 
+/** Marks an error as already handled by the session-expiry flow, so the
+ * global query-error toast (src/queryClient.ts) doesn't also show the raw
+ * 401/400 for it — the caller shows one friendly "session expired" toast instead. */
+export interface SessionExpiredError {
+  isSessionExpired?: boolean;
+}
+
 let refreshInFlight: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -103,6 +110,7 @@ apiClient.interceptors.response.use(
     if (!refreshedToken) {
       clearTokens();
       onSessionExpired?.();
+      (error as AxiosError & SessionExpiredError).isSessionExpired = true;
       return Promise.reject(error);
     }
 

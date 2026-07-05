@@ -23,7 +23,7 @@ export function DestinationDetailPage() {
   if (isLoading) {
     return (
       <div className="card">
-        <p>Loading destination…</p>
+        <p className="state-message state-message--loading">Loading destination…</p>
       </div>
     );
   }
@@ -35,25 +35,33 @@ export function DestinationDetailPage() {
           {getApiErrorMessage(error, 'Could not load this destination.')}
         </p>
         <p>
-          <Link to="/">Back to search</Link>
+          <Link to="/" className="back-link">
+            Back to search
+          </Link>
         </p>
       </div>
     );
   }
 
+  // The category is also the first tag from the provider; drop it from the tag
+  // list so it isn't shown twice (once as the category label, once as a pill).
+  const additionalTags = data.tags.filter((tag) => tag !== data.category);
+
   return (
     <div className="destination-detail card">
       <p>
-        <Link to="/">Back to search</Link>
+        <Link to="/" className="back-link">
+          Back to search
+        </Link>
       </p>
 
       <PhotoCarousel photos={data.photos} destinationName={data.name} />
 
       <h1>{data.name}</h1>
       {data.category && <p className="attraction-category">{data.category}</p>}
-      {data.tags.length > 0 && (
+      {additionalTags.length > 0 && (
         <ul className="attraction-tags">
-          {data.tags.map((tag) => (
+          {additionalTags.map((tag) => (
             <li key={tag}>{tag}</li>
           ))}
         </ul>

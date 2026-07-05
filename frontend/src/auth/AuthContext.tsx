@@ -7,7 +7,10 @@ import {
   registerSessionExpiredHandler,
   storeTokens,
 } from '../api/client';
+import { publishErrorToast } from '../components/toast/toastBus';
 import { decodeUserFromToken } from './jwt';
+
+const SESSION_EXPIRED_MESSAGE = 'Your session has expired. Please log in again.';
 import type { AuthenticatedUser, AuthTokens } from '../types';
 
 interface AuthContextValue {
@@ -38,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     registerSessionExpiredHandler(() => {
       setTokens(null);
       queryClient.clear();
+      publishErrorToast(SESSION_EXPIRED_MESSAGE);
     });
   }, [queryClient]);
 

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, Link } from 'react-router-dom';
+import { Navigate, Route, Routes, Link, NavLink } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LoginPage } from './features/auth/LoginPage';
@@ -16,11 +16,24 @@ export default function App() {
     <div className="app">
       <nav className="navbar">
         <Link to="/" className="brand">
-          ✈️ TripPlanner
+          <span className="brand-mark" aria-hidden="true">
+            ✈️
+          </span>
+          TripPlanner
         </Link>
         <div className="nav-links">
-          <Link to="/">Discover</Link>
-          {isAuthenticated ? <Link to="/trips">My trips</Link> : <Link to="/login">Log in</Link>}
+          <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : undefined)}>
+            Discover
+          </NavLink>
+          {isAuthenticated ? (
+            <NavLink to="/trips" className={({ isActive }) => (isActive ? 'active' : undefined)}>
+              My trips
+            </NavLink>
+          ) : (
+            <NavLink to="/login" className={({ isActive }) => (isActive ? 'active' : undefined)}>
+              Log in
+            </NavLink>
+          )}
         </div>
       </nav>
 

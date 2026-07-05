@@ -126,7 +126,7 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
   }
 
   if (tripsQuery.isLoading) {
-    return <p>Loading your trips…</p>;
+    return <p className="state-message state-message--loading">Loading your trips…</p>;
   }
 
   if (tripsQuery.isError) {
@@ -172,7 +172,9 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
         )}
       </label>
 
-      {selectedTripId && selectedTripQuery.isLoading && <p>Loading days…</p>}
+      {selectedTripId && selectedTripQuery.isLoading && (
+        <p className="state-message state-message--loading">Loading days…</p>
+      )}
 
       {hasSelectedTripWithNoDays && (
         <p>

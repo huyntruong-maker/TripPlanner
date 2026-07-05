@@ -28,7 +28,7 @@ export function TripPlannerPage() {
   if (tripQuery.isLoading) {
     return (
       <div className="card">
-        <p>Loading trip…</p>
+        <p className="state-message state-message--loading">Loading trip…</p>
       </div>
     );
   }
@@ -40,7 +40,9 @@ export function TripPlannerPage() {
           {getApiErrorMessage(tripQuery.error, 'Could not load this trip.')}
         </p>
         <p>
-          <Link to="/trips">Back to my trips</Link>
+          <Link to="/trips" className="back-link">
+            Back to my trips
+          </Link>
         </p>
       </div>
     );
@@ -59,7 +61,9 @@ export function TripPlannerPage() {
   return (
     <div className="trip-planner">
       <p>
-        <Link to="/trips">Back to my trips</Link>
+        <Link to="/trips" className="back-link">
+          Back to my trips
+        </Link>
       </p>
 
       <div className="card">
@@ -74,7 +78,9 @@ export function TripPlannerPage() {
 
       {trip.itineraryDays.length === 0 ? (
         <div className="card">
-          <p>Set the trip dates above to generate your itinerary days.</p>
+          <p className="state-message state-message--empty">
+            Set the trip dates above to generate your itinerary days.
+          </p>
         </div>
       ) : (
         <div className="itinerary-board">
@@ -84,7 +90,9 @@ export function TripPlannerPage() {
                 Day {day.dayIndex} — {day.date}
               </h2>
               {day.tripDestinations.length === 0 ? (
-                <p>No destinations scheduled for this day yet.</p>
+                <p className="state-message state-message--empty">
+                  No destinations scheduled for this day yet.
+                </p>
               ) : (
                 <ul className="itinerary-destinations">
                   {day.tripDestinations.map((destination) => (
@@ -92,6 +100,7 @@ export function TripPlannerPage() {
                       <span>{destination.name}</span>
                       <button
                         type="button"
+                        className="btn-danger"
                         onClick={() => removeMutation.mutate(destination.id)}
                         disabled={removeMutation.isPending && removeMutation.variables === destination.id}
                       >

@@ -59,10 +59,10 @@ public class RefreshTokenCommandHandler(
             var tokenExpiration = DateTimeHelper.GetDt().AddMinutes(authShareService.ExpirationMinutes);
             var newToken = authShareService.GenerateToken(userClaims, authShareService.Secret, tokenExpiration);
 
-            var refreshExpiration = DateTimeHelper.GetDt().AddDays(authShareService.RefreshShortExpirationDays);
+            var refreshExpiration = DateTimeHelper.GetDtUtc().AddDays(authShareService.RefreshShortExpirationDays);
             if (userToken != null && userToken.RememberMe)
             {
-                refreshExpiration = DateTimeHelper.GetDt().AddDays(authShareService.RefreshExpirationDays);
+                refreshExpiration = DateTimeHelper.GetDtUtc().AddDays(authShareService.RefreshExpirationDays);
             }
             var newRefreshToken = authShareService.GenerateToken(userClaims, authShareService.RefreshTokeCommand, refreshExpiration);
 

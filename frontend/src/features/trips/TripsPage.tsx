@@ -48,7 +48,7 @@ export function TripsPage() {
       <div className="card">
         <header className="row">
           <h1>My trips</h1>
-          <button type="button" onClick={logout}>
+          <button type="button" className="btn-outline" onClick={logout}>
             Log out
           </button>
         </header>
@@ -87,7 +87,7 @@ export function TripsPage() {
       <div className="card">
         <h2>Your trips</h2>
 
-        {tripsQuery.isLoading && <p>Loading trips…</p>}
+        {tripsQuery.isLoading && <p className="state-message state-message--loading">Loading trips…</p>}
 
         {tripsQuery.isError && (
           <p className="error" role="alert">
@@ -96,7 +96,9 @@ export function TripsPage() {
         )}
 
         {tripsQuery.data && tripsQuery.data.length === 0 && (
-          <p>You don&apos;t have any trips yet. Create one above to get started.</p>
+          <p className="state-message state-message--empty">
+            You don&apos;t have any trips yet. Create one above to get started.
+          </p>
         )}
 
         {tripsQuery.data && tripsQuery.data.length > 0 && (

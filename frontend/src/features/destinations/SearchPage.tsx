@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { getApiErrorMessage } from '../../api/errors';
 import { useLocationSearch } from './useLocationSearch';
@@ -16,6 +17,7 @@ const MIN_QUERY_LENGTH = 1;
  * Public page — users can browse before logging in (F3/US8).
  */
 export function SearchPage() {
+  const { isAuthenticated } = useAuth();
   const [query, setQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
   const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
@@ -58,9 +60,11 @@ export function SearchPage() {
           <LocationResults query={locationsQuery} onSelect={handleSelectLocation} />
         )}
 
-        <p>
-          <Link to="/login">Log in</Link> to start planning a trip.
-        </p>
+        {!isAuthenticated && (
+          <p>
+            <Link to="/login">Log in</Link> to start planning a trip.
+          </p>
+        )}
       </div>
 
       {selectedLocation && <AttractionsGrid location={selectedLocation} query={attractionsQuery} />}
@@ -75,7 +79,7 @@ interface LocationResultsProps {
 
 function LocationResults({ query, onSelect }: LocationResultsProps) {
   if (query.isLoading) {
-    return <p>Searching…</p>;
+    return <p className="state-message state-message--loading">Searching…</p>;
   }
 
   if (query.isError) {
@@ -87,7 +91,7 @@ function LocationResults({ query, onSelect }: LocationResultsProps) {
   }
 
   if (!query.data || query.data.items.length === 0) {
-    return <p>No matching cities or countries.</p>;
+    return <p className="state-message state-message--empty">No matching cities or countries.</p>;
   }
 
   return (
@@ -113,7 +117,7 @@ function AttractionsGrid({ location, query }: AttractionsGridProps) {
     <div className="card">
       <h2>Attractions near {location.displayName}</h2>
 
-      {query.isLoading && <p>Loading attractions…</p>}
+      {query.isLoading && <p className="state-message state-message--loading">Loading attractions…</p>}
 
       {query.isError && (
         <p className="error" role="alert">
@@ -121,7 +125,9 @@ function AttractionsGrid({ location, query }: AttractionsGridProps) {
         </p>
       )}
 
-      {query.data && query.data.items.length === 0 && <p>No attractions found.</p>}
+      {query.data && query.data.items.length === 0 && (
+        <p className="state-message state-message--empty">No attractions found.</p>
+      )}
 
       {query.data && query.data.items.length > 0 && (
         <ul className="attraction-grid">

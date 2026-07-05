@@ -45,7 +45,20 @@ public class OpenTripMapDestinationProvider(
                   + $"&format=json"
                   + $"&apikey={ApiKey}";
 
-        var (statusCode, body) = await restfulService.Get(url);
+        HttpStatusCode statusCode;
+        string body;
+        try
+        {
+            (statusCode, body) = await restfulService.Get(url);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
+        {
+            // Transient network/TLS failures calling a third-party API over the public
+            // internet happen occasionally — degrade to an empty result rather than a 500.
+            logger.LogWarning("[OpenTripMap] Radius search request failed: {Ex}", ex.Message);
+            return new AttractionSearchResultDto();
+        }
+
         if (statusCode != HttpStatusCode.OK || string.IsNullOrWhiteSpace(body))
         {
             logger.LogWarning("[OpenTripMap] Radius search returned {Status}", statusCode);
@@ -58,6 +71,8 @@ public class OpenTripMapDestinationProvider(
             var features = docs.RootElement.EnumerateArray().ToList();
 
             var attractions = features.Select(MapFeature).ToList();
+            await EnrichThumbnailsAsync(attractions, cancellationToken);
+
             return new AttractionSearchResultDto
             {
                 Items = attractions,
@@ -71,12 +86,48 @@ public class OpenTripMapDestinationProvider(
         }
     }
 
+    // The Radius API does not return photo previews — only the detail endpoint
+    // (/xid/{id}) does. Fetch them in parallel, best-effort, so a slow or failed
+    // lookup for one place never fails the whole search.
+    private async Task EnrichThumbnailsAsync(List<AttractionDto> attractions, CancellationToken cancellationToken)
+    {
+        var tasks = attractions
+            .Where(a => !string.IsNullOrWhiteSpace(a.ProviderPlaceId))
+            .Select(a => EnrichThumbnailAsync(a, cancellationToken));
+
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task EnrichThumbnailAsync(AttractionDto attraction, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var detail = await GetAttractionDetailAsync(attraction.ProviderPlaceId, cancellationToken);
+            attraction.ThumbnailUrl = detail?.ThumbnailUrl;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning("[OpenTripMap] Thumbnail enrichment failed for xid '{Xid}': {Ex}", attraction.ProviderPlaceId, ex.Message);
+        }
+    }
+
     public async Task<AttractionDto?> GetAttractionDetailAsync(
         string providerPlaceId,
         CancellationToken cancellationToken = default)
     {
         var url = $"{BaseUrl}/xid/{Uri.EscapeDataString(providerPlaceId)}?apikey={ApiKey}";
-        var (statusCode, body) = await restfulService.Get(url);
+
+        HttpStatusCode statusCode;
+        string body;
+        try
+        {
+            (statusCode, body) = await restfulService.Get(url);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
+        {
+            logger.LogWarning("[OpenTripMap] Detail fetch request failed for xid '{Xid}': {Ex}", providerPlaceId, ex.Message);
+            return null;
+        }
 
         if (statusCode == HttpStatusCode.NotFound)
             return null;
@@ -181,12 +232,15 @@ public class OpenTripMapDestinationProvider(
         }
 
         // Thumbnail — kept for list-compat; also added as the first Photos entry.
+        // Not built from `preview.source`: that links directly to a fixed-width
+        // Wikimedia thumbnail, and Wikimedia periodically stops serving widths it
+        // no longer considers standard (400 Bad Request). Special:FilePath with an
+        // explicit width redirects to whatever width Wikimedia currently allows.
         string? thumbnail = null;
         var photos = new List<string>();
-        if (root.TryGetProperty("preview", out var preview)
-            && preview.TryGetProperty("source", out var sourceProp))
+        if (root.TryGetProperty("image", out var imageProp))
         {
-            thumbnail = sourceProp.GetString();
+            thumbnail = BuildWikimediaThumbnailUrl(imageProp.GetString());
             if (!string.IsNullOrWhiteSpace(thumbnail))
                 photos.Add(thumbnail);
         }
@@ -235,5 +289,21 @@ public class OpenTripMapDestinationProvider(
             Website = website,
             OpeningHours = null
         };
+    }
+
+    private const int ThumbnailWidth = 400;
+    private const string CommonsFileMarker = "/wiki/File:";
+
+    private static string? BuildWikimediaThumbnailUrl(string? commonsFilePageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(commonsFilePageUrl))
+            return null;
+
+        var markerIndex = commonsFilePageUrl.IndexOf(CommonsFileMarker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0)
+            return null;
+
+        var fileName = commonsFilePageUrl[(markerIndex + CommonsFileMarker.Length)..];
+        return $"https://commons.wikimedia.org/wiki/Special:FilePath/{fileName}?width={ThumbnailWidth}";
     }
 }

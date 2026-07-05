@@ -1,10 +1,15 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
+import type { SessionExpiredError } from './api/client';
 import { getApiErrorMessage } from './api/errors';
 import { publishErrorToast } from './components/toast/toastBus';
 
 const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
 function reportError(error: unknown): void {
+  // AuthContext already shows a dedicated "session expired" toast for these
+  // (see registerSessionExpiredHandler) — showing the raw 401/400 too would
+  // be a confusing second toast for the same event.
+  if ((error as SessionExpiredError)?.isSessionExpired) return;
   publishErrorToast(getApiErrorMessage(error, GENERIC_ERROR_MESSAGE));
 }
 

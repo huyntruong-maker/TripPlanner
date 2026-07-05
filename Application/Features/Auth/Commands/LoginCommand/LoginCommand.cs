@@ -58,7 +58,7 @@ public class LoginCommandHandler(
 
             if (user.AccessFailedCount == authShareService.MaxFailedAccessAttempts)
             {
-                var lockoutTime = DateTimeHelper.GetDtOffset().AddMinutes(authShareService.DefaultLockoutMinutes);
+                var lockoutTime = DateTimeHelper.GetDtOffsetUtc().AddMinutes(authShareService.DefaultLockoutMinutes);
                 await userManager.SetLockoutEndDateAsync(user, lockoutTime);
                 loginResult.LockoutEnd = user.LockoutEnd?.AddHours(7).DateTime;
                 loginResult.AccessFailedCount = authShareService.MaxFailedAccessAttempts;
@@ -67,6 +67,9 @@ public class LoginCommandHandler(
 
             return (AuthControllerMsg.Login.InvalidCredential, loginResult);
         }
+
+        if (!user.EmailConfirmed)
+            return (AuthControllerMsg.Login.InActive, loginResult);
 
         user.LockoutEnd = null;
         user.AccessFailedCount = 0;
@@ -80,8 +83,8 @@ public class LoginCommandHandler(
             DateTimeHelper.GetDt().AddMinutes(authShareService.ExpirationMinutes));
 
         var refreshExpiration = request.RememberMe
-            ? DateTimeHelper.GetDt().AddDays(authShareService.RefreshExpirationDays)
-            : DateTimeHelper.GetDt().AddDays(authShareService.RefreshShortExpirationDays);
+            ? DateTimeHelper.GetDtUtc().AddDays(authShareService.RefreshExpirationDays)
+            : DateTimeHelper.GetDtUtc().AddDays(authShareService.RefreshShortExpirationDays);
 
         var refreshToken = authShareService.GenerateToken(
             userClaims,

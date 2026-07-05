@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { getApiErrorMessage } from '../../api/errors';
 import { useToast } from '../../components/toast/ToastProvider';
-import { registerSchema, type RegisterFormValues } from './schemas';
+import { registerSchema, PASSWORD_POLICY_MESSAGE, type RegisterFormValues } from './schemas';
 
 /**
  * Feature 4 / US1 — sign up with email and password.
@@ -87,14 +87,17 @@ export function RegisterPage() {
           )}
         </label>
         <label>
-          Password (min 8 characters)
+          Password
           <input
             type="password"
             autoComplete="new-password"
             {...register('password')}
             aria-invalid={Boolean(errors.password)}
-            aria-describedby={errors.password ? 'register-password-error' : undefined}
+            aria-describedby="register-password-hint register-password-error"
           />
+          <p className="hint" id="register-password-hint">
+            {PASSWORD_POLICY_MESSAGE}
+          </p>
           {errors.password && (
             <p className="error" id="register-password-error">
               {errors.password.message}

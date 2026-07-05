@@ -37,7 +37,7 @@ namespace Application.Features.Auth.Commands.ForgotPasswordCommand
             }
 
             var resetPasswordToken = CommonHelper.GenerateBase64GuidToken();
-            var expirationTime = DateTimeHelper.GetDt().AddHours(authShareService.ResetPasswordExpirationHours);
+            var expirationTime = DateTimeHelper.GetDtUtc().AddHours(authShareService.ResetPasswordExpirationHours);
 
             user.ResetPasswordToken = resetPasswordToken;
             user.ResetPasswordExpiration = expirationTime;
