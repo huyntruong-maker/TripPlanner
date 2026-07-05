@@ -25,8 +25,6 @@ public class User : IdentityUser<Guid>, IBaseEntity, IIsDeletedEntity
 
     public virtual ICollection<UserToken> UserTokens { get; set; } = [];
 
-    public virtual ICollection<UserRole> UserRoles { get; set; } = [];
-
     public virtual ICollection<EmailVerificationToken> EmailVerificationTokens { get; set; } = [];
 
     public virtual ICollection<Trip> Trips { get; set; } = [];

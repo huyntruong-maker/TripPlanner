@@ -12,11 +12,6 @@ public class UserContextValidator
             return ShareControllerMsg.CurrentUserContext.InvalidUser;
         }
 
-        if (userContext.RoleIds.Length == 0 || userContext.RolesLevel.Length == 0)
-        {
-            return ShareControllerMsg.CurrentUserContext.InvalidRole;
-        }
-
         return string.Empty;
     }
 }

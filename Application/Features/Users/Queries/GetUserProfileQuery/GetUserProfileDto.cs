@@ -1,5 +1,3 @@
-﻿using Application.Dtos.Base;
-
 namespace Application.Features.Users.Queries.GetUserProfileQuery;
 
 public class GetUserProfileDto
@@ -15,6 +13,4 @@ public class GetUserProfileDto
     public required string Email { get; set; }
 
     public string? PhoneNumber { get; set; }
-
-    public RoleDetailDto[] Roles { get; set; } = [];
 }

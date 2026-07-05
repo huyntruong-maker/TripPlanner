@@ -1,5 +1,3 @@
-﻿using Application.Dtos.Base;
-
 namespace WebApi.Models.Responses.User;
 
 public class UserProfileRes
@@ -15,6 +13,4 @@ public class UserProfileRes
     public required string Email { get; set; }
 
     public string? PhoneNumber { get; set; }
-
-    public RoleDetailDto[] Roles { get; set; } = [];
 }
