@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.Features.Auth;
 using Application.Features.Destinations;
+using Application.Features.Trips;
 using Application.MediatR;
 using Infrastructure.Caching;
 using Infrastructure.DataAccess;
@@ -39,5 +40,6 @@ public static class CoreDependencyConfiguration
     {
         collection.AddAuthFeatures();
         collection.AddDestinationsFeature();
+        collection.AddTripsFeature();
     }
 }
