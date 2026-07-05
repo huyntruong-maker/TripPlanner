@@ -1,0 +1,168 @@
+using Application.Dtos.Trips;
+using Application.Interfaces.Cqrs;
+using Application.Interfaces.DataAccess;
+using Domain.Entities;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace Application.Features.Trips.Commands.SetTripDatesCommand;
+
+/// <summary>
+/// Sets or updates the start and end dates of a trip, regenerating one <see cref="ItineraryDay"/>
+/// per calendar date in the new range.
+/// </summary>
+/// <remarks>
+/// When the new date range is shorter than the existing one, some <see cref="ItineraryDay"/> rows
+/// are soft-deleted. Because the EF cascade rule for TripDestination → ItineraryDay is SetNull,
+/// affected destinations are NOT deleted — they become unscheduled (ItineraryDayId = null).
+/// <see cref="SetTripDatesResult.DestinationsUnscheduledCount"/> reports how many were affected.
+/// </remarks>
+public record SetTripDatesCommand : ICommand<SetTripDatesResult?>
+{
+    public required Guid TripId { get; init; }
+
+    public required Guid UserId { get; init; }
+
+    public required DateOnly StartDate { get; init; }
+
+    public required DateOnly EndDate { get; init; }
+}
+
+public class SetTripDatesResult
+{
+    public required TripDto Trip { get; init; }
+
+    /// <summary>
+    /// Number of TripDestinations that became unscheduled because their itinerary day was removed.
+    /// Zero when no destinations were affected.
+    /// </summary>
+    public int DestinationsUnscheduledCount { get; init; }
+}
+
+public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
+    : IRequestHandler<SetTripDatesCommand, SetTripDatesResult?>
+{
+    public async Task<SetTripDatesResult?> Handle(SetTripDatesCommand request, CancellationToken cancellationToken)
+    {
+        var tripRepo = writeUnitOfWork.GetRepository<Trip>();
+        var dayRepo = writeUnitOfWork.GetRepository<ItineraryDay>();
+
+        // Load the trip with its current itinerary days — ownership is verified here (UserId filter).
+        var trip = await tripRepo.Single(
+            predicate: t => t.Id == request.TripId && t.UserId == request.UserId,
+            include: q => q.Include(t => t.ItineraryDays));
+
+        if (trip is null)
+            return null;
+
+        var newDates = EnumerateDates(request.StartDate, request.EndDate).ToList();
+
+        var existingDays = trip.ItineraryDays
+            .Where(d => !d.IsDeleted)
+            .OrderBy(d => d.DayIndex)
+            .ToList();
+
+        var existingDates = existingDays.Select(d => d.Date).ToHashSet();
+        var newDatesSet = newDates.ToHashSet();
+
+        // Soft-delete days that fall outside the new range.
+        var daysToRemove = existingDays.Where(d => !newDatesSet.Contains(d.Date)).ToList();
+
+        // Count destinations that will become unscheduled due to SetNull cascade on ItineraryDay delete.
+        // We query before deleting so we can return the count as a warning.
+        var destinationRepo = writeUnitOfWork.GetRepository<TripDestination>();
+        var dayIdsToRemove = daysToRemove.Select(d => d.Id).ToHashSet();
+        int unscheduledCount = 0;
+
+        if (dayIdsToRemove.Count > 0)
+        {
+            var allDestinations = await destinationRepo.QueryCondition(
+                d => d.TripId == request.TripId && d.ItineraryDayId != null);
+            unscheduledCount = allDestinations
+                .Count(d => d.ItineraryDayId.HasValue && dayIdsToRemove.Contains(d.ItineraryDayId.Value));
+        }
+
+        foreach (var day in daysToRemove)
+        {
+            day.IsDeleted = true;
+            day.UpdatedAt = DateTimeOffset.UtcNow;
+            day.UpdatedBy = request.UserId;
+            await dayRepo.Update(day);
+        }
+
+        // Add days that are new in the requested range.
+        var datesToAdd = newDates.Where(date => !existingDates.Contains(date)).ToList();
+        var newDayEntities = new List<ItineraryDay>();
+
+        foreach (var (date, index) in newDates.Select((d, i) => (d, i + 1)))
+        {
+            if (datesToAdd.Contains(date))
+            {
+                var newDay = new ItineraryDay
+                {
+                    TripId = request.TripId,
+                    Date = date,
+                    DayIndex = index,
+                    CreatedBy = request.UserId,
+                    UpdatedBy = request.UserId
+                };
+                newDayEntities.Add(newDay);
+                await dayRepo.Add(newDay);
+            }
+            else
+            {
+                // Update DayIndex for existing days in case the range shifted.
+                var existingDay = existingDays.First(d => d.Date == date);
+                if (existingDay.DayIndex != index)
+                {
+                    existingDay.DayIndex = index;
+                    existingDay.UpdatedAt = DateTimeOffset.UtcNow;
+                    existingDay.UpdatedBy = request.UserId;
+                    await dayRepo.Update(existingDay);
+                }
+            }
+        }
+
+        trip.StartDate = request.StartDate;
+        trip.EndDate = request.EndDate;
+        trip.UpdatedAt = DateTimeOffset.UtcNow;
+        trip.UpdatedBy = request.UserId;
+        await tripRepo.Update(trip);
+
+        await writeUnitOfWork.SaveChanges();
+
+        // Reload the days after save to get accurate state including newly created IDs.
+        var updatedDays = (await dayRepo.QueryCondition(d => d.TripId == request.TripId))
+            .OrderBy(d => d.DayIndex)
+            .Select(d => new ItineraryDayDto
+            {
+                Id = d.Id,
+                Date = d.Date,
+                DayIndex = d.DayIndex
+            })
+            .ToList();
+
+        var tripDto = new TripDto
+        {
+            Id = trip.Id,
+            Name = trip.Name,
+            StartDate = trip.StartDate,
+            EndDate = trip.EndDate,
+            CreatedAt = trip.CreatedAt,
+            UpdatedAt = trip.UpdatedAt,
+            ItineraryDays = updatedDays
+        };
+
+        return new SetTripDatesResult
+        {
+            Trip = tripDto,
+            DestinationsUnscheduledCount = unscheduledCount
+        };
+    }
+
+    private static IEnumerable<DateOnly> EnumerateDates(DateOnly start, DateOnly end)
+    {
+        for (var date = start; date <= end; date = date.AddDays(1))
+            yield return date;
+    }
+}
