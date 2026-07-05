@@ -1,0 +1,89 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { registerToastListener } from './toastBus';
+
+const TOAST_AUTO_DISMISS_MS = 8000;
+
+interface ToastItem {
+  id: number;
+  message: string;
+}
+
+interface ToastContextValue {
+  /** Shows an error popup with the given message (e.g. from getApiErrorMessage). */
+  showToast: (message: string) => void;
+}
+
+const ToastContext = createContext<ToastContextValue | undefined>(undefined);
+
+/**
+ * App-wide error popup. Reads the backend's own error text (docs/API.md
+ * `{ error, errorCode }`, backed by the `*ControllerMsg` constants server-side)
+ * via getApiErrorMessage/getApiErrorCode and surfaces it here so a failure is
+ * never silent, in addition to any page-level inline error message.
+ *
+ * Two ways a toast gets shown:
+ *  1. Automatically for every TanStack Query query/mutation failure, wired in
+ *     src/queryClient.ts via the QueryCache/MutationCache onError callbacks.
+ *  2. Explicitly, via useToast().showToast(...), for the handful of call sites
+ *     (login, register, create-trip, set-dates) that call the API directly
+ *     rather than through useMutation.
+ */
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const nextId = useRef(0);
+
+  const dismissToast = useCallback((id: number) => {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  }, []);
+
+  const showToast = useCallback(
+    (message: string) => {
+      const id = nextId.current++;
+      setToasts((current) => [...current, { id, message }]);
+      setTimeout(() => dismissToast(id), TOAST_AUTO_DISMISS_MS);
+    },
+    [dismissToast],
+  );
+
+  useEffect(() => {
+    registerToastListener(showToast);
+    return () => registerToastListener(null);
+  }, [showToast]);
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      <div className="toast-stack">
+        {toasts.map((toast) => (
+          <div key={toast.id} className="toast toast--error" role="alert">
+            <span>{toast.message}</span>
+            <button
+              type="button"
+              className="toast-dismiss"
+              onClick={() => dismissToast(toast.id)}
+              aria-label="Dismiss notification"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+}
+
+export function useToast(): ToastContextValue {
+  const ctx = useContext(ToastContext);
+  if (!ctx) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return ctx;
+}
