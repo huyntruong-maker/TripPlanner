@@ -16,7 +16,7 @@ public interface IAuthShareService
 {
     Task<User?> VerifyToken(string token, string secret);
     string GenerateToken(IEnumerable<Claim> claims, string secret, DateTime expireDateTime);
-    Task<User?> VerifyUserToken(Guid deviceUuid, string token, string refreshToken);
+    Task<User?> VerifyUserToken(string token, string refreshToken);
 
     int MaxFailedAccessAttempts { get; }
     int DefaultLockoutMinutes { get; }
@@ -101,7 +101,7 @@ public class AuthShareService(
         return tokenHandler.WriteToken(token);
     }
 
-    public async Task<User?> VerifyUserToken(Guid deviceUuid, string token, string refreshToken)
+    public async Task<User?> VerifyUserToken(string token, string refreshToken)
     {
         var tokenContent = ReadJwtToken(token);
         var refreshTokenContent = ReadJwtToken(refreshToken);
@@ -120,7 +120,7 @@ public class AuthShareService(
         if (user == null) return null;
 
         var userTokenRepo = readUnitOfWork.GetRepository<UserToken>();
-        var userToken = await userTokenRepo.Single(i => i.UserId == user.Id && i.DeviceUuid == deviceUuid);
+        var userToken = await userTokenRepo.Single(i => i.UserId == user.Id);
         if (userToken == null
             || userToken.RefreshToken != refreshToken
             || userToken.RefreshTokenExpiration < DateTimeHelper.GetDtOffset())

@@ -47,14 +47,6 @@ public class AuthController(
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrWhiteSpace(request.DeviceUuid.ToString())
-                || string.IsNullOrWhiteSpace(request.DeviceInfo)
-                || string.IsNullOrWhiteSpace(request.LocationInfo))
-            {
-                response.ErrorCode = AuthControllerMsg.Login.InvalidCredential;
-                return BadRequest(response);
-            }
-
             var (errorCode, loginResult) = await sender.Send(Mapper.Map<LoginCommand>(request));
             response.Result = Mapper.Map<LoginRes>(loginResult);
             if (!string.IsNullOrWhiteSpace(errorCode))

@@ -36,7 +36,6 @@ public static class ConfigKeys
 
         public struct Email
         {
-            public const string NewDeviceNotification = "Security:Email:NewDeviceNotification";
             public const string ChangePasswordNotification = "Security:Email:ChangePasswordNotification";
             public const string ResetPasswordNotification = "Security:Email:ResetPasswordNotification";
             public const string ResetPasswordSuccessNotification = "Security:Email:ResetPasswordSuccessNotification";

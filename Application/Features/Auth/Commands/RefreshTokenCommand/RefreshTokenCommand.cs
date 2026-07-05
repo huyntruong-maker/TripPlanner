@@ -17,8 +17,6 @@ public record RefreshTokenCommand : ICommand<RefreshTokenDto>
     public required string Token { get; set; }
 
     public required string RefreshToken { get; set; }
-
-    public Guid DeviceUuid { get; set; }
 }
 
 public class RefreshTokenCommandHandler(
@@ -49,14 +47,14 @@ public class RefreshTokenCommandHandler(
         }
         catch (SecurityTokenExpiredException)
         {
-            var user = await authShareService.VerifyUserToken(request.DeviceUuid, request.Token, request.RefreshToken);
+            var user = await authShareService.VerifyUserToken(request.Token, request.RefreshToken);
             if (user == null) return result;
 
             var principal = await signInManager.CreateUserPrincipalAsync(user);
             var userClaims = principal.Claims.ToList();
 
             var userTokenRepo = writeUnitOfWork.GetRepository<UserToken>();
-            var userToken = await userTokenRepo.Single(i => i.UserId == user.Id && i.DeviceUuid == request.DeviceUuid);
+            var userToken = await userTokenRepo.Single(i => i.UserId == user.Id);
 
             var tokenExpiration = DateTimeHelper.GetDt().AddMinutes(authShareService.ExpirationMinutes);
             var newToken = authShareService.GenerateToken(userClaims, authShareService.Secret, tokenExpiration);

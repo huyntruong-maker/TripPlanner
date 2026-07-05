@@ -8,8 +8,6 @@ namespace Domain.Entities;
 [Table("UserTokens")]
 public class UserToken : IdentityUserToken<Guid>, IBaseEntity
 {
-    public Guid DeviceUuid { get; set; }
-
     public required string RefreshToken { get; set; }
 
     public DateTimeOffset RefreshTokenExpiration { get; set; }
@@ -25,10 +23,4 @@ public class UserToken : IdentityUserToken<Guid>, IBaseEntity
     public DateTimeOffset UpdatedAt { get; set; }
 
     public bool RememberMe { get; set; }
-
-    [MaxLength(250)]
-    public required string DeviceInfo { get; set; }
-
-    [MaxLength(150)]
-    public required string LocationInfo { get; set; }
 }

@@ -1,17 +1,11 @@
-using Application.Dtos.Base;
-using Application.Dtos.Email;
 using Application.Features.Auth.Shared;
 using Application.Interfaces.DataAccess;
-using Application.Interfaces.Email;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Helpers;
 using Domain.Messages;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 using Application.Interfaces.Cqrs;
 
 namespace Application.Features.Auth.Commands.LoginCommand;
@@ -22,23 +16,14 @@ public record LoginCommand : ICommand<(string, LoginResultDto)>
 
     public string? Password { get; init; }
 
-    public required Guid DeviceUuid { get; init; }
-
     public required bool RememberMe { get; init; }
-
-    public required string DeviceInfo { get; set; }
-
-    public required string LocationInfo { get; set; }
 }
 
 public class LoginCommandHandler(
     SignInManager<User> signInManager,
     UserManager<User> userManager,
     IAuthShareService authShareService,
-    IWriteUnitOfWork writeUnitOfWork,
-    IEmailService emailService,
-    IConfiguration configuration,
-    ILogger<LoginCommandHandler> logger)
+    IWriteUnitOfWork writeUnitOfWork)
     : IRequestHandler<LoginCommand, (string, LoginResultDto)>
 {
     public async Task<(string, LoginResultDto)> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -106,32 +91,28 @@ public class LoginCommandHandler(
         await userManager.UpdateAsync(user);
 
         var userTokenRepo = writeUnitOfWork.GetRepository<UserToken>();
-        var userToken = await userTokenRepo.Single(i => i.DeviceUuid == request.DeviceUuid && i.UserId == user.Id);
+        var userToken = await userTokenRepo.Single(i => i.UserId == user.Id);
 
         if (userToken == null)
         {
             userToken = new UserToken
             {
                 UserId = user.Id,
-                DeviceUuid = request.DeviceUuid,
                 RefreshToken = refreshToken,
                 RefreshTokenExpiration = refreshExpiration,
                 Value = token,
                 LoginProvider = GlobalConstants.JwtLoginToken,
                 Name = $"{user.UserName}_{DateTime.Now.ToFileTime()}",
-                RememberMe = request.RememberMe,
-                DeviceInfo = request.DeviceInfo,
-                LocationInfo = request.LocationInfo
+                RememberMe = request.RememberMe
             };
             await writeUnitOfWork.GetRepository<UserToken>().Add(userToken);
-
-            await SendNewDeviceEmail(user, userToken, request);
         }
         else
         {
             userToken.Value = token;
             userToken.RefreshToken = refreshToken;
             userToken.RefreshTokenExpiration = refreshExpiration;
+            userToken.RememberMe = request.RememberMe;
             await userTokenRepo.Update(userToken);
         }
 
@@ -141,42 +122,5 @@ public class LoginCommandHandler(
         loginResult.RefreshToken = refreshToken;
 
         return (string.Empty, loginResult);
-    }
-
-    private async Task<string> SendNewDeviceEmail(User user, UserToken userToken, LoginCommand loginRequest)
-    {
-        if (string.IsNullOrEmpty(user.Email))
-        {
-            logger.LogWarning("SendNewDeviceEmail Failed. User {id} dont have email", user.Id);
-            return string.Empty;
-        }
-
-        var emailTemplate = configuration.GetSection(ConfigKeys.Security.Email.NewDeviceNotification)
-            .Get<EmailTemplateDto>();
-
-        if (emailTemplate == null || string.IsNullOrEmpty(emailTemplate.Path))
-        {
-            logger.LogWarning("Template or template path for send email new device login not found");
-            return string.Empty;
-        }
-
-        var dataBinding = new Dictionary<string, string>
-        {
-            { "{{UserName}}", user.UserName! },
-            { "{{DeviceId}}", userToken.DeviceUuid.ToString() },
-            { "{{LoginTime}}", DateTimeOffset.UtcNow.ToLocalTime().ToString(DateTimeFormats.DateTime4)},
-            { "{{DeviceInfo}}", loginRequest.DeviceInfo },
-            { "{{LocationInfo}}", loginRequest.LocationInfo },
-        };
-
-        var request = new SendEmailReqDto
-        {
-            ToEmails = [user.Email],
-            Subject = string.IsNullOrEmpty(emailTemplate.Subject) ? "New device login alert" : emailTemplate.Subject,
-            TemplatePath = emailTemplate.Path,
-            DataBinding = dataBinding
-        };
-
-        return await emailService.SendEmail(request);
     }
 }
