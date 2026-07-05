@@ -43,7 +43,9 @@ describe('RegisterPage', () => {
     await fillAndSubmit(user, { firstName: 'Jane', email: EXISTING_EMAIL, password: 'Secret123!' });
 
     expect(
-      await screen.findByText('An account with this email already exists.', { selector: 'p.error' }),
+      await screen.findByText('An account with this email already exists.', {
+        selector: 'p[role="alert"]',
+      }),
     ).toBeInTheDocument();
   });
 

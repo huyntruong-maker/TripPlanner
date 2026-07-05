@@ -13,48 +13,80 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
   const additionalTags = attraction.tags.filter((tag) => tag !== attraction.category);
 
   return (
-    <li className="attraction-card">
-      <Link to={`/destinations/${attraction.providerPlaceId}`} className="attraction-card-link">
-        <div className="attraction-media">
-          {attraction.thumbnailUrl ? (
-            // Decorative: the heading right below already names the destination,
-            // so an alt here would just duplicate it in the link's accessible name.
-            <img className="attraction-thumbnail" src={attraction.thumbnailUrl} alt="" />
-          ) : (
-            <div className="attraction-thumbnail attraction-thumbnail--placeholder" aria-hidden="true">
-              No photo
+    <li>
+      <article className="h-full bg-white rounded-xl overflow-hidden elevation-l1 hover:elevation-l2 transition-all flex flex-col border border-outline-variant/20">
+        <Link
+          to={`/destinations/${attraction.providerPlaceId}`}
+          className="flex flex-col flex-grow group"
+        >
+          <div className="relative aspect-[4/3] overflow-hidden">
+            {attraction.thumbnailUrl ? (
+              // Decorative: the heading right below already names the destination,
+              // so an alt here would just duplicate it in the link's accessible name.
+              <img
+                className="attraction-thumbnail w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src={attraction.thumbnailUrl}
+                alt=""
+              />
+            ) : (
+              <div
+                className="attraction-thumbnail w-full h-full flex items-center justify-center bg-surface-container-high text-on-surface-variant text-label-md"
+                aria-hidden="true"
+              >
+                No photo
+              </div>
+            )}
+            {attraction.rating !== null && (
+              <p className="absolute top-4 right-4 glass-effect px-3 py-1 rounded-full flex items-center gap-1">
+                <span
+                  className="material-symbols-outlined text-[18px] text-on-tertiary-container"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                  aria-hidden="true"
+                >
+                  star
+                </span>
+                <span className="text-label-md font-label-md text-on-surface">
+                  Rating {attraction.rating.toFixed(1)}
+                </span>
+              </p>
+            )}
+          </div>
+          <div className="p-stack-lg flex-grow flex flex-col">
+            <div className="mb-stack-md">
+              {attraction.category && (
+                <p className="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-1">
+                  {attraction.category}
+                </p>
+              )}
+              <h3 className="text-headline-md font-headline-md text-primary">{attraction.name}</h3>
             </div>
-          )}
-          {attraction.rating !== null && (
-            <p className="attraction-rating attraction-rating--badge">
-              Rating {attraction.rating.toFixed(1)}
-            </p>
-          )}
+            {additionalTags.length > 0 && (
+              <ul className="flex flex-wrap gap-2 mb-stack-lg">
+                {additionalTags.map((tag) => (
+                  <li
+                    key={tag}
+                    className="bg-[#E0F2FE] text-primary px-3 py-1 rounded-full text-label-sm font-label-sm"
+                  >
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Link>
+        <div className="px-stack-lg pb-stack-lg mt-auto">
+          <AddToTripControl
+            destination={{
+              providerPlaceId: attraction.providerPlaceId,
+              name: attraction.name,
+              category: attraction.category,
+              thumbnailUrl: attraction.thumbnailUrl,
+              lat: attraction.latitude,
+              lng: attraction.longitude,
+            }}
+          />
         </div>
-        <div className="attraction-card-body">
-          <h3>{attraction.name}</h3>
-          {attraction.category && <p className="attraction-category">{attraction.category}</p>}
-          {additionalTags.length > 0 && (
-            <ul className="attraction-tags">
-              {additionalTags.map((tag) => (
-                <li key={tag}>{tag}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </Link>
-      <div className="attraction-card-actions">
-        <AddToTripControl
-          destination={{
-            providerPlaceId: attraction.providerPlaceId,
-            name: attraction.name,
-            category: attraction.category,
-            thumbnailUrl: attraction.thumbnailUrl,
-            lat: attraction.latitude,
-            lng: attraction.longitude,
-          }}
-        />
-      </div>
+      </article>
     </li>
   );
 }

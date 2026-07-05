@@ -61,17 +61,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="toast-stack">
+      <div className="fixed top-4 right-4 z-[1000] flex flex-col gap-2 max-w-[360px]">
         {toasts.map((toast) => (
-          <div key={toast.id} className="toast toast--error" role="alert">
-            <span>{toast.message}</span>
+          <div
+            key={toast.id}
+            className="toast bg-error-container border border-error/30 text-on-error-container rounded-lg px-4 py-3 flex items-start justify-between gap-3 shadow-lg"
+            role="alert"
+          >
+            <span className="text-label-md font-label-md">{toast.message}</span>
             <button
               type="button"
-              className="toast-dismiss"
+              className="text-on-error-container/70 hover:text-on-error-container transition-colors flex-shrink-0"
               onClick={() => dismissToast(toast.id)}
               aria-label="Dismiss notification"
             >
-              ×
+              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                close
+              </span>
             </button>
           </div>
         ))}

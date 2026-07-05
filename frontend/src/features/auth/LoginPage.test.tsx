@@ -35,7 +35,7 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Log in' }));
 
     expect(
-      await screen.findByText('Invalid email or password.', { selector: 'p.error' }),
+      await screen.findByText('Invalid email or password.', { selector: 'p[role="alert"]' }),
     ).toBeInTheDocument();
   });
 

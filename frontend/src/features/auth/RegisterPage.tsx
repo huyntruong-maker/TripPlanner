@@ -7,6 +7,9 @@ import { getApiErrorMessage } from '../../api/errors';
 import { useToast } from '../../components/toast/ToastProvider';
 import { registerSchema, PASSWORD_POLICY_MESSAGE, type RegisterFormValues } from './schemas';
 
+const INPUT_CLASSES =
+  'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
+
 /**
  * Feature 4 / US1 — sign up with email and password.
  *
@@ -43,79 +46,130 @@ export function RegisterPage() {
 
   if (registeredEmail) {
     return (
-      <div className="card">
-        <h1>Check your email</h1>
-        <p>We sent a verification link to {registeredEmail}. Verify your account, then log in.</p>
-        <p>
-          <Link to="/login">Log in</Link>
-        </p>
+      <div className="flex items-center justify-center">
+        <div className="w-full max-w-[480px]">
+          <div className="bg-surface-container-lowest rounded-xl p-8 md:p-10 elevation-l1 border border-outline-variant/30 text-center">
+            <h1 className="text-headline-md font-headline-md text-on-surface mb-2">
+              Check your email
+            </h1>
+            <p className="text-body-md font-body-md text-on-surface-variant mb-6">
+              We sent a verification link to {registeredEmail}. Verify your account, then log in.
+            </p>
+            <p className="text-body-md font-body-md text-on-surface-variant">
+              <Link to="/login" className="text-primary font-bold hover:underline">
+                Log in
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="card">
-      <h1>Create account</h1>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <label>
-          First name
-          <input
-            autoComplete="given-name"
-            {...register('firstName')}
-            aria-invalid={Boolean(errors.firstName)}
-            aria-describedby={errors.firstName ? 'register-firstName-error' : undefined}
-          />
-          {errors.firstName && (
-            <p className="error" id="register-firstName-error">
-              {errors.firstName.message}
+    <div className="flex items-center justify-center">
+      <div className="w-full max-w-[480px]">
+        <div className="bg-surface-container-lowest rounded-xl p-8 md:p-10 elevation-l1 border border-outline-variant/30">
+          <div className="mb-8">
+            <h1 className="text-headline-md font-headline-md text-on-surface mb-2">
+              Create account
+            </h1>
+            <p className="text-body-md font-body-md text-on-surface-variant">
+              Start your next journey with personalized planning tools.
             </p>
-          )}
-        </label>
-        <label>
-          Email
-          <input
-            type="email"
-            autoComplete="email"
-            {...register('email')}
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby={errors.email ? 'register-email-error' : undefined}
-          />
-          {errors.email && (
-            <p className="error" id="register-email-error">
-              {errors.email.message}
+          </div>
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
+            <div className="space-y-2">
+              <label
+                className="block text-label-md font-label-md text-on-surface-variant"
+                htmlFor="register-firstName"
+              >
+                First name
+              </label>
+              <input
+                id="register-firstName"
+                autoComplete="given-name"
+                className={INPUT_CLASSES}
+                {...register('firstName')}
+                aria-invalid={Boolean(errors.firstName)}
+                aria-describedby={errors.firstName ? 'register-firstName-error' : undefined}
+              />
+              {errors.firstName && (
+                <p className="text-error text-label-sm font-semibold" id="register-firstName-error">
+                  {errors.firstName.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label
+                className="block text-label-md font-label-md text-on-surface-variant"
+                htmlFor="register-email"
+              >
+                Email
+              </label>
+              <input
+                id="register-email"
+                type="email"
+                autoComplete="email"
+                className={INPUT_CLASSES}
+                {...register('email')}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? 'register-email-error' : undefined}
+              />
+              {errors.email && (
+                <p className="text-error text-label-sm font-semibold" id="register-email-error">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label
+                className="block text-label-md font-label-md text-on-surface-variant"
+                htmlFor="register-password"
+              >
+                Password
+              </label>
+              <input
+                id="register-password"
+                type="password"
+                autoComplete="new-password"
+                className={INPUT_CLASSES}
+                {...register('password')}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby="register-password-hint register-password-error"
+              />
+              <p className="text-label-sm text-on-surface-variant" id="register-password-hint">
+                {PASSWORD_POLICY_MESSAGE}
+              </p>
+              {errors.password && (
+                <p className="text-error text-label-sm font-semibold" id="register-password-error">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+            {formError && (
+              <p className="text-error text-label-sm font-semibold" role="alert">
+                {formError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-primary text-on-primary py-4 rounded-full font-label-md hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Creating…' : 'Sign up'}
+            </button>
+          </form>
+          <div className="mt-8 text-center">
+            <p className="text-body-md font-body-md text-on-surface-variant">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary font-bold hover:underline">
+                Log in
+              </Link>
             </p>
-          )}
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            autoComplete="new-password"
-            {...register('password')}
-            aria-invalid={Boolean(errors.password)}
-            aria-describedby="register-password-hint register-password-error"
-          />
-          <p className="hint" id="register-password-hint">
-            {PASSWORD_POLICY_MESSAGE}
-          </p>
-          {errors.password && (
-            <p className="error" id="register-password-error">
-              {errors.password.message}
-            </p>
-          )}
-        </label>
-        {formError && (
-          <p className="error" role="alert">
-            {formError}
-          </p>
-        )}
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating…' : 'Sign up'}
-        </button>
-      </form>
-      <p>
-        Already have an account? <Link to="/login">Log in</Link>
-      </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
