@@ -46,12 +46,16 @@ All Npgsql + PostgreSQL 16. SQL Server support is not implemented.
 | Entity | Table (EF default) | Key fields | Notes |
 |--------|-------------------|------------|-------|
 | `User` | `AspNetUsers` | Id (Guid), UserName, Email, FirstName, LastName, ResetPasswordToken, ResetPasswordExpiration, IsDeleted | Extends `IdentityUser<Guid>`. Implements `IBaseEntity`, `IIsDeletedEntity`. |
-| `Role` | `AspNetRoles` | Id (Guid), Name, Level (int) | Extends `IdentityRole<Guid>`. |
-| `UserRole` | `AspNetUserRoles` | UserId, RoleId | Many-to-many join. |
-| `UserToken` | `AspNetUserTokens` | UserId, DeviceUuid, Token (JWT), RefreshToken, RefreshTokenExpiration, RememberMe, DeviceInfo, LocationInfo | Multi-device token storage. **Different from the planned `RefreshTokens` table.** |
+| `UserToken` | `AspNetUserTokens` | UserId, Token (JWT), RefreshToken, RefreshTokenExpiration, RememberMe | Single-session-per-user token storage (device tracking removed 2026-07-05). **Different from the planned `RefreshTokens` table.** |
 | `UserClaim` | `AspNetUserClaims` | Id, UserId, ClaimType, ClaimValue | Standard Identity claims. |
 | `UserLogin` | `AspNetUserLogins` | LoginProvider, ProviderKey, UserId | External login providers. |
-| `RoleClaim` | `AspNetRoleClaims` | Id, RoleId, ClaimType, ClaimValue | Permission claims per role. |
+
+There is no role/permission concept in this product — the PRD defines a single "Traveler" persona who only
+manages their own data (NFR-6). A prior RBAC scaffold (`Role`/`UserRole`/`RoleClaim`, `AspNetRoles` /
+`AspNetUserRoles` / `AspNetRoleClaims`) was unused leftover boilerplate and was removed, along with the
+seeded `SuperAdmin`/`SystemAdmin` roles and the seeded `admin` user, via migration `RemoveRbacScaffold`
+(2026-07-05). `BaseDbContext` now extends `IdentityUserContext<User, Guid, UserClaim, UserLogin, UserToken>`
+(no role store).
 
 **Base entity (✅ exists)**
 `BaseEntity`: Id (Guid PK), CreatedBy (Guid?), CreatedAt (DateTimeOffset), UpdatedBy (Guid?), UpdatedAt (DateTimeOffset?).
@@ -74,9 +78,10 @@ To apply: `dotnet ef database update --project Infrastructure --startup-project 
 ### Deviation: UserToken vs. RefreshTokens
 The design doc specifies a `RefreshTokens(Id, UserId, TokenHash, ExpiresAt, RevokedAt)` table.
 The actual implementation uses `UserTokens` (ASP.NET Identity's `IdentityUserToken<Guid>` extended
-with `DeviceUuid`, `RefreshToken`, `DeviceInfo`, `LocationInfo`). This supports multi-device sessions.
-When building Phase 1.1 (register/verify), keep using `UserTokens` for token storage — do NOT
-create a separate `RefreshTokens` table.
+with `RefreshToken`, `RefreshTokenExpiration`, `RememberMe`). One row per user (single active
+session per user; device/multi-device tracking — `DeviceUuid`, `DeviceInfo`, `LocationInfo` — was
+removed 2026-07-05 as unused scope). When building Phase 1.1 (register/verify), keep using
+`UserTokens` for token storage — do NOT create a separate `RefreshTokens` table.
 
 ### Deviation: Users table
 The design doc specifies `Users(Id, Email, PasswordHash, EmailVerified, CreatedAt)`.

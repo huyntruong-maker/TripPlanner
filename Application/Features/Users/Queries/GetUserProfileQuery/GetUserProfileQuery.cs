@@ -1,6 +1,5 @@
-﻿using Application.Common.Services;
+using Application.Common.Services;
 using Application.Common.Validators;
-using Application.Dtos.Base;
 using Application.Interfaces.Cqrs;
 using Application.Interfaces.DataAccess;
 using Domain.Entities;
@@ -28,40 +27,18 @@ public class GetUserProfileHandler(
         var userId = userContext.UserId;
 
         var userQuery = await unitOfWork.GetRepository<User>().QueryCondition(x => x.Id == userId);
-        var userRoleQuery = await unitOfWork.GetRepository<UserRole>().QueryCondition(x => x.UserId == userId);
-        var roleQuery = await unitOfWork.GetRepository<Role>().QueryAll();
 
-        var userProfile = await (
-            from us in userQuery
-            join ur in userRoleQuery on us.Id equals ur.UserId
-            join ro in roleQuery on ur.RoleId equals ro.Id
-            select new
+        var userProfile = await userQuery
+            .Select(us => new GetUserProfileDto
             {
-                us.Id,
-                us.UserName,
-                us.FirstName,
-                us.LastName,
-                us.Email,
-                us.PhoneNumber,
-                RoleId = ro.Id,
-                RoleName = ro.DisplayName
+                Id = us.Id,
+                UserName = us.UserName!,
+                FirstName = us.FirstName,
+                LastName = us.LastName,
+                Email = us.Email!,
+                PhoneNumber = us.PhoneNumber
             })
-            .GroupBy(gr => new { gr.UserName, gr.FirstName, gr.LastName, gr.Email, gr.PhoneNumber, gr.Id })
-            .Select(gr => new GetUserProfileDto()
-            {
-                Email = gr.Key.Email,
-                FirstName = gr.Key.FirstName,
-                LastName = gr.Key.LastName,
-                UserName = gr.Key.UserName,
-                PhoneNumber = gr.Key.PhoneNumber,
-                Id = gr.Key.Id,
-                Roles = gr.Select(i => new RoleDetailDto()
-                {
-                    Id = i.RoleId,
-                    DisplayName = i.RoleName
-                }).ToArray()
-            })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         return userProfile != null
             ? (string.Empty, userProfile)

@@ -266,11 +266,6 @@ public static class CommonHelper
         return Guid.Parse(claimValue);
     }
 
-    public static string[] GetUserRoleClaims(this IEnumerable<Claim> claims)
-    {
-        return claims.Where(x => x.Type == RolePolicyConstants.ClaimType).Select(i => i.Value).ToArray();
-    }
-
     public static bool IsValidEmail(this string email)
     {
         var text = email.Trim();

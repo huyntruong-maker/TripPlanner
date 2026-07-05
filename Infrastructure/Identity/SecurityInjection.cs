@@ -9,6 +9,6 @@ public static class SecurityInjection
     {
         collection.AddDbIdentity(configuration);
         collection.AddJwtBearer(configuration);
-        collection.AddClaimsBasedAuthorization();
+        collection.AddAuthorization();
     }
 }

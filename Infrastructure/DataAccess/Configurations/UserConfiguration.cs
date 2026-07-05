@@ -22,23 +22,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.NormalizedEmail).HasMaxLength(256);
 
         builder.HasQueryFilter(i => !i.IsDeleted);
-
-        builder.HasData(
-            new User
-            {
-                Id = UserConstants.AdminId,
-                UserName = "admin",
-                PasswordHash =
-                    "AQAAAAEAACcQAAAAEELKNErj+EBVy3yZwAI32HSAQILEj5UAOooOEHTMPYU/yp0E28xNH1BjU/SEBw8kuA==", // Admin!1234
-                LockoutEnabled = true,
-                ConcurrencyStamp = "616f1653-48e9-4a6f-81b3-1bdd52e565b5",
-                NormalizedUserName = "ADMIN",
-                SecurityStamp = "ZY5BGSWBARTE74T6ZLO7WKKMMILBEB2E",
-                CreatedAt = new DateTime(2023, 10, 09, 0, 0, 0, 0, DateTimeKind.Utc).AddTicks(8363),
-                UpdatedAt = new DateTime(2023, 10, 09, 0, 0, 0, 0, DateTimeKind.Utc).AddTicks(8363),
-                CreatedBy = Guid.Empty,
-                UpdatedBy = Guid.Empty,
-                FirstName = "Admin",
-            });
     }
 }

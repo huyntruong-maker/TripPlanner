@@ -3,7 +3,6 @@ using Application.Common.Validators;
 using Application.Dtos.Base;
 using Application.Dtos.Email;
 using Application.Interfaces.Cqrs;
-using Application.Interfaces.DataAccess;
 using Application.Interfaces.Email;
 using Domain.Constants;
 using Domain.Entities;
@@ -23,14 +22,11 @@ public record ChangePasswordCommand : ICommand<string>
     public required string NewPassword { get; set; }
 
     public required string ConfirmPassword { get; set; }
-
-    public Guid DeviceUuid { get; set; }
 }
 
 public class ChangePasswordHandler(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
-    IWriteUnitOfWork writeUnitOfWork,
     IConfiguration configuration,
     IEmailService emailService,
     ILogger<ChangePasswordCommand> logger,
@@ -82,14 +78,6 @@ public class ChangePasswordHandler(
 
         if (result.Succeeded)
         {
-            var userTokenRepo = writeUnitOfWork.GetRepository<UserToken>();
-            var userToken = (await userTokenRepo.QueryCondition(i => i.UserId == user.Id
-                                                                     && i.DeviceUuid != request.DeviceUuid))
-                .ToList();
-
-            await userTokenRepo.Delete(userToken);
-            await writeUnitOfWork.SaveChanges();
-
             await SendChangePassEmail(user);
 
             return string.Empty;
@@ -108,7 +96,7 @@ public class ChangePasswordHandler(
     {
         if (string.IsNullOrEmpty(user.Email))
         {
-            logger.LogWarning("SendNewDeviceEmail Failed. User {id} dont have email", user.Id);
+            logger.LogWarning("SendChangePassEmail Failed. User {id} dont have email", user.Id);
             return string.Empty;
         }
 

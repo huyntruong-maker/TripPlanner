@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.DataAccess.DbContexts;
 
 public class
-    BaseDbContext<TContext> : IdentityDbContext<User, Role, Guid, UserClaim, UserRole, UserLogin, RoleClaim, UserToken>
+    BaseDbContext<TContext> : IdentityUserContext<User, Guid, UserClaim, UserLogin, UserToken>
     where TContext : DbContext
 {
     public BaseDbContext()
@@ -34,10 +34,7 @@ public class
         // (including IdentityPasskeyData added in .NET 10).
         base.OnModelCreating(builder);
 
-        builder.ApplyConfiguration(new RoleConfiguration());
-        builder.ApplyConfiguration(new RoleClaimConfiguration());
         builder.ApplyConfiguration(new UserConfiguration());
-        builder.ApplyConfiguration(new UserRoleConfiguration());
         builder.ApplyConfiguration(new UserTokenConfiguration());
         builder.ApplyConfiguration(new UserLoginConfiguration());
         builder.ApplyConfiguration(new UserClaimConfiguration());

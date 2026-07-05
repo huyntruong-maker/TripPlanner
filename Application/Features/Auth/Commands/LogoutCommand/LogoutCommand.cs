@@ -13,8 +13,6 @@ public record LogoutCommand : ICommand<bool>
     public required string Token { get; set; }
 
     public required string RefreshToken { get; set; }
-
-    public Guid DeviceUuid { get; set; }
 }
 
 public class LogoutCommandHandler(
@@ -30,7 +28,7 @@ public class LogoutCommandHandler(
             var user = await authShareService.VerifyToken(request.Token, authShareService.Secret);
             if (user == null) return false;
 
-            user = await authShareService.VerifyUserToken(request.DeviceUuid, request.Token, request.RefreshToken);
+            user = await authShareService.VerifyUserToken(request.Token, request.RefreshToken);
             if (user == null) return false;
 
             var userTokenRepo = writeUnitOfWork.GetRepository<UserToken>();

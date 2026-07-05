@@ -49,9 +49,6 @@ Log in and obtain JWT access + refresh tokens.
 {
   "username": "user@example.com",
   "password": "Secret123!",
-  "deviceUuid": "550e8400-...",
-  "deviceInfo": "Chrome/Windows",
-  "locationInfo": "Ho Chi Minh City",
   "rememberMe": false
 }
 ```
@@ -75,7 +72,7 @@ Exchange a refresh token for a new access token.
 ---
 
 ### PUT /api/v1/auth/logout
-End the current device session.
+End the user's current session (single session per user).
 
 **Body** `{ "token": "...", "refreshToken": "..." }`
 
