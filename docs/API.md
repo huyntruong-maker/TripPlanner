@@ -318,6 +318,11 @@ Note: `itineraryDays` is always an empty array in list responses. Use `GET /trip
 
 Returns full detail for a single trip, including itinerary days (ordered by `dayIndex`) and their destinations (ordered by `position`). Implements F3-US10.
 
+> **Known gap**: destinations are only ever returned nested under `itineraryDays[].tripDestinations`.
+> There is currently no way to retrieve a trip's "Saved Places" — destinations whose `itineraryDayId`
+> was set to `null` by a date-range reduction (see `PUT /trips/{id}/dates` below). See that section for
+> detail; tracked as a backend/contract follow-up, not a frontend defect.
+
 **Path parameter**: `id` (Guid) — the trip ID.
 
 **Success response** (`200 OK`)
@@ -437,6 +442,17 @@ When destinations were unscheduled by the date reduction, `success` is still `tr
 | 401 | — | No valid JWT. |
 | 404 | `Trip.NotFound` | Trip does not exist or does not belong to the caller. |
 | 500 | `Trip.SetDates.Exception` | Unexpected server error. |
+
+> **Known limitation — "Saved Places" are unreachable via the API.** When a date-range reduction
+> unschedules a destination (`itineraryDayId` → `null`), the row survives in the database (per the
+> cascade rule described above) but no documented endpoint returns it: `GET /trips` never nests
+> destinations, and `GET /trips/{id}` only nests destinations under `itineraryDays[].tripDestinations`,
+> which by definition excludes anything with a `null` `itineraryDayId`. The frontend can and does surface
+> the `Trip.SetDates.DestinationsUnscheduled` warning at the moment it happens, but there is no way for a
+> returning user to see or re-schedule those destinations later. Fixing this needs either a new endpoint
+> (e.g. `GET /trips/{id}/saved-places`) or including unscheduled destinations in the `GET /trips/{id}`
+> response outside of `itineraryDays`. Flagged during Phase 2 frontend work (2026-07-05); not addressed
+> in this PR — backend follow-up needed.
 
 ---
 
