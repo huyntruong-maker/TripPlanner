@@ -78,6 +78,9 @@ public static class ConfigKeys
 
     public struct Providers
     {
+        /// <summary>Name of the destination provider to use (see <see cref="ProviderNames"/>).</summary>
+        public const string Default = "Providers:Default";
+
         public struct OpenTripMap
         {
             public const string BaseUrl = "Providers:OpenTripMap:BaseUrl";
