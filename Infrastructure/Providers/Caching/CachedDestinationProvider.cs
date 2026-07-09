@@ -8,11 +8,13 @@ namespace Infrastructure.Providers.Caching;
 /// <summary>
 /// Caching decorator around <see cref="IDestinationProvider"/>.
 /// Attraction-list results are cached for 30 minutes; detail records for 24 hours.
+/// Keys are namespaced by provider name; empty list results are never cached.
 /// Cache misses fall through to the underlying provider transparently.
 /// This satisfies NFR-1 (search ≤500 ms) and NFR-2 (attractions ≤1000 ms) for repeated queries.
 /// </summary>
 public class CachedDestinationProvider(
     IDestinationProvider inner,
+    string providerName,
     ICacheManager cacheManager,
     ILogger<CachedDestinationProvider> logger) : IDestinationProvider
 {
@@ -30,7 +32,9 @@ public class CachedDestinationProvider(
         // Round coordinates to 4 decimal places (~11 m precision) for stable cache keys.
         var latKey = Math.Round(latitude, 4);
         var lonKey = Math.Round(longitude, 4);
-        var cacheKey = $"attractions:{latKey}:{lonKey}:{radiusMeters}:p{page}:s{pageSize}";
+        // Keyed by provider: place IDs and result sets are provider-specific, so entries
+        // written by one provider must not be served after Providers:Default is switched.
+        var cacheKey = $"attractions:{providerName}:{latKey}:{lonKey}:{radiusMeters}:p{page}:s{pageSize}";
 
         var cached = await cacheManager.GetData<AttractionSearchResultDto>(cacheKey);
         if (cached is not null)
@@ -40,7 +44,13 @@ public class CachedDestinationProvider(
         }
 
         var result = await inner.GetAttractionsAsync(latitude, longitude, radiusMeters, page, pageSize, cancellationToken);
-        await cacheManager.SetData(cacheKey, result, AttractionListTtl);
+
+        // Providers degrade transient network failures to an empty result, so an empty page
+        // is indistinguishable from an outage — caching it would serve "no attractions"
+        // for the full TTL. Genuinely empty areas just re-fetch, which is cheap.
+        if (!result.IsEmpty)
+            await cacheManager.SetData(cacheKey, result, AttractionListTtl);
+
         return result;
     }
 
@@ -48,7 +58,7 @@ public class CachedDestinationProvider(
         string providerPlaceId,
         CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"attraction-detail:{providerPlaceId}";
+        var cacheKey = $"attraction-detail:{providerName}:{providerPlaceId}";
 
         var cached = await cacheManager.GetData<AttractionDto>(cacheKey);
         if (cached is not null)
