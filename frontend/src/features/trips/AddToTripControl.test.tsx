@@ -11,6 +11,7 @@ import {
 } from '../../test/msw/handlers/trips';
 import { signInForTest } from '../../test/tripsTestRoutes';
 import { AddToTripControl, type AddableDestination } from './AddToTripControl';
+import { consumePendingAddToTrip, rememberPendingAddToTrip } from './pendingAddToTrip';
 
 const SAMPLE_DESTINATION: AddableDestination = {
   providerPlaceId: 'W214242',
@@ -37,6 +38,7 @@ function renderControl(initialEntry = '/destinations/W214242') {
 describe('AddToTripControl', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   describe('logged out (F3-US8 AC2 — disabled + redirect-back)', () => {
@@ -48,6 +50,15 @@ describe('AddToTripControl', () => {
         'href',
         '/login?returnTo=%2Fdestinations%2FW214242',
       );
+    });
+
+    it('remembers this destination as the pending add-to-trip intent when the login link is clicked (F3-US8 AC5)', async () => {
+      const user = userEvent.setup();
+      renderControl('/destinations/W214242');
+
+      await user.click(screen.getByRole('link', { name: 'Log in' }));
+
+      expect(consumePendingAddToTrip(SAMPLE_DESTINATION.providerPlaceId)).toBe(true);
     });
   });
 
@@ -87,6 +98,36 @@ describe('AddToTripControl', () => {
       await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
 
       expect(await screen.findByText(/You don't have any trips yet/)).toBeInTheDocument();
+    });
+
+    describe('resuming after login (F3-US8 AC5 — best-effort)', () => {
+      it('auto-opens and focuses the trip picker for the destination that had a pending intent', async () => {
+        rememberPendingAddToTrip(SAMPLE_DESTINATION.providerPlaceId);
+
+        renderControl();
+
+        const tripSelect = await screen.findByLabelText('Trip');
+        expect(tripSelect).toHaveFocus();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+      });
+
+      it('clears the pending intent so it does not resume again on a later render', async () => {
+        rememberPendingAddToTrip(SAMPLE_DESTINATION.providerPlaceId);
+
+        renderControl();
+
+        await screen.findByLabelText('Trip');
+        expect(consumePendingAddToTrip(SAMPLE_DESTINATION.providerPlaceId)).toBe(false);
+      });
+
+      it('does not resume when the pending intent is for a different destination', () => {
+        rememberPendingAddToTrip('a-different-place-id');
+
+        renderControl();
+
+        expect(screen.getByRole('button', { name: 'Add to Trip' })).toBeInTheDocument();
+        expect(screen.queryByLabelText('Trip')).not.toBeInTheDocument();
+      });
     });
   });
 });
