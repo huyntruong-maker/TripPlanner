@@ -66,7 +66,11 @@ app.UseStaticFiles();
 if (app.Environment.IsDevelopment() || app.Configuration.GetSection(ConfigKeys.EnableSwagger).Get<bool>())
     app.UseSwaggers();
 
-app.UseHttpsRedirection();
+// In Development the frontend calls the HTTP endpoint directly; redirecting to HTTPS
+// breaks CORS preflights (browsers reject redirects on preflight requests).
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

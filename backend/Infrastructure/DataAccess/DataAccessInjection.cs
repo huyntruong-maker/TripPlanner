@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace Infrastructure.DataAccess;
 
@@ -36,7 +38,28 @@ public static class DataAccessInjection
             .Options;
 
         using var context = new WriteDbContext(options);
-        context.Database.Migrate();
+
+        // The database may still be starting when the app boots (e.g. docker compose cold start),
+        // so wait for it instead of crashing on the first refused connection.
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(RunMigration));
+        const int maxConnectAttempts = 10;
+        var retryDelay = TimeSpan.FromSeconds(3);
+
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                context.Database.Migrate();
+                return;
+            }
+            catch (NpgsqlException exception) when (attempt < maxConnectAttempts)
+            {
+                logger.LogWarning(
+                    "Database is not ready yet ({Message}). Attempt {Attempt}/{MaxAttempts}, retrying in {DelaySeconds}s.",
+                    exception.Message, attempt, maxConnectAttempts, retryDelay.TotalSeconds);
+                Thread.Sleep(retryDelay);
+            }
+        }
     }
 
     private static void AddReadDbContext(this IServiceCollection collection, IConfiguration configuration)
