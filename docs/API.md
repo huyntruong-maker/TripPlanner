@@ -489,7 +489,8 @@ Adds a destination to a specific itinerary day within the trip (F3-US3). Because
 | 400 | `Trip.AddDestination.ProviderPlaceIdRequired` | `providerPlaceId` is null or whitespace. |
 | 400 | `Trip.AddDestination.NameRequired` | `name` is null or whitespace. |
 | 401 | — | No valid JWT. |
-| 404 | `Trip.NotFound` | Trip not found/not owned, or `itineraryDayId` does not belong to this trip. |
+| 404 | `Trip.NotFound` | Trip not found or not owned by the caller. |
+| 404 | `Trip.AddDestination.ItineraryDayNotFound` | `itineraryDayId` does not belong to this trip. |
 | 500 | `Trip.AddDestination.Exception` | Unexpected server error. |
 
 ---

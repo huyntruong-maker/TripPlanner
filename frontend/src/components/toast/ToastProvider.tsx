@@ -17,25 +17,13 @@ interface ToastItem {
 }
 
 interface ToastContextValue {
-  /** Shows an error popup with the given message (e.g. from getApiErrorMessage). */
+  /** Shows an error popup with the given message. */
   showToast: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-/**
- * App-wide error popup. Reads the backend's own error text (docs/API.md
- * `{ error, errorCode }`, backed by the `*ControllerMsg` constants server-side)
- * via getApiErrorMessage/getApiErrorCode and surfaces it here so a failure is
- * never silent, in addition to any page-level inline error message.
- *
- * Two ways a toast gets shown:
- *  1. Automatically for every TanStack Query query/mutation failure, wired in
- *     src/queryClient.ts via the QueryCache/MutationCache onError callbacks.
- *  2. Explicitly, via useToast().showToast(...), for the handful of call sites
- *     (login, register, create-trip, set-dates) that call the API directly
- *     rather than through useMutation.
- */
+/** App-wide error popup: shown automatically for query/mutation failures, or explicitly via useToast().showToast() for direct API calls (login, register, create-trip, set-dates). */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);

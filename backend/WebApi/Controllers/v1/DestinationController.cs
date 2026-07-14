@@ -19,14 +19,7 @@ public class DestinationController(
     ILogger<DestinationController> logger,
     IMapper mapper) : BaseController(logger, mapper)
 {
-    /// <summary>
-    /// Searches for cities or countries matching the given query text.
-    /// Returns up to 5 ranked results; exact matches appear first.
-    /// </summary>
-    /// <param name="sender">Injected by ASP.NET Core endpoint DI per-request.</param>
-    /// <param name="query">Partial or full city/country name (at least 1 character).</param>
-    /// <param name="maxResults">Maximum number of results to return (default: 5, max: 5).</param>
-    /// <param name="cancellationToken">Propagates request cancellation.</param>
+    /// <summary>Searches for cities/countries matching the query; up to 5 ranked results, exact matches first.</summary>
     [HttpGet("locations/search")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.LocationSearchResultDto>), StatusCodes.Status200OK)]
@@ -66,18 +59,7 @@ public class DestinationController(
         }
     }
 
-    /// <summary>
-    /// Returns a ranked, paginated list of attractions near the given coordinates.
-    /// Default search radius is 20 km (city-level). Returns an empty list when no
-    /// attractions are found rather than an error.
-    /// </summary>
-    /// <param name="sender">Injected by ASP.NET Core endpoint DI per-request.</param>
-    /// <param name="latitude">Latitude of the search centre (required).</param>
-    /// <param name="longitude">Longitude of the search centre (required).</param>
-    /// <param name="radiusMeters">Search radius in metres (default: 20 000).</param>
-    /// <param name="page">1-based page number (default: 1).</param>
-    /// <param name="pageSize">Items per page (default: 20, max: 20).</param>
-    /// <param name="cancellationToken">Propagates request cancellation.</param>
+    /// <summary>Ranked, paginated attractions near a coordinate; empty list (not an error) when none found.</summary>
     [HttpGet("attractions")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.AttractionSearchResultDto>), StatusCodes.Status200OK)]
@@ -135,15 +117,7 @@ public class DestinationController(
         }
     }
 
-    /// <summary>
-    /// Returns full detail for a single destination identified by its provider-specific ID.
-    /// Optional fields (description, photos, address, website, openingHours) are null or empty
-    /// when the provider does not supply them — the response is always returned (graceful partial data).
-    /// NFR-3: response within 2 s; repeated requests are served from the 24-hour Redis cache.
-    /// </summary>
-    /// <param name="sender">Injected by ASP.NET Core endpoint DI per-request.</param>
-    /// <param name="providerPlaceId">Provider-specific place identifier (OpenTripMap xid or Foursquare fsq_id).</param>
-    /// <param name="cancellationToken">Propagates request cancellation.</param>
+    /// <summary>Full destination detail by provider ID; NFR-3: served from 24h cache on repeat requests.</summary>
     [HttpGet("{providerPlaceId}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.DestinationDetailDto>), StatusCodes.Status200OK)]

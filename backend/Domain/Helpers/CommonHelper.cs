@@ -18,14 +18,7 @@ public static class CommonHelper
 {
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _propertyCache = new();
 
-    /// <summary>
-    ///     Extract data between a symbol
-    ///     Get first group
-    /// </summary>
-    /// <param name="text">Source</param>
-    /// <param name="pattern">Pattern to search</param>
-    /// <param name="idx">Index of matched data</param>
-    /// <returns>Text result</returns>
+    /// <summary>Returns the first regex match, or a specific group of it when <c>idx</c> is given.</summary>
     public static string RegexGroupValue(this string text, string pattern, int? idx = null)
     {
         var regex = new Regex(pattern);
@@ -33,14 +26,7 @@ public static class CommonHelper
         return idx != null ? match.Groups[idx.Value].Value : match.Value;
     }
 
-    /// <summary>
-    ///     Extract data between a symbol
-    ///     Get last group
-    /// </summary>
-    /// <param name="text">Source</param>
-    /// <param name="pattern">Pattern to search</param>
-    /// <param name="idx">Index of matched data</param>
-    /// <returns>Text result</returns>
+    /// <summary>Returns the last regex match, or a specific group of it when <c>idx</c> is given.</summary>
     public static string RegexGroupValueLast(this string text, string pattern, int? idx = null)
     {
         var regex = new Regex(pattern);
@@ -48,11 +34,7 @@ public static class CommonHelper
         return idx != null ? matches.Last().Groups[idx.Value].Value : matches.Last().Value;
     }
 
-    /// <summary>
-    ///     Compute an object
-    /// </summary>
-    /// <param name="toCompute">Object to compute</param>
-    /// <returns>Hash</returns>
+    /// <summary>Computes an MD5 hash of the object's JSON representation.</summary>
     public static string ComputeHash(this object toCompute)
     {
         using var md5 = MD5.Create();
@@ -64,11 +46,7 @@ public static class CommonHelper
         return sb.ToString();
     }
 
-    /// <summary>
-    ///     Compute a string
-    /// </summary>
-    /// <param name="text">String to compute</param>
-    /// <returns>Hash</returns>
+    /// <summary>Computes an MD5 hash of the string.</summary>
     public static string ComputeHash(this string text)
     {
         using var md5 = MD5.Create();
@@ -80,36 +58,19 @@ public static class CommonHelper
         return sb.ToString();
     }
 
-    /// <summary>
-    ///     Compare 2 hash
-    /// </summary>
-    /// <param name="source">Source</param>
-    /// <param name="toCompare">Hash to compare</param>
-    /// <returns>Compare result</returns>
     public static bool CompareHash(string source, string toCompare)
     {
         return string.IsNullOrEmpty(source) ? string.IsNullOrEmpty(toCompare) : source.Equals(toCompare);
     }
 
-    /// <summary>
-    ///     Convert 0 to empty, usually use for data exportation
-    /// </summary>
-    /// <param name="source">Source</param>
-    /// <param name="format">Format</param>
-    /// <returns>Convert result</returns>
+    /// <summary>Converts zero to an empty string; used for data exportation formatting.</summary>
     public static string ConvertZeroToEmpty(this double? source, string format = "0.00")
     {
         if (source == null) return string.Empty;
         return source == 0 ? string.Empty : source.Value.ToString(format);
     }
 
-    /// <summary>
-    ///     Parse double
-    /// </summary>
-    /// <param name="source">Source</param>
-    /// <param name="func">Function</param>
-    /// <param name="defaultValue">Default value</param>
-    /// <returns>Parse result, default value if parse error</returns>
+    /// <summary>Parses a double, optionally transforming input first; falls back to default on failure.</summary>
     public static double? TryParseDoubleNullable(this string source, Func<string, string>? func,
         double? defaultValue = 0.0)
     {
@@ -119,75 +80,38 @@ public static class CommonHelper
         return canParse ? result : defaultValue;
     }
 
-    /// <summary>
-    ///     Convert to integer
-    /// </summary>
-    /// <param name="value">Value</param>
-    /// <returns>Int</returns>
     public static int ToInt(this Enum value)
     {
         return Convert.ToInt32(value);
     }
 
-    /// <summary>
-    ///     Convert double to string
-    /// </summary>
-    /// <param name="source">Source</param>
-    /// <param name="format">Format</param>
-    /// <returns>Double as string</returns>
     public static string DoubleToString(this double? source, string format = "0.00")
     {
         if (source == null) return string.Empty;
         return source != 0 ? source.Value.ToString(format) : "0";
     }
 
-    /// <summary>
-    ///     Init array
-    /// </summary>
-    /// <param name="count">Array size</param>
-    /// <param name="defaultValue">Init value</param>
-    /// <returns>Array</returns>
     public static T[] InitArray<T>(int count, T defaultValue)
     {
         return Enumerable.Repeat(defaultValue, count).ToArray();
     }
 
-    /// <summary>
-    ///     Convert to byte array
-    /// </summary>
-    /// <param name="source">Source</param>
-    /// <returns>Byte array</returns>
     public static byte[] ToByteArray(this string source)
     {
         return Encoding.UTF8.GetBytes(source);
     }
 
-    /// <summary>
-    ///     Convert to utf8
-    /// </summary>
-    /// <param name="data">Data</param>
-    /// <returns>String</returns>
     public static string ToUtf8String(this byte[] data)
     {
         return Encoding.UTF8.GetString(data);
     }
 
-    /// <summary>
-    ///     Remove spaces
-    /// </summary>
-    /// <param name="source">Source</param>
-    /// <returns>String with no space</returns>
     public static string RemoveSpaces(this string source)
     {
         return source.Replace(" ", "");
     }
 
-    /// <summary>
-    ///     Check file existence
-    /// </summary>
-    /// <param name="filePath">FilePath</param>
-    /// <param name="cancelToken">Cancellation token</param>
-    /// <returns>True if the file exists. Otherwise, False</returns>
+    /// <summary>Checks file existence, retrying up to 5 times with a 3s delay.</summary>
     public static async Task<bool> CheckFileExistence(string filePath, CancellationToken? cancelToken = null)
     {
         var attempt = 5;
@@ -242,11 +166,7 @@ public static class CommonHelper
         return Math.Abs(value - compareTo) < precision;
     }
 
-    /// <summary>
-    ///     Extract userId nullable from claims.
-    /// </summary>
-    /// <param name="claims">Logged in claims</param>
-    /// <returns>UserId</returns>
+    /// <summary>Returns Guid.Empty (not null) when no user-id claim is found.</summary>
     public static Guid GetUserIdNullable(this IEnumerable<Claim> claims)
     {
         if (claims.Count() == 0) return Guid.Empty;
@@ -255,11 +175,6 @@ public static class CommonHelper
         return claimValue != null ? Guid.Parse(claimValue) : Guid.Empty;
     }
 
-    /// <summary>
-    ///     Extract userId from claims.
-    /// </summary>
-    /// <param name="claims">Logged in claims</param>
-    /// <returns>UserId</returns>
     public static Guid GetUserId(this IEnumerable<Claim> claims)
     {
         var claimValue = claims.First(x => x.Type == "nameid" || x.Type == ClaimTypes.NameIdentifier).Value;
@@ -300,10 +215,6 @@ public static class CommonHelper
         return hashPassword;
     }
 
-    /// <summary>
-    /// Generate GUID Base64 Encoded
-    /// </summary>
-    /// <returns></returns>
     public static string GenerateBase64GuidToken()
     {
         var guidBytes = Guid.NewGuid().ToByteArray();
@@ -322,12 +233,7 @@ public static class CommonHelper
         return Encoding.UTF8.GetString(base64EncodedBytes);
     }
 
-    /// <summary>
-    /// Trims all string properties in an object and its nested objects
-    /// </summary>
-    /// <typeparam name="T">Type of the object</typeparam>
-    /// <param name="obj">Object to process</param>
-    /// <param name="logger">Logger for error reporting</param>
+    /// <summary>Recursively trims all string properties in an object and its nested objects.</summary>
     public static void TrimData<T>(this T obj, ILogger? logger = null)
     {
         if (obj == null || obj is ValueType || obj is string) return;
@@ -385,32 +291,17 @@ public static class CommonHelper
         return guids.Any(guid => guid == Guid.Empty);
     }
 
-    /// <summary>
-    /// Validates if a year is within a specified range.
-    /// </summary>
-    /// <param name="year">The year to validate.</param>
-    /// <param name="minYear">The minimum valid year (default: 2000).</param>
-    /// <param name="maxYear">The maximum valid year (default: 9999).</param>
-    /// <returns>True if the year is valid, otherwise false.</returns>
     public static bool IsValidYearRange(int year, int minYear = 2000, int maxYear = 9999)
     {
         return year >= minYear && year <= maxYear;
     }
 
-    /// <summary>
-    /// Validates if a month is within the valid range (1-12).
-    /// </summary>
-    /// <param name="month">The month to validate.</param>
-    /// <returns>True if the month is valid, otherwise false.</returns>
+    /// <summary>Validates a month is in range 1-12.</summary>
     public static bool IsValidMonth(int month)
     {
         return month >= 1 && month <= 12;
     }
 
-    /// <summary>
-    /// Gets the allowed MIME types for archive files
-    /// </summary>
-    /// <returns>Array of allowed MIME types for archives</returns>
     public static string[] GetAllowedArchiveMimeTypes()
     {
         return new string[]
@@ -425,10 +316,6 @@ public static class CommonHelper
         };
     }
 
-    /// <summary>
-    /// Retrieves the allowed file extensions for workflow.
-    /// </summary>
-    /// <returns>Array of allowed file extensions.</returns>
     public static string[] GetWorkflowAllowedFileExtension()
     {
         return [
@@ -437,12 +324,6 @@ public static class CommonHelper
         ];
     }
 
-    /// <summary>
-    /// Validates if a file's MIME type is in the list of allowed MIME types
-    /// </summary>
-    /// <param name="file">The file to validate</param>
-    /// <param name="allowedMimeTypes">Array of allowed MIME types</param>
-    /// <returns>True if the MIME type is allowed, otherwise false</returns>
     public static bool IsValidMimeType(this IFormFile file, string[] allowedMimeTypes)
     {
         if (file == null || file.Length == 0 || string.IsNullOrWhiteSpace(file.ContentType))
@@ -453,13 +334,6 @@ public static class CommonHelper
         return allowedMimeTypes.Contains(file.ContentType.ToLower());
     }
 
-    /// <summary>
-    /// Checks if the input string matches the specified regex pattern.
-    /// </summary>
-    /// <param name="input">The input string to check.</param>
-    /// <param name="pattern">The regex pattern to match against.</param>
-    /// <param name="options">Optional regex options (e.g., IgnoreCase, Compiled).</param>
-    /// <returns>True if the input matches the pattern; otherwise, false.</returns>
     public static bool IsMatchRegexPattern(this string input, string pattern, RegexOptions options = RegexOptions.None)
     {
         if (string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(pattern))
@@ -480,12 +354,6 @@ public static class CommonHelper
         return Convert.ToBase64String(bytes);
     }
 
-    /// <summary>
-    /// Checks if the uploaded file has a valid extension.
-    /// </summary>
-    /// <param name="file">The uploaded file (IFormFile).</param>
-    /// <param name="allowedExtensions">A list of allowed file extensions (e.g., ".zip", ".rar").</param>
-    /// <returns>True if the file has a valid extension, otherwise False.</returns>
     public static bool IsValidFileExtension(this IFormFile file, params string[] allowedExtensions)
     {
         if (file == null

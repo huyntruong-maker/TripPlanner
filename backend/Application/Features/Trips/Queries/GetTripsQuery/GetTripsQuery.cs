@@ -6,11 +6,7 @@ using MediatR;
 
 namespace Application.Features.Trips.Queries.GetTripsQuery;
 
-/// <summary>
-/// Returns the list of trips belonging to the authenticated user.
-/// Each item includes only top-level trip fields — <see cref="TripDto.ItineraryDays"/> is empty.
-/// Returns an empty list when the user has no trips (F3-US10 empty state).
-/// </summary>
+/// <summary>Lists the authenticated user's trips (top-level fields only); empty list if none.</summary>
 public record GetTripsQuery : IQuery<IReadOnlyList<TripDto>>
 {
     public required Guid UserId { get; init; }

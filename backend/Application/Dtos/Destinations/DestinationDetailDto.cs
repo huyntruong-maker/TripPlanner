@@ -1,11 +1,6 @@
 namespace Application.Dtos.Destinations;
 
-/// <summary>
-/// Full detail record for a single destination / attraction, returned by
-/// <c>GET /api/v1/destinations/{providerPlaceId}</c>.
-/// All optional fields are null or empty when the provider does not supply them;
-/// the response is always returned rather than rejected (graceful partial data).
-/// </summary>
+/// <summary>Full destination detail; optional fields are null/empty rather than rejected when unavailable.</summary>
 public class DestinationDetailDto
 {
     /// <summary>Provider-specific identifier (OpenTripMap xid or Foursquare fsq_id).</summary>
@@ -22,10 +17,7 @@ public class DestinationDetailDto
     /// <summary>Short description or editorial summary when available.</summary>
     public string? Description { get; set; }
 
-    /// <summary>
-    /// Ordered list of photo URLs. Empty when no photos are available.
-    /// Callers show a placeholder image when this list is empty (F2-US2).
-    /// </summary>
+    /// <summary>Ordered photo URLs; empty list means show a placeholder image (F2-US2).</summary>
     public IReadOnlyList<string> Photos { get; set; } = [];
 
     /// <summary>Street / city / country address string when available.</summary>
@@ -34,10 +26,7 @@ public class DestinationDetailDto
     /// <summary>Official website URL when available.</summary>
     public string? Website { get; set; }
 
-    /// <summary>
-    /// Structured opening-hours data. Null when the provider does not supply it.
-    /// The UI must show "Opening hours not available" when this is null (F2-US4).
-    /// </summary>
+    /// <summary>Null means show "Opening hours not available" in the UI (F2-US4).</summary>
     public OpeningHoursDto? OpeningHours { get; set; }
 
     /// <summary>Popularity or rating score, 0–10 scale where available.</summary>

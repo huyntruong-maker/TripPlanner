@@ -13,7 +13,7 @@ import { createTripSchema, type CreateTripFormValues } from './schemas';
 const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 
-/** F3/US1 — create a trip, F3/US10 — list saved trips with an empty state. */
+/** Create a trip; lists saved trips with an empty state. */
 export function TripsPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();

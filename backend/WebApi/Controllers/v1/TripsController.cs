@@ -63,10 +63,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>
-    /// Returns full detail for a single trip (itinerary days + destinations). 404 when the trip
-    /// does not exist or does not belong to the caller (NFR-6 — no enumeration).
-    /// </summary>
+    /// <summary>Full trip detail (days + destinations); 404 when not found or not owned (NFR-6).</summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status404NotFound)]
@@ -113,10 +110,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>
-    /// Creates a new trip for the authenticated user (F3-US1). Trip name is required.
-    /// The trip is created without dates; call PUT /trips/{id}/dates to set dates.
-    /// </summary>
+    /// <summary>Creates a trip without dates (F3-US1); use PUT /trips/{id}/dates to set them.</summary>
     [HttpPost]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status400BadRequest)]
@@ -145,11 +139,17 @@ public class TripsController(
                 return Unauthorized(response);
             }
 
-            var result = await sender.Send(new CreateTripCommand
+            var (errorCode, result) = await sender.Send(new CreateTripCommand
             {
                 Name = request.Name.Trim(),
                 UserId = userId.Value
             }, cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(errorCode))
+            {
+                response.ErrorCode = errorCode;
+                return BadRequest(response);
+            }
 
             response.Result = result;
             response.Success = true;
@@ -163,11 +163,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>
-    /// Sets or updates the trip's date range (F3-US2). Generates one ItineraryDay per calendar date.
-    /// When the new range is shorter, scheduled destinations that lose their day become unscheduled
-    /// (moved to Saved Places). The response includes a warning code when this occurs.
-    /// </summary>
+    /// <summary>Sets the trip's date range (F3-US2); shortening it unschedules destinations that lose their day.</summary>
     [HttpPut("{id:guid}/dates")]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status400BadRequest)]
@@ -210,7 +206,7 @@ public class TripsController(
                 return Unauthorized(response);
             }
 
-            var setDatesResult = await sender.Send(new SetTripDatesCommand
+            var (errorCode, setDatesResult) = await sender.Send(new SetTripDatesCommand
             {
                 TripId = id,
                 UserId = userId.Value,
@@ -218,13 +214,13 @@ public class TripsController(
                 EndDate = request.EndDate.Value
             }, cancellationToken);
 
-            if (setDatesResult is null)
+            if (!string.IsNullOrWhiteSpace(errorCode))
             {
-                response.ErrorCode = TripControllerMsg.NotFound;
+                response.ErrorCode = errorCode;
                 return NotFound(response);
             }
 
-            response.Result = setDatesResult.Trip;
+            response.Result = setDatesResult!.Trip;
             response.Success = true;
 
             // Warn the caller when scheduled destinations were moved to Saved Places.
@@ -241,10 +237,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>
-    /// Adds a destination to a specific itinerary day within the trip (F3-US3).
-    /// The itinerary day must belong to this trip (prevents cross-trip injection).
-    /// </summary>
+    /// <summary>Adds a destination to an itinerary day (F3-US3); the day must belong to this trip.</summary>
     [HttpPost("{id:guid}/destinations")]
     [ProducesResponseType(typeof(ResultRes<TripDestinationDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ResultRes<TripDestinationDto>), StatusCodes.Status400BadRequest)]
@@ -287,7 +280,7 @@ public class TripsController(
                 return Unauthorized(response);
             }
 
-            var result = await sender.Send(new AddDestinationToTripCommand
+            var (errorCode, result) = await sender.Send(new AddDestinationToTripCommand
             {
                 TripId = id,
                 UserId = userId.Value,
@@ -300,11 +293,9 @@ public class TripsController(
                 Lng = request.Lng
             }, cancellationToken);
 
-            if (result is null)
+            if (!string.IsNullOrWhiteSpace(errorCode))
             {
-                // Null means either the trip was not found/owned, or the itinerary day does not
-                // belong to this trip. Return 404 with NotFound to avoid leaking existence.
-                response.ErrorCode = TripControllerMsg.NotFound;
+                response.ErrorCode = errorCode;
                 return NotFound(response);
             }
 
@@ -320,10 +311,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>
-    /// Removes a destination from the trip (F3-US7). Both the trip and destination must belong to
-    /// the authenticated user (NFR-6). Returns 404 when not found to prevent enumeration.
-    /// </summary>
+    /// <summary>Removes a destination from the trip (F3-US7); 404 when not found/owned (NFR-6).</summary>
     [HttpDelete("{id:guid}/destinations/{tripDestinationId:guid}")]
     [ProducesResponseType(typeof(ResultRes<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ResultRes<bool>), StatusCodes.Status404NotFound)]
@@ -347,7 +335,7 @@ public class TripsController(
                 return Unauthorized(response);
             }
 
-            var removed = await sender.Send(new RemoveDestinationFromTripCommand
+            var (errorCode, removed) = await sender.Send(new RemoveDestinationFromTripCommand
             {
                 TripId = id,
                 TripDestinationId = tripDestinationId,
@@ -356,7 +344,7 @@ public class TripsController(
 
             if (!removed)
             {
-                response.ErrorCode = TripControllerMsg.NotFound;
+                response.ErrorCode = errorCode;
                 return NotFound(response);
             }
 
@@ -373,10 +361,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>
-    /// Extracts the authenticated user's ID from the JWT NameIdentifier claim.
-    /// Returns null only when the claim is absent (should not happen for [Authorize] endpoints).
-    /// </summary>
+    /// <summary>Extracts the user ID from the JWT claim; null only if absent (unexpected for [Authorize]).</summary>
     private Guid? GetCurrentUserId()
     {
         var value = User.FindFirstValue(ClaimTypes.NameIdentifier);

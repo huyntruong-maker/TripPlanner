@@ -2,16 +2,13 @@ using Application.Dtos.Trips;
 using Application.Interfaces.Cqrs;
 using Application.Interfaces.DataAccess;
 using Domain.Entities;
+using Domain.Messages;
 using MediatR;
 
 namespace Application.Features.Trips.Commands.AddDestinationToTripCommand;
 
-/// <summary>
-/// Adds a destination to a specific itinerary day within a trip.
-/// Because drag-drop scheduling (F3-US4) is out of MVP, the caller must supply
-/// <see cref="ItineraryDayId"/> explicitly (the user picks a day from the UI).
-/// </summary>
-public record AddDestinationToTripCommand : ICommand<TripDestinationDto?>
+/// <summary>Adds a destination to a specific itinerary day; caller supplies the day explicitly (drag-drop is post-MVP).</summary>
+public record AddDestinationToTripCommand : ICommand<(string, TripDestinationDto?)>
 {
     public required Guid TripId { get; init; }
 
@@ -33,22 +30,22 @@ public record AddDestinationToTripCommand : ICommand<TripDestinationDto?>
 }
 
 public class AddDestinationToTripCommandHandler(IWriteUnitOfWork writeUnitOfWork)
-    : IRequestHandler<AddDestinationToTripCommand, TripDestinationDto?>
+    : IRequestHandler<AddDestinationToTripCommand, (string, TripDestinationDto?)>
 {
-    public async Task<TripDestinationDto?> Handle(AddDestinationToTripCommand request, CancellationToken cancellationToken)
+    public async Task<(string, TripDestinationDto?)> Handle(AddDestinationToTripCommand request, CancellationToken cancellationToken)
     {
         var tripRepo = writeUnitOfWork.GetRepository<Trip>();
 
         // Verify the trip exists and belongs to the caller (NFR-6).
         var tripExists = await tripRepo.Any(t => t.Id == request.TripId && t.UserId == request.UserId);
         if (!tripExists)
-            return null;
+            return (TripControllerMsg.NotFound, null);
 
         // Verify the itinerary day belongs to this trip — prevents cross-trip injection.
         var dayRepo = writeUnitOfWork.GetRepository<ItineraryDay>();
         var dayExists = await dayRepo.Any(d => d.Id == request.ItineraryDayId && d.TripId == request.TripId);
         if (!dayExists)
-            return null;
+            return (TripControllerMsg.AddDestination.ItineraryDayNotFound, null);
 
         // Compute the next position within the day.
         var destinationRepo = writeUnitOfWork.GetRepository<TripDestination>();
@@ -74,7 +71,7 @@ public class AddDestinationToTripCommandHandler(IWriteUnitOfWork writeUnitOfWork
         await destinationRepo.Add(destination);
         await writeUnitOfWork.SaveChanges();
 
-        return new TripDestinationDto
+        var destinationDto = new TripDestinationDto
         {
             Id = destination.Id,
             TripId = destination.TripId,
@@ -87,5 +84,7 @@ public class AddDestinationToTripCommandHandler(IWriteUnitOfWork writeUnitOfWork
             Lng = destination.Lng,
             Position = destination.Position
         };
+
+        return (string.Empty, destinationDto);
     }
 }

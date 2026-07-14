@@ -6,10 +6,9 @@ interface AttractionCardProps {
   attraction: AttractionSummary;
 }
 
-/** F1/US3 — one attraction result: thumbnail/placeholder, category/tags, rating when available. */
+/** One attraction result card: thumbnail, category/tags, and rating when available. */
 export function AttractionCard({ attraction }: AttractionCardProps) {
-  // The category is also the first tag from the provider; drop it from the tag
-  // list so it isn't shown twice (once as the category label, once as a pill).
+  // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = attraction.tags.filter((tag) => tag !== attraction.category);
 
   return (
@@ -21,8 +20,7 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
         >
           <div className="relative aspect-[4/3] overflow-hidden">
             {attraction.thumbnailUrl ? (
-              // Decorative: the heading right below already names the destination,
-              // so an alt here would just duplicate it in the link's accessible name.
+              // Decorative: the heading below already names the destination.
               <img
                 className="attraction-thumbnail w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 src={attraction.thumbnailUrl}

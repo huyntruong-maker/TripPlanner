@@ -1,10 +1,6 @@
 namespace Application.Dtos.Trips;
 
-/// <summary>
-/// Represents a trip with its itinerary structure.
-/// In list responses <see cref="ItineraryDays"/> is always an empty collection.
-/// In the detail response <see cref="ItineraryDays"/> is populated with days and their destinations.
-/// </summary>
+/// <summary>A trip with its itinerary structure; itinerary days are empty in list responses.</summary>
 public class TripDto
 {
     public Guid Id { get; set; }
@@ -21,9 +17,6 @@ public class TripDto
 
     public DateTimeOffset UpdatedAt { get; set; }
 
-    /// <summary>
-    /// Itinerary days ordered by <see cref="ItineraryDayDto.DayIndex"/>.
-    /// Populated only in detail responses; empty in list responses.
-    /// </summary>
+    /// <summary>Itinerary days ordered by day index; populated only in detail responses.</summary>
     public IReadOnlyList<ItineraryDayDto> ItineraryDays { get; set; } = [];
 }

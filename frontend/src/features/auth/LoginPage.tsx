@@ -11,7 +11,6 @@ import { loginSchema, type LoginFormValues } from './schemas';
 const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 
-/** Feature 4 / US3 — log in with email and password. */
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();

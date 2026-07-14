@@ -11,11 +11,7 @@ function TripsPageMarker() {
   return <p>Trips page content</p>;
 }
 
-/**
- * Renders the real auth routes (login/register + a protected /trips stand-in)
- * so tests exercise the actual ProtectedRoute -> LoginPage -> returnTo
- * round trip, not a reimplementation of it.
- */
+/** Renders the real auth routes so tests exercise the actual ProtectedRoute -> LoginPage -> returnTo round trip. */
 export function renderAuthRoutes(initialEntries: string[]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 

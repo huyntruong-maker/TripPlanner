@@ -9,11 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.OpenTripMap;
 
-/// <summary>
-/// Geocodes a free-text location query using the OpenTripMap Geoname API
-/// (https://api.opentripmap.com/0.1/en/places/geoname).
-/// Returns up to <paramref name="maxResults"/> results ranked exact-match first.
-/// </summary>
+/// <summary>Geocodes a free-text location query using the OpenTripMap Geoname API.</summary>
 public class OpenTripMapGeocodingProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
@@ -33,8 +29,7 @@ public class OpenTripMapGeocodingProvider(
         if (string.IsNullOrWhiteSpace(query))
             return [];
 
-        // OpenTripMap geoname endpoint returns a single best-match location.
-        // We call it and, when a result is found, wrap it in a list.
+        // Geoname endpoint returns a single best-match location; wrap it in a list.
         var url = $"{BaseUrl}/geoname?name={Uri.EscapeDataString(query)}&apikey={ApiKey}";
 
         var (statusCode, body) = await restfulService.Get(url);

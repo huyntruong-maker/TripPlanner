@@ -9,9 +9,7 @@ public class TripDestination : BaseEntity, IIsDeletedEntity
 {
     public Guid TripId { get; set; }
 
-    /// <summary>
-    /// Null means the destination is in "Saved Places" — not yet scheduled to a specific day.
-    /// </summary>
+    /// <summary>Null means the destination is unscheduled ("Saved Places").</summary>
     public Guid? ItineraryDayId { get; set; }
 
     [MaxLength(256)]
@@ -30,9 +28,7 @@ public class TripDestination : BaseEntity, IIsDeletedEntity
 
     public double Lng { get; set; }
 
-    /// <summary>
-    /// Ordering position within the itinerary day (or saved places list).
-    /// </summary>
+    /// <summary>Ordering position within the itinerary day (or saved places list).</summary>
     public int Position { get; set; }
 
     public bool IsDeleted { get; set; }

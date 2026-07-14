@@ -16,7 +16,7 @@ const BACK_LINK_CLASSES =
 const INPUT_CLASSES =
   'w-full h-12 px-4 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-body-md outline-none';
 
-/** F3/US2, US3, US7, US10 — set dates, view the itinerary board, add/remove destinations. */
+/** Set dates, view the itinerary board, add/remove destinations. */
 export function TripPlannerPage() {
   const { tripId } = useParams<{ tripId: string }>();
   const queryClient = useQueryClient();

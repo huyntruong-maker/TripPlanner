@@ -6,11 +6,8 @@ using MediatR;
 
 namespace Application.Features.Trips.Commands.CreateTripCommand;
 
-/// <summary>
-/// Creates a new trip owned by the authenticated user.
-/// The trip is created without dates — the user sets dates in a separate step (F3-US2).
-/// </summary>
-public record CreateTripCommand : ICommand<TripDto>
+/// <summary>Creates a new trip without dates; dates are set in a separate step (F3-US2).</summary>
+public record CreateTripCommand : ICommand<(string, TripDto)>
 {
     public required string Name { get; init; }
 
@@ -19,9 +16,9 @@ public record CreateTripCommand : ICommand<TripDto>
 }
 
 public class CreateTripCommandHandler(IWriteUnitOfWork writeUnitOfWork)
-    : IRequestHandler<CreateTripCommand, TripDto>
+    : IRequestHandler<CreateTripCommand, (string, TripDto)>
 {
-    public async Task<TripDto> Handle(CreateTripCommand request, CancellationToken cancellationToken)
+    public async Task<(string, TripDto)> Handle(CreateTripCommand request, CancellationToken cancellationToken)
     {
         var trip = new Trip
         {
@@ -34,7 +31,7 @@ public class CreateTripCommandHandler(IWriteUnitOfWork writeUnitOfWork)
         await writeUnitOfWork.GetRepository<Trip>().Add(trip);
         await writeUnitOfWork.SaveChanges();
 
-        return new TripDto
+        var tripDto = new TripDto
         {
             Id = trip.Id,
             Name = trip.Name,
@@ -43,5 +40,7 @@ public class CreateTripCommandHandler(IWriteUnitOfWork writeUnitOfWork)
             CreatedAt = trip.CreatedAt,
             UpdatedAt = trip.UpdatedAt
         };
+
+        return (string.Empty, tripDto);
     }
 }

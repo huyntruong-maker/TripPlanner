@@ -40,15 +40,9 @@ public static class TripControllerMsg
         public const string Exception = "Trip.GetDetail.Exception";
     }
 
-    /// <summary>
-    /// Shared error code used whenever a trip does not exist OR does not belong to the caller.
-    /// Returning the same code for both cases prevents trip-ID enumeration.
-    /// </summary>
+    /// <summary>Shared code for missing-or-not-owned trips; prevents trip-ID enumeration.</summary>
     public const string NotFound = "Trip.NotFound";
 
-    /// <summary>
-    /// Warning code returned when setting trip dates causes scheduled destinations to become
-    /// unscheduled (moved to Saved Places) because their ItineraryDay was removed.
-    /// </summary>
+    /// <summary>Warning code when setting dates unschedules destinations whose day was removed.</summary>
     public const string DatesDestinationsUnscheduled = "Trip.SetDates.DestinationsUnscheduled";
 }

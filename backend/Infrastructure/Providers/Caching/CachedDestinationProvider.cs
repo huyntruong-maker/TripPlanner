@@ -5,12 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Caching;
 
-/// <summary>
-/// Caching decorator around <see cref="IDestinationProvider"/>.
-/// Attraction-list results are cached for 30 minutes; detail records for 24 hours.
-/// Cache misses fall through to the underlying provider transparently.
-/// This satisfies NFR-1 (search ≤500 ms) and NFR-2 (attractions ≤1000 ms) for repeated queries.
-/// </summary>
+/// <summary>Caches attraction lists (30 min) and details (24 h) to meet NFR-1/NFR-2 latency targets.</summary>
 public class CachedDestinationProvider(
     IDestinationProvider inner,
     ICacheManager cacheManager,

@@ -2,22 +2,14 @@ using Application.Dtos.Trips;
 using Application.Interfaces.Cqrs;
 using Application.Interfaces.DataAccess;
 using Domain.Entities;
+using Domain.Messages;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Trips.Commands.SetTripDatesCommand;
 
-/// <summary>
-/// Sets or updates the start and end dates of a trip, regenerating one <see cref="ItineraryDay"/>
-/// per calendar date in the new range.
-/// </summary>
-/// <remarks>
-/// When the new date range is shorter than the existing one, some <see cref="ItineraryDay"/> rows
-/// are soft-deleted. Because the EF cascade rule for TripDestination → ItineraryDay is SetNull,
-/// affected destinations are NOT deleted — they become unscheduled (ItineraryDayId = null).
-/// <see cref="SetTripDatesResult.DestinationsUnscheduledCount"/> reports how many were affected.
-/// </remarks>
-public record SetTripDatesCommand : ICommand<SetTripDatesResult?>
+/// <summary>Sets a trip's date range, regenerating one itinerary day per date; shortening soft-deletes days and unschedules their destinations (SetNull cascade) rather than deleting them.</summary>
+public record SetTripDatesCommand : ICommand<(string, SetTripDatesResult?)>
 {
     public required Guid TripId { get; init; }
 
@@ -32,17 +24,14 @@ public class SetTripDatesResult
 {
     public required TripDto Trip { get; init; }
 
-    /// <summary>
-    /// Number of TripDestinations that became unscheduled because their itinerary day was removed.
-    /// Zero when no destinations were affected.
-    /// </summary>
+    /// <summary>Number of TripDestinations unscheduled because their itinerary day was removed.</summary>
     public int DestinationsUnscheduledCount { get; init; }
 }
 
 public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
-    : IRequestHandler<SetTripDatesCommand, SetTripDatesResult?>
+    : IRequestHandler<SetTripDatesCommand, (string, SetTripDatesResult?)>
 {
-    public async Task<SetTripDatesResult?> Handle(SetTripDatesCommand request, CancellationToken cancellationToken)
+    public async Task<(string, SetTripDatesResult?)> Handle(SetTripDatesCommand request, CancellationToken cancellationToken)
     {
         var tripRepo = writeUnitOfWork.GetRepository<Trip>();
         var dayRepo = writeUnitOfWork.GetRepository<ItineraryDay>();
@@ -53,7 +42,7 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
             include: q => q.Include(t => t.ItineraryDays));
 
         if (trip is null)
-            return null;
+            return (TripControllerMsg.NotFound, null);
 
         var newDates = EnumerateDates(request.StartDate, request.EndDate).ToList();
 
@@ -68,8 +57,7 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
         // Soft-delete days that fall outside the new range.
         var daysToRemove = existingDays.Where(d => !newDatesSet.Contains(d.Date)).ToList();
 
-        // Count destinations that will become unscheduled due to SetNull cascade on ItineraryDay delete.
-        // We query before deleting so we can return the count as a warning.
+        // Count destinations that will become unscheduled, before the cascading delete happens.
         var destinationRepo = writeUnitOfWork.GetRepository<TripDestination>();
         var dayIdsToRemove = daysToRemove.Select(d => d.Id).ToHashSet();
         int unscheduledCount = 0;
@@ -153,11 +141,13 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
             ItineraryDays = updatedDays
         };
 
-        return new SetTripDatesResult
+        var setDatesResult = new SetTripDatesResult
         {
             Trip = tripDto,
             DestinationsUnscheduledCount = unscheduledCount
         };
+
+        return (string.Empty, setDatesResult);
     }
 
     private static IEnumerable<DateOnly> EnumerateDates(DateOnly start, DateOnly end)

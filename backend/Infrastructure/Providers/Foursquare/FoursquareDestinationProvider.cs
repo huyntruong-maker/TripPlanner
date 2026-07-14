@@ -9,10 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Foursquare;
 
-/// <summary>
-/// Fetches and enriches attraction data using the Foursquare Places API v3.
-/// Used as an enrichment source: categories, ratings, and photos.
-/// </summary>
+/// <summary>Fetches attraction data (categories, ratings, photos) from the Foursquare Places API v3.</summary>
 public class FoursquareDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
@@ -100,10 +97,6 @@ public class FoursquareDestinationProvider(
             return null;
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Private mapping helpers
-    // -------------------------------------------------------------------------
 
     private static AttractionDto MapPlace(JsonElement place)
     {

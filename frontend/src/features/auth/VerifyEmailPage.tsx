@@ -6,19 +6,14 @@ import { getApiErrorCode, getApiErrorMessage } from '../../api/errors';
 
 const ALREADY_VERIFIED_ERROR_CODE = 'Auth.VerifyEmail.AlreadyVerified';
 
-/**
- * Feature 4 / US2 — email verification landing page.
- * Reads `?token=` (docs/API.md GET /auth/verify-email) and shows a
- * success / invalid / expired / already-verified / missing-token state.
- */
+/** Reads `?token=` and shows success / invalid / expired / already-verified / missing-token state. */
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
   const { status, error } = useQuery({
     queryKey: ['verify-email', token],
-    // TanStack Query rejects `undefined` query results; verifyEmail() resolves
-    // to void on success, so map it to an explicit sentinel value.
+    // TanStack Query rejects `undefined` results; map void success to a sentinel.
     queryFn: async () => {
       await verifyEmail(token as string);
       return true as const;

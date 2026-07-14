@@ -1,8 +1,6 @@
 namespace Application.Dtos.Destinations;
 
-/// <summary>
-/// Represents a single geocoding result — a city or country with coordinates.
-/// </summary>
+/// <summary>A single geocoding result — a city or country with coordinates.</summary>
 public class LocationDto
 {
     public required string Name { get; set; }

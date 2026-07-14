@@ -9,8 +9,7 @@ import { createAppQueryClient } from './queryClient';
 
 const BASE_URL = 'http://localhost:5080/api/v1';
 
-/** A bare query with zero component-level error handling — proves the toast
- * comes from the QueryClient's global wiring, not a per-component catch. */
+/** Proves the toast comes from the QueryClient's global wiring, not a per-component catch. */
 function TripsListProbe() {
   useQuery({ queryKey: ['trips'], queryFn: getTrips, retry: false });
   return <p>probe rendered</p>;

@@ -1,8 +1,6 @@
 namespace Application.Dtos.Destinations;
 
-/// <summary>
-/// Paginated result wrapper for an attractions search.
-/// </summary>
+/// <summary>Paginated result wrapper for an attractions search.</summary>
 public class AttractionSearchResultDto
 {
     public IReadOnlyList<AttractionDto> Items { get; set; } = [];
