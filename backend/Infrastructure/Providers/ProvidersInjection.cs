@@ -9,17 +9,7 @@ namespace Infrastructure.Providers;
 
 public static class ProvidersInjection
 {
-    /// <summary>
-    /// Registers the external provider clients and their caching decorators.
-    /// <para>
-    /// Resolution order:
-    /// <list type="bullet">
-    ///   <item>IGeocodingProvider → CachedGeocodingProvider wrapping OpenTripMapGeocodingProvider</item>
-    ///   <item>IDestinationProvider → CachedDestinationProvider wrapping OpenTripMapDestinationProvider
-    ///         (Foursquare is available as a named alternative and can be swapped here)</item>
-    /// </list>
-    /// </para>
-    /// </summary>
+    /// <summary>Registers the external provider clients and their caching decorators.</summary>
     public static void AddProviders(this IServiceCollection collection)
     {
         // Raw provider implementations (transient — stateless HTTP clients).

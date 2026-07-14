@@ -7,12 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Trips.Queries.GetTripDetailQuery;
 
-/// <summary>
-/// Returns the full detail of a single trip, including all itinerary days and their destinations.
-/// Returns <c>null</c> when the trip does not exist or does not belong to the caller (NFR-6).
-/// Days are ordered by <see cref="ItineraryDay.DayIndex"/>; destinations within each day are ordered
-/// by <see cref="TripDestination.Position"/>.
-/// </summary>
+/// <summary>Full trip detail with ordered days and destinations; null if not found or not owned (NFR-6).</summary>
 public record GetTripDetailQuery : IQuery<TripDto?>
 {
     public required Guid TripId { get; init; }

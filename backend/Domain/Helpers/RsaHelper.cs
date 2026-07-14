@@ -14,12 +14,7 @@ public static class RsaHelper
         return (privateKey, publicKey);
     }
 
-    /// <summary>
-    /// Encrypt data using the public key
-    /// </summary>
-    /// <param name="data">Data in plain text</param>
-    /// <param name="publicKey">Public key</param>
-    /// <returns>Encrypted string</returns>
+    /// <summary>Encrypts data using the public key.</summary>
     public static string Encrypt(this string data, string publicKey)
     {
         var rsa = new RSACryptoServiceProvider();
@@ -45,12 +40,7 @@ public static class RsaHelper
         return sb.ToString().Base64Encode();
     }
 
-    /// <summary>
-    /// Decrypt using the private key
-    /// </summary>
-    /// <param name="data">Data in base64</param>
-    /// <param name="privateKey">Private Key</param>
-    /// <returns>Decrypted string</returns>
+    /// <summary>Decrypts base64 data using the private key.</summary>
     public static string Decrypt(this string data, string privateKey)
     {
         var decoded = data.Base64Decode();
@@ -70,12 +60,7 @@ public static class RsaHelper
         return encoder.GetString(decryptedByte);
     }
 
-    /// <summary>
-    /// Encrypt using a single secret key
-    /// </summary>
-    /// <param name="data">Data in plain text</param>
-    /// <param name="secretKey">Secret key</param>
-    /// <returns>Encrypted string</returns>
+    /// <summary>Encrypts data using a single AES secret key.</summary>
     public static string EncryptSingleKey(this string data, string secretKey)
     {
         var aes = Aes.Create();
@@ -93,12 +78,7 @@ public static class RsaHelper
         return Convert.ToBase64String(memoryStream.ToArray());
     }
 
-    /// <summary>
-    /// Decrypt using a single secret key
-    /// </summary>
-    /// <param name="data">Data in base64</param>
-    /// <param name="secretKey">Secret key</param>
-    /// <returns>Decrypted string</returns>
+    /// <summary>Decrypts base64 data using a single AES secret key.</summary>
     public static string DecryptSingleKey(this string data, string secretKey)
     {
         var aes = Aes.Create();

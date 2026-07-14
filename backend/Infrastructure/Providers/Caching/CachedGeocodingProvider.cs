@@ -5,10 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Caching;
 
-/// <summary>
-/// Caching decorator around <see cref="IGeocodingProvider"/>.
-/// Location search results are cached for 1 hour to meet NFR-1 (≤500 ms for 95% of requests).
-/// </summary>
+/// <summary>Caches location search results for 1 hour to meet NFR-1 (≤500 ms for 95% of requests).</summary>
 public class CachedGeocodingProvider(
     IGeocodingProvider inner,
     ICacheManager cacheManager,

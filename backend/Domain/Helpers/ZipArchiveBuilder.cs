@@ -20,9 +20,6 @@ public class ZipArchiveBuilder : IDisposable
         _compressionLevel = compressionLevel;
     }
 
-    /// <summary>
-    /// Adds JSON data to the archive
-    /// </summary>
     public ZipArchiveBuilder AddJson<T>(T data, string entryName)
     {
         if (string.IsNullOrEmpty(entryName))
@@ -35,9 +32,6 @@ public class ZipArchiveBuilder : IDisposable
         return this;
     }
 
-    /// <summary>
-    /// Adds JSON data to the archive asynchronously
-    /// </summary>
     public async Task<ZipArchiveBuilder> AddJsonAsync<T>(T data, string entryName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(entryName))
@@ -56,9 +50,6 @@ public class ZipArchiveBuilder : IDisposable
         return this;
     }
 
-    /// <summary>
-    /// Adds a stream to the archive asynchronously
-    /// </summary>
     public async Task<ZipArchiveBuilder> AddStreamAsync(Stream stream, string entryName, CancellationToken cancellationToken = default)
     {
         if (stream == null)
@@ -74,9 +65,6 @@ public class ZipArchiveBuilder : IDisposable
         return this;
     }
 
-    /// <summary>
-    /// Adds a stream to the archive synchronously
-    /// </summary>
     public ZipArchiveBuilder AddStream(Stream stream, string entryName)
     {
         if (stream == null)
@@ -92,9 +80,7 @@ public class ZipArchiveBuilder : IDisposable
         return this;
     }
 
-    /// <summary>
-    /// Builds and returns the archive stream. The caller is responsible for disposing the returned stream.
-    /// </summary>
+    /// <summary>Builds the archive stream; caller is responsible for disposing it.</summary>
     public Stream Build()
     {
         if (_isFinalized)

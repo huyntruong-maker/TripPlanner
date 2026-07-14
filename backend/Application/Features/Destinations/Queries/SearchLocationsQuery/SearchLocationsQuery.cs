@@ -5,11 +5,7 @@ using MediatR;
 
 namespace Application.Features.Destinations.Queries.SearchLocationsQuery;
 
-/// <summary>
-/// Returns up to <see cref="MaxResults"/> city/country results that match the free-text
-/// <see cref="Query"/>. Results are ranked with exact matches first; partial and
-/// case-insensitive matches are included. Empty query returns an empty list.
-/// </summary>
+/// <summary>Free-text city/country search; exact matches ranked first.</summary>
 public record SearchLocationsQuery : IQuery<LocationSearchResultDto>
 {
     public required string Query { get; init; }

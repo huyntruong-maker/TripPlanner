@@ -1,8 +1,7 @@
 import { apiClient } from './client';
 import type { ApiEnvelope, AuthTokens } from '../types';
 
-// Calls to the Auth endpoints (docs/API.md "Authentication"). Base path is
-// baked into apiClient's baseURL (`/api/v1`).
+// Auth endpoints; base path is baked into apiClient's baseURL.
 
 export interface RegisterPayload {
   email: string;
@@ -32,15 +31,7 @@ export async function login(payload: LoginPayload): Promise<AuthTokens> {
   return data.result;
 }
 
-/**
- * PUT /auth/logout — ends the single active session server-side.
- *
- * Called from AuthContext.logout() *after* local tokens are already cleared
- * (so the UI feels instant), so the request interceptor's localStorage
- * lookup would find nothing to attach — the endpoint requires auth, so an
- * unauthenticated call would 401 and never actually delete the server-side
- * session. Passing the still-known token explicitly avoids that race.
- */
+/** PUT /auth/logout — called after local tokens are cleared, so pass the token explicitly (the interceptor would find nothing to attach). */
 export async function logout(tokens: AuthTokens): Promise<void> {
   await apiClient.put<ApiEnvelope<null>>('/auth/logout', tokens, {
     headers: { Authorization: `Bearer ${tokens.token}` },

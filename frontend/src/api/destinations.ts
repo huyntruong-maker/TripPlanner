@@ -7,8 +7,7 @@ import type {
   PagedResult,
 } from '../types';
 
-// Calls to the Destinations endpoints (docs/API.md "Destinations"). All are
-// public (AllowAnonymous) — no JWT required.
+// Destinations endpoints; all public (AllowAnonymous), no JWT required.
 
 export interface SearchLocationsParams {
   query: string;
@@ -27,11 +26,7 @@ export async function searchLocations({
   return data.result;
 }
 
-/**
- * GET /destinations/{providerPlaceId} — always returns 200 with partial data
- * when optional fields are unavailable (F2-US1); only 404 when the provider
- * doesn't recognize the id at all.
- */
+/** Returns 200 with partial data when optional fields are unavailable; 404 only if the provider doesn't recognize the id. */
 export async function getDestinationDetail(providerPlaceId: string): Promise<DestinationDetail> {
   const { data } = await apiClient.get<ApiEnvelope<DestinationDetail>>(
     `/destinations/${encodeURIComponent(providerPlaceId)}`,

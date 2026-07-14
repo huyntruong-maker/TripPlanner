@@ -8,7 +8,7 @@ export interface Coordinates {
 
 const ATTRACTIONS_STALE_TIME_MS = 30_000;
 
-/** F1/US3 — attractions near a selected location; `null` coords means "no location chosen yet". */
+/** `null` coords means "no location chosen yet". */
 export function useAttractions(coordinates: Coordinates | null) {
   return useQuery({
     queryKey: ['destinations', 'attractions', coordinates?.latitude, coordinates?.longitude],

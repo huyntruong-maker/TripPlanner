@@ -1,7 +1,5 @@
 ﻿using Application.Common;
 using Application.Features.Auth;
-using Application.Features.Destinations;
-using Application.Features.Trips;
 using Application.MediatR;
 using Infrastructure.Caching;
 using Infrastructure.DataAccess;
@@ -20,7 +18,7 @@ public static class CoreDependencyConfiguration
     public static void AddCoreDependencies(this IServiceCollection collection, IConfiguration configuration)
     {
         collection.AddHttpContextAccessor();
-        collection.AddFeatures();
+        collection.AddAuthFeatures();
         collection.AddOrchestratorDatabases(configuration);
         collection.AddRestfulService();
         collection.AddObjectStorage(configuration);
@@ -34,12 +32,5 @@ public static class CoreDependencyConfiguration
 
         collection.AddUserContext();
         collection.AddBehaviours();
-    }
-
-    private static void AddFeatures(this IServiceCollection collection)
-    {
-        collection.AddAuthFeatures();
-        collection.AddDestinationsFeature();
-        collection.AddTripsFeature();
     }
 }

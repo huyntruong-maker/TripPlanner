@@ -3,11 +3,7 @@ function base64UrlEncode(value: object): string {
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-/**
- * Builds a syntactically valid (but unsigned) JWT for tests. jwt-decode never
- * verifies signatures, so this is enough to exercise decodeUserFromToken and
- * MSW-mocked auth flows without a live backend.
- */
+/** Builds an unsigned but syntactically valid JWT for tests; jwt-decode never verifies signatures. */
 export function buildFakeJwt(claims: Record<string, unknown>): string {
   const header = base64UrlEncode({ alg: 'HS512', typ: 'JWT' });
   const oneHourFromNowSeconds = Math.floor(Date.now() / 1000) + 3600;

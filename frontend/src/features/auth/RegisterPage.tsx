@@ -10,13 +10,7 @@ import { registerSchema, PASSWORD_POLICY_MESSAGE, type RegisterFormValues } from
 const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 
-/**
- * Feature 4 / US1 — sign up with email and password.
- *
- * The account requires email verification before it can log in (backend
- * rejects unverified logins with Auth.Login.InActive), so this does not
- * navigate to /trips on success — it shows a "check your email" message.
- */
+/** Doesn't navigate to /trips on success — shows a "check your email" message since the account needs verification first. */
 export function RegisterPage() {
   const { register: registerUser } = useAuth();
   const { showToast } = useToast();

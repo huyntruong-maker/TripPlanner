@@ -1,6 +1,6 @@
 // Shared types mirroring the backend DTOs (see docs/API.md).
 
-/** The response envelope every API endpoint returns (docs/API.md line 5-9). */
+/** Response envelope every API endpoint returns. */
 export interface ApiEnvelope<TResult> {
   success: boolean;
   errorCode: string | null;
@@ -21,7 +21,7 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-/** A paginated list result (docs/API.md GET /destinations/locations/search, /attractions). */
+/** Paginated list result shared by the search and attractions endpoints. */
 export interface PagedResult<TItem> {
   items: TItem[];
   totalCount: number;
@@ -50,17 +50,14 @@ export interface AttractionSummary {
   address: string | null;
 }
 
-/** docs/API.md GET /destinations/{providerPlaceId} — null when the provider has no hours data. */
+/** Null when the provider has no hours data. */
 export interface OpeningHours {
   displayText: string | null;
   weekdayText: string[];
   isOpenNow: boolean | null;
 }
 
-/**
- * Full destination detail. Every optional field is null/empty when the
- * provider doesn't supply it — the view must still render (F2-US1).
- */
+/** Every optional field is null/empty when the provider doesn't supply it; the view must still render. */
 export interface DestinationDetail {
   providerPlaceId: string;
   name: string;
@@ -76,7 +73,7 @@ export interface DestinationDetail {
   longitude: number;
 }
 
-/** One destination scheduled within a trip (docs/API.md GET /trips/{id}). */
+/** One destination scheduled within a trip. */
 export interface TripDestination {
   id: string;
   tripId: string;
@@ -98,10 +95,7 @@ export interface ItineraryDay {
   tripDestinations: TripDestination[];
 }
 
-/**
- * A trip. `itineraryDays` is always `[]` from GET /trips (list) — only
- * GET /trips/{id} (detail) populates it.
- */
+/** `itineraryDays` is always `[]` from the list endpoint; only the detail endpoint populates it. */
 export interface Trip {
   id: string;
   name: string;

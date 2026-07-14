@@ -1,11 +1,8 @@
 import { jwtDecode } from 'jwt-decode';
 import type { AuthenticatedUser } from '../types';
 
-// ASP.NET Core Identity's default JwtSecurityTokenHandler serializes
-// ClaimTypes.NameIdentifier / ClaimTypes.Name under short JWT claim names
-// ("nameid" / "unique_name") rather than the long claim-type URIs — see
-// Domain/Helpers/CommonHelper.cs which reads claims the same defensive way.
-// We try every known form here since there is no `/me` endpoint to fall back on.
+// ASP.NET's JwtSecurityTokenHandler maps ClaimTypes to short names ("nameid"/"unique_name");
+// try every known form since there's no `/me` endpoint to fall back on.
 const ID_CLAIM_KEYS = [
   'nameid',
   'sub',
@@ -30,11 +27,7 @@ function firstStringClaim(claims: Record<string, unknown>, keys: string[]): stri
   return null;
 }
 
-/**
- * Decodes the current user's id/email from the access token's own claims.
- * Returns null if the token is malformed or missing the claims we expect —
- * callers must treat that as "not signed in" rather than throwing.
- */
+/** Decodes id/email from the token's claims; returns null (treat as signed out) if malformed or missing. */
 export function decodeUserFromToken(token: string): AuthenticatedUser | null {
   try {
     const claims = jwtDecode<Record<string, unknown>>(token);

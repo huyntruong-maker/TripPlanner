@@ -9,10 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.OpenTripMap;
 
-/// <summary>
-/// Fetches points-of-interest using the OpenTripMap Radius API and enriches each result
-/// with its detail endpoint to obtain rating and thumbnail when available.
-/// </summary>
+/// <summary>Fetches POIs via the OpenTripMap Radius API, enriched with detail-endpoint thumbnails.</summary>
 public class OpenTripMapDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
@@ -53,8 +50,7 @@ public class OpenTripMapDestinationProvider(
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
         {
-            // Transient network/TLS failures calling a third-party API over the public
-            // internet happen occasionally — degrade to an empty result rather than a 500.
+            // Transient network failure — degrade to empty result rather than a 500.
             logger.LogWarning("[OpenTripMap] Radius search request failed: {Ex}", ex.Message);
             return new AttractionSearchResultDto();
         }
@@ -86,9 +82,7 @@ public class OpenTripMapDestinationProvider(
         }
     }
 
-    // The Radius API does not return photo previews — only the detail endpoint
-    // (/xid/{id}) does. Fetch them in parallel, best-effort, so a slow or failed
-    // lookup for one place never fails the whole search.
+    // Radius API omits photos; fetch them from the detail endpoint in parallel, best-effort.
     private async Task EnrichThumbnailsAsync(List<AttractionDto> attractions, CancellationToken cancellationToken)
     {
         var tasks = attractions
@@ -149,10 +143,6 @@ public class OpenTripMapDestinationProvider(
             return null;
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Private mapping helpers
-    // -------------------------------------------------------------------------
 
     private static AttractionDto MapFeature(JsonElement feature)
     {
@@ -231,11 +221,7 @@ public class OpenTripMapDestinationProvider(
             if (point.TryGetProperty("lon", out var lonProp)) lon = lonProp.GetDouble();
         }
 
-        // Thumbnail — kept for list-compat; also added as the first Photos entry.
-        // Not built from `preview.source`: that links directly to a fixed-width
-        // Wikimedia thumbnail, and Wikimedia periodically stops serving widths it
-        // no longer considers standard (400 Bad Request). Special:FilePath with an
-        // explicit width redirects to whatever width Wikimedia currently allows.
+        // Use Special:FilePath (not preview.source) since Wikimedia can 400 on fixed thumbnail widths.
         string? thumbnail = null;
         var photos = new List<string>();
         if (root.TryGetProperty("image", out var imageProp))

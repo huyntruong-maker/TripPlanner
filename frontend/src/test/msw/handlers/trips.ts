@@ -74,7 +74,7 @@ export function resetTripsFixture() {
   tripsState = defaultTrips();
 }
 
-/** Test-only helper: simulate a user with no saved trips (F3-US10 empty state). */
+/** Test-only helper: simulate a user with no saved trips. */
 export function clearTripsFixture() {
   tripsState = [];
 }

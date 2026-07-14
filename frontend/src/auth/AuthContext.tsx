@@ -23,20 +23,12 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-/**
- * Holds the signed-in user's tokens in localStorage so a page refresh keeps
- * the session (Feature 4 / US3: "Stay signed in after refreshing the page").
- * There is no `/me` endpoint, so the display identity is decoded from the
- * access token's own claims (see auth/jwt.ts).
- */
+/** Persists tokens in localStorage to survive refresh; no `/me` endpoint, so identity is decoded from the JWT. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [tokens, setTokens] = useState<AuthTokens | null>(() => getStoredTokens());
   const queryClient = useQueryClient();
 
-  // If a background token refresh ultimately fails (refresh token itself
-  // expired/invalid), the api client calls this to drop the local session.
-  // Also clear the query cache — otherwise a different user signing in on the
-  // same tab could briefly see the previous user's cached data (NFR-6).
+  // Clears local session and query cache on refresh-token failure (NFR-6).
   useEffect(() => {
     registerSessionExpiredHandler(() => {
       setTokens(null);
@@ -57,17 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTokens(nextTokens);
       },
       async register(email, password, firstName) {
-        // Registration does not log the user in — the account must be
-        // verified by email first (backend returns Auth.Login.InActive
-        // otherwise). Callers should show a "check your email" state.
+        // Doesn't log the user in — account must be verified by email first.
         await authApi.register({ email, password, firstName });
       },
       logout() {
         const activeTokens = tokens;
         clearTokens();
         setTokens(null);
-        // Drop every cached query — a different user signing in on the same
-        // tab must never see this user's cached trips/destinations (NFR-6).
+        // Drop cached queries so another user on this tab can't see them (NFR-6).
         queryClient.clear();
         if (activeTokens) {
           void authApi.logout(activeTokens).catch(() => {

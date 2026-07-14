@@ -15,10 +15,7 @@ const MIN_QUERY_LENGTH = 1;
 const DROPDOWN_MESSAGE_CLASSES =
   'absolute z-10 top-full left-0 right-0 mt-2 bg-surface-container-lowest border border-outline-variant rounded-lg elevation-l1 px-4 py-3 text-body-md';
 
-/**
- * F1/US2 — search a city or country by name, F1/US3 — browse its attractions.
- * Public page — users can browse before logging in (F3/US8).
- */
+/** Public page — users can browse destinations and attractions before logging in. */
 export function SearchPage() {
   const { isAuthenticated } = useAuth();
   const [query, setQuery] = useState('');

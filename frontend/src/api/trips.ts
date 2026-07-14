@@ -1,17 +1,15 @@
 import { apiClient } from './client';
 import type { ApiEnvelope, Trip, TripDestination } from '../types';
 
-// Calls to the Trips endpoints (docs/API.md "Trips"). All require a JWT;
-// apiClient's request interceptor attaches it automatically. A trip not
-// owned by the caller returns 404 (NFR-6 — no ID-enumeration signal).
+// Trips endpoints; JWT required. A trip not owned by the caller returns 404 (NFR-6).
 
-/** GET /trips — the caller's trip list; itineraryDays is always [] here. */
+/** itineraryDays is always [] in the list response. */
 export async function getTrips(): Promise<Trip[]> {
   const { data } = await apiClient.get<ApiEnvelope<Trip[]>>('/trips');
   return data.result;
 }
 
-/** GET /trips/{id} — full detail including itineraryDays + tripDestinations. */
+/** Includes itineraryDays and tripDestinations, unlike the list endpoint. */
 export async function getTrip(tripId: string): Promise<Trip> {
   const { data } = await apiClient.get<ApiEnvelope<Trip>>(`/trips/${encodeURIComponent(tripId)}`);
   return data.result;
@@ -21,7 +19,7 @@ export interface CreateTripPayload {
   name: string;
 }
 
-/** POST /trips — creates a trip without dates (F3-US1). */
+/** Creates a trip without dates. */
 export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
   const { data } = await apiClient.post<ApiEnvelope<Trip>>('/trips', payload);
   return data.result;
@@ -38,7 +36,7 @@ export interface SetTripDatesResult {
   warningErrorCode: string | null;
 }
 
-/** PUT /trips/{id}/dates — regenerates itineraryDays for the new range (F3-US2). */
+/** Regenerates itineraryDays for the new date range. */
 export async function setTripDates(
   tripId: string,
   payload: SetTripDatesPayload,
@@ -60,7 +58,7 @@ export interface AddTripDestinationPayload {
   lng: number;
 }
 
-/** POST /trips/{id}/destinations — adds a destination to a specific day (F3-US3). */
+/** Adds a destination to a specific itinerary day. */
 export async function addTripDestination(
   tripId: string,
   payload: AddTripDestinationPayload,
@@ -72,7 +70,7 @@ export async function addTripDestination(
   return data.result;
 }
 
-/** DELETE /trips/{id}/destinations/{tripDestinationId} — soft-delete, immediate (F3-US7). */
+/** Soft-deletes immediately. */
 export async function removeTripDestination(
   tripId: string,
   tripDestinationId: string,

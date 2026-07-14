@@ -29,11 +29,7 @@ interface AddToTripControlProps {
   destination: AddableDestination;
 }
 
-/**
- * F3/US3, US8 — "Add to Trip" action reused by the results grid and the
- * destination detail page. Disabled (not just hidden) when logged out, with
- * a login link that returns here afterward (F3-US8 AC2, best-effort).
- */
+/** "Add to Trip" action, reused across pages; disabled (not hidden) when logged out, with a login link that returns here after. */
 export function AddToTripControl({ destination }: AddToTripControlProps) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();

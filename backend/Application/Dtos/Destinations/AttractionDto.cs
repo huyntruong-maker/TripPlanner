@@ -1,8 +1,6 @@
 namespace Application.Dtos.Destinations;
 
-/// <summary>
-/// Represents a single point-of-interest / attraction enriched from OpenTripMap and Foursquare.
-/// </summary>
+/// <summary>A point-of-interest enriched from OpenTripMap and Foursquare.</summary>
 public class AttractionDto
 {
     /// <summary>Provider-specific identifier (OpenTripMap xid or Foursquare fsq_id).</summary>
@@ -29,17 +27,12 @@ public class AttractionDto
     /// <summary>Street address when available.</summary>
     public string? Address { get; set; }
 
-    // -------------------------------------------------------------------------
-    // Detail-only fields — populated by GetAttractionDetailAsync; null/empty
-    // when returned from list queries (GetAttractionsAsync).
-    // -------------------------------------------------------------------------
+    // Detail-only fields below: null/empty when returned from list queries.
 
     /// <summary>Short description or editorial summary when available.</summary>
     public string? Description { get; set; }
 
-    /// <summary>
-    /// Ordered list of photo URLs. Empty for list results; populated for detail calls.
-    /// </summary>
+    /// <summary>Ordered photo URLs; empty for list results, populated for detail calls.</summary>
     public IReadOnlyList<string> Photos { get; set; } = [];
 
     /// <summary>Official website URL when available.</summary>

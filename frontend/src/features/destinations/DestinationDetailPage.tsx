@@ -8,11 +8,7 @@ import { PhotoCarousel } from './PhotoCarousel';
 
 const BACK_LINK_CLASSES = 'inline-flex items-center gap-2 text-primary font-label-md hover:underline';
 
-/**
- * F2/US1, US2, US4 — full destination detail. Must render even when every
- * optional field (description/photos/address/website/openingHours) is null
- * or empty (docs/API.md "graceful partial data" business rule).
- */
+/** Must render even when every optional field is null or empty (graceful partial data). */
 export function DestinationDetailPage() {
   const { providerPlaceId } = useParams<{ providerPlaceId: string }>();
 
@@ -46,8 +42,7 @@ export function DestinationDetailPage() {
     );
   }
 
-  // The category is also the first tag from the provider; drop it from the tag
-  // list so it isn't shown twice (once as the category label, once as a pill).
+  // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = data.tags.filter((tag) => tag !== data.category);
 
   return (

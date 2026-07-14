@@ -90,8 +90,7 @@ describe('SearchPage — attractions grid (F1/US3)', () => {
     await user.click(await screen.findByRole('button', { name: 'Paris, France' }));
 
     expect(await screen.findByRole('heading', { name: 'Eiffel Tower' })).toBeInTheDocument();
-    // Thumbnail is decorative (alt="") so the card link's accessible name isn't
-    // cluttered with a redundant "Photo of X" — assert the image itself directly.
+    // Thumbnail is decorative (alt=""); assert the image directly instead of by accessible name.
     const thumbnail = document.querySelector('img.attraction-thumbnail');
     expect(thumbnail).toHaveAttribute('src', 'https://example.test/eiffel.jpg');
     expect(thumbnail).toHaveAttribute('alt', '');

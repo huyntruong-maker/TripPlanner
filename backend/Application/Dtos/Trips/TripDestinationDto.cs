@@ -1,9 +1,6 @@
 namespace Application.Dtos.Trips;
 
-/// <summary>
-/// Represents a single saved destination inside a trip, optionally scheduled to an itinerary day.
-/// When <see cref="ItineraryDayId"/> is null the destination is in "Saved Places" (unscheduled).
-/// </summary>
+/// <summary>A destination saved to a trip, optionally scheduled to an itinerary day.</summary>
 public class TripDestinationDto
 {
     public Guid Id { get; set; }

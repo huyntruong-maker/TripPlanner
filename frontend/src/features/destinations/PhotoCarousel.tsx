@@ -5,7 +5,7 @@ interface PhotoCarouselProps {
   destinationName: string;
 }
 
-/** F2/US2 — photo carousel with a placeholder when the destination has no photos. */
+/** Photo carousel with a placeholder when there are no photos. */
 export function PhotoCarousel({ photos, destinationName }: PhotoCarouselProps) {
   const [index, setIndex] = useState(0);
   const total = photos.length;
