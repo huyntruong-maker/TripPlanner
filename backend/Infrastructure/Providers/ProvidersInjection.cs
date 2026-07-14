@@ -1,6 +1,7 @@
 using Application.Interfaces.Caching;
 using Application.Interfaces.Providers;
 using Infrastructure.Providers.Caching;
+using Infrastructure.Providers.Composite;
 using Infrastructure.Providers.Foursquare;
 using Infrastructure.Providers.OpenTripMap;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,8 +16,11 @@ public static class ProvidersInjection
     /// Resolution order:
     /// <list type="bullet">
     ///   <item>IGeocodingProvider → CachedGeocodingProvider wrapping OpenTripMapGeocodingProvider</item>
-    ///   <item>IDestinationProvider → CachedDestinationProvider wrapping OpenTripMapDestinationProvider
-    ///         (Foursquare is available as a named alternative and can be swapped here)</item>
+    ///   <item>IDestinationProvider → CachedDestinationProvider wrapping
+    ///         FoursquareEnrichedDestinationProvider, which uses OpenTripMapDestinationProvider as
+    ///         the primary POI source and FoursquareDestinationProvider to enrich categories/rating
+    ///         (F1-US3), degrading gracefully to unenriched OpenTripMap results when Foursquare is
+    ///         unavailable or not configured.</item>
     /// </list>
     /// </para>
     /// </summary>
@@ -26,6 +30,7 @@ public static class ProvidersInjection
         collection.AddTransient<OpenTripMapGeocodingProvider>();
         collection.AddTransient<OpenTripMapDestinationProvider>();
         collection.AddTransient<FoursquareDestinationProvider>();
+        collection.AddTransient<FoursquareEnrichedDestinationProvider>();
 
         // IGeocodingProvider: cached wrapper over OpenTripMap.
         collection.AddScoped<IGeocodingProvider>(sp =>
@@ -36,11 +41,11 @@ public static class ProvidersInjection
             return new CachedGeocodingProvider(inner, cache, logger);
         });
 
-        // IDestinationProvider: cached wrapper over OpenTripMap.
-        // Foursquare is registered separately for direct injection in enrichment scenarios.
+        // IDestinationProvider: cached wrapper over the OpenTripMap+Foursquare composite so
+        // enriched results (not just the raw OpenTripMap ones) are what gets cached.
         collection.AddScoped<IDestinationProvider>(sp =>
         {
-            var inner = sp.GetRequiredService<OpenTripMapDestinationProvider>();
+            var inner = sp.GetRequiredService<FoursquareEnrichedDestinationProvider>();
             var cache = sp.GetRequiredService<ICacheManager>();
             var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CachedDestinationProvider>>();
             return new CachedDestinationProvider(inner, cache, logger);

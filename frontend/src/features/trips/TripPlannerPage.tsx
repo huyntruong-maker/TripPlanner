@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/errors';
 import { removeTripDestination, setTripDates } from '../../api/trips';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useToast } from '../../components/toast/ToastProvider';
 import type { Trip } from '../../types';
 import { useTrip, tripQueryKey } from './useTrip';
@@ -16,18 +17,40 @@ const BACK_LINK_CLASSES =
 const INPUT_CLASSES =
   'w-full h-12 px-4 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-body-md outline-none';
 
+/**
+ * Client-side check for F3-US2 AC5: would shortening the date range drop an
+ * itinerary day that still has scheduled destinations? Mirrors the backend's
+ * own unscheduling rule (days outside the new range are dropped) so we can
+ * confirm *before* submitting instead of only warning after the save.
+ */
+function wouldUnscheduleDestinations(trip: Trip, startDate: string, endDate: string): boolean {
+  return trip.itineraryDays.some(
+    (day) => (day.date < startDate || day.date > endDate) && day.tripDestinations.length > 0,
+  );
+}
+
 /** F3/US2, US3, US7, US10 — set dates, view the itinerary board, add/remove destinations. */
 export function TripPlannerPage() {
   const { tripId } = useParams<{ tripId: string }>();
   const queryClient = useQueryClient();
   const tripQuery = useTrip(tripId);
   const [datesWarning, setDatesWarning] = useState<string | null>(null);
+  const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
 
   const removeMutation = useMutation({
     mutationFn: (tripDestinationId: string) =>
       removeTripDestination(tripId as string, tripDestinationId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tripQueryKey(tripId as string) }),
   });
+
+  function confirmRemoval() {
+    if (!pendingRemovalId) {
+      return;
+    }
+    const tripDestinationId = pendingRemovalId;
+    setPendingRemovalId(null);
+    removeMutation.mutate(tripDestinationId);
+  }
 
   if (tripQuery.isLoading) {
     return (
@@ -131,17 +154,30 @@ export function TripPlannerPage() {
                     {day.tripDestinations.map((destination) => (
                       <li
                         key={destination.id}
-                        className="p-4 rounded-lg bg-surface border border-outline-variant/30 flex justify-between items-center gap-3"
+                        className="p-4 rounded-lg bg-surface border border-outline-variant/30 space-y-3"
                       >
-                        <span className="font-label-md text-on-surface">{destination.name}</span>
-                        <button
-                          type="button"
-                          className="text-error bg-error-container/20 px-3 py-1 rounded-full text-label-sm hover:bg-error-container/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0"
-                          onClick={() => removeMutation.mutate(destination.id)}
-                          disabled={removeMutation.isPending && removeMutation.variables === destination.id}
-                        >
-                          Remove
-                        </button>
+                        <div className="flex justify-between items-center gap-3">
+                          <span className="font-label-md text-on-surface">{destination.name}</span>
+                          <button
+                            type="button"
+                            className="text-error bg-error-container/20 px-3 py-1 rounded-full text-label-sm hover:bg-error-container/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0"
+                            onClick={() => setPendingRemovalId(destination.id)}
+                            disabled={
+                              removeMutation.isPending && removeMutation.variables === destination.id
+                            }
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <ConfirmDialog
+                          open={pendingRemovalId === destination.id}
+                          title={`Remove ${destination.name} from this day?`}
+                          description="You can add it back to this trip again later."
+                          confirmLabel="Yes, remove"
+                          cancelLabel="Cancel"
+                          onConfirm={confirmRemoval}
+                          onCancel={() => setPendingRemovalId(null)}
+                        />
                       </li>
                     ))}
                   </ul>
@@ -170,6 +206,7 @@ function SetDatesForm({ trip, onSaved }: SetDatesFormProps) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingValues, setPendingValues] = useState<SetDatesFormValues | null>(null);
 
   const {
     register,
@@ -180,7 +217,7 @@ function SetDatesForm({ trip, onSaved }: SetDatesFormProps) {
     defaultValues: { startDate: trip.startDate ?? '', endDate: trip.endDate ?? '' },
   });
 
-  async function onSubmit(values: SetDatesFormValues) {
+  async function submitDates(values: SetDatesFormValues) {
     setFormError(null);
     try {
       const { warningErrorCode } = await setTripDates(trip.id, values);
@@ -193,71 +230,99 @@ function SetDatesForm({ trip, onSaved }: SetDatesFormProps) {
     }
   }
 
+  function onSubmit(values: SetDatesFormValues) {
+    if (wouldUnscheduleDestinations(trip, values.startDate, values.endDate)) {
+      setPendingValues(values);
+      return undefined;
+    }
+    return submitDates(values);
+  }
+
+  function confirmDateChange() {
+    if (!pendingValues) {
+      return;
+    }
+    const values = pendingValues;
+    setPendingValues(null);
+    void submitDates(values);
+  }
+
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="flex flex-col md:flex-row md:items-end gap-stack-lg"
-    >
-      <div className="w-full md:w-1/3 space-y-2">
-        <label
-          htmlFor="set-dates-startDate"
-          className="block text-label-md font-label-md text-on-surface-variant"
-        >
-          Start date
-        </label>
-        <input
-          id="set-dates-startDate"
-          type="date"
-          className={INPUT_CLASSES}
-          {...register('startDate')}
-          aria-invalid={Boolean(errors.startDate)}
-          aria-describedby={errors.startDate ? 'set-dates-startDate-error' : undefined}
-        />
-        {errors.startDate && (
-          <p className="text-error text-label-sm font-semibold" id="set-dates-startDate-error">
-            {errors.startDate.message}
+    <div className="space-y-stack-lg">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="flex flex-col md:flex-row md:items-end gap-stack-lg"
+      >
+        <div className="w-full md:w-1/3 space-y-2">
+          <label
+            htmlFor="set-dates-startDate"
+            className="block text-label-md font-label-md text-on-surface-variant"
+          >
+            Start date
+          </label>
+          <input
+            id="set-dates-startDate"
+            type="date"
+            className={INPUT_CLASSES}
+            {...register('startDate')}
+            aria-invalid={Boolean(errors.startDate)}
+            aria-describedby={errors.startDate ? 'set-dates-startDate-error' : undefined}
+          />
+          {errors.startDate && (
+            <p className="text-error text-label-sm font-semibold" id="set-dates-startDate-error">
+              {errors.startDate.message}
+            </p>
+          )}
+        </div>
+        <div className="w-full md:w-1/3 space-y-2">
+          <label
+            htmlFor="set-dates-endDate"
+            className="block text-label-md font-label-md text-on-surface-variant"
+          >
+            End date
+          </label>
+          <input
+            id="set-dates-endDate"
+            type="date"
+            className={INPUT_CLASSES}
+            {...register('endDate')}
+            aria-invalid={Boolean(errors.endDate)}
+            aria-describedby={errors.endDate ? 'set-dates-endDate-error' : undefined}
+          />
+          {errors.endDate && (
+            <p className="text-error text-label-sm font-semibold" id="set-dates-endDate-error">
+              {errors.endDate.message}
+            </p>
+          )}
+        </div>
+        {formError && (
+          <p className="text-error text-label-sm font-semibold w-full" role="alert">
+            {formError}
           </p>
         )}
-      </div>
-      <div className="w-full md:w-1/3 space-y-2">
-        <label
-          htmlFor="set-dates-endDate"
-          className="block text-label-md font-label-md text-on-surface-variant"
-        >
-          End date
-        </label>
-        <input
-          id="set-dates-endDate"
-          type="date"
-          className={INPUT_CLASSES}
-          {...register('endDate')}
-          aria-invalid={Boolean(errors.endDate)}
-          aria-describedby={errors.endDate ? 'set-dates-endDate-error' : undefined}
-        />
-        {errors.endDate && (
-          <p className="text-error text-label-sm font-semibold" id="set-dates-endDate-error">
-            {errors.endDate.message}
-          </p>
-        )}
-      </div>
-      {formError && (
-        <p className="text-error text-label-sm font-semibold w-full" role="alert">
-          {formError}
-        </p>
-      )}
-      <div className="w-full md:w-auto">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full md:w-auto bg-primary text-on-primary h-12 px-8 rounded-lg font-label-md hover:opacity-90 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
-            {trip.startDate ? 'sync' : 'event_available'}
-          </span>
-          {isSubmitting ? 'Saving…' : trip.startDate ? 'Update dates' : 'Set dates'}
-        </button>
-      </div>
-    </form>
+        <div className="w-full md:w-auto">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full md:w-auto bg-primary text-on-primary h-12 px-8 rounded-lg font-label-md hover:opacity-90 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+              {trip.startDate ? 'sync' : 'event_available'}
+            </span>
+            {isSubmitting ? 'Saving…' : trip.startDate ? 'Update dates' : 'Set dates'}
+          </button>
+        </div>
+      </form>
+      <ConfirmDialog
+        open={pendingValues !== null}
+        title="Shortening these dates will remove scheduled destinations"
+        description="Some days with planned destinations fall outside the new date range and will be unscheduled. Continue?"
+        confirmLabel="Update dates anyway"
+        cancelLabel="Keep current dates"
+        onConfirm={confirmDateChange}
+        onCancel={() => setPendingValues(null)}
+      />
+    </div>
   );
 }

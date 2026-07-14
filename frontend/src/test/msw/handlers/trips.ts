@@ -6,13 +6,18 @@ const BASE_URL = 'http://localhost:5080/api/v1';
 export const EXISTING_TRIP_ID = 'trip-with-dates';
 export const TRIP_WITHOUT_DATES_ID = 'trip-without-dates';
 export const SHORTEN_DATES_TRIP_ID = 'trip-to-shorten';
+export const SHORTEN_WITH_SCHEDULED_DESTINATION_TRIP_ID = 'trip-to-shorten-with-destination';
 export const TRIP_NOT_FOUND_ID = 'trip-does-not-exist';
 export const DUPLICATE_NAME_TRIGGER = 'DuplicateTripNameTrigger';
 export const EXISTING_DESTINATION_ID = 'existing-destination';
+export const DROPPED_DESTINATION_ID = 'dropped-destination';
 
 const DAY_1_ID = 'day-1';
 const DAY_2_ID = 'day-2';
 const SHORTEN_DAY_ID = 'shorten-day-1';
+const SHORTEN_WITH_DESTINATION_DAY_1_ID = 'shorten-with-destination-day-1';
+const SHORTEN_WITH_DESTINATION_DAY_2_ID = 'shorten-with-destination-day-2';
+const SHORTEN_WITH_DESTINATION_DAY_3_ID = 'shorten-with-destination-day-3';
 
 function defaultTrips(): Trip[] {
   return [
@@ -63,6 +68,47 @@ function defaultTrips(): Trip[] {
       createdAt: '2026-06-03T10:00:00Z',
       updatedAt: '2026-06-03T10:00:00Z',
       itineraryDays: [{ id: SHORTEN_DAY_ID, date: '2026-08-01', dayIndex: 1, tripDestinations: [] }],
+    },
+    {
+      id: SHORTEN_WITH_SCHEDULED_DESTINATION_TRIP_ID,
+      name: 'Trip With Scheduled Day',
+      startDate: '2026-09-01',
+      endDate: '2026-09-03',
+      createdAt: '2026-06-04T10:00:00Z',
+      updatedAt: '2026-06-04T10:00:00Z',
+      itineraryDays: [
+        {
+          id: SHORTEN_WITH_DESTINATION_DAY_1_ID,
+          date: '2026-09-01',
+          dayIndex: 1,
+          tripDestinations: [],
+        },
+        {
+          id: SHORTEN_WITH_DESTINATION_DAY_2_ID,
+          date: '2026-09-02',
+          dayIndex: 2,
+          tripDestinations: [],
+        },
+        {
+          id: SHORTEN_WITH_DESTINATION_DAY_3_ID,
+          date: '2026-09-03',
+          dayIndex: 3,
+          tripDestinations: [
+            {
+              id: DROPPED_DESTINATION_ID,
+              tripId: SHORTEN_WITH_SCHEDULED_DESTINATION_TRIP_ID,
+              itineraryDayId: SHORTEN_WITH_DESTINATION_DAY_3_ID,
+              providerPlaceId: 'W111111',
+              name: 'Louvre Museum',
+              category: 'cultural',
+              thumbnailUrl: null,
+              lat: 48.8606,
+              lng: 2.3376,
+              position: 1,
+            },
+          ],
+        },
+      ],
     },
   ];
 }
@@ -140,7 +186,9 @@ export const tripsHandlers = [
     }
 
     const body = (await request.json()) as { startDate: string; endDate: string };
-    const isShorten = params.id === SHORTEN_DATES_TRIP_ID;
+    const isShorten =
+      params.id === SHORTEN_DATES_TRIP_ID ||
+      params.id === SHORTEN_WITH_SCHEDULED_DESTINATION_TRIP_ID;
 
     const updatedTrip: Trip = {
       ...trip,

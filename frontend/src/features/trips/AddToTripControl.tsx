@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { addTripDestination, getTrip } from '../../api/trips';
 import { useTrips } from './useTrips';
 import { tripQueryKey } from './useTrip';
 import { addToTripSchema, type AddToTripFormValues } from './schemas';
+import { consumePendingAddToTrip, rememberPendingAddToTrip } from './pendingAddToTrip';
 
 const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
@@ -39,6 +40,17 @@ export function AddToTripControl({ destination }: AddToTripControlProps) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [resumedFromLogin, setResumedFromLogin] = useState(false);
+
+  // F3-US8 AC5 — best-effort resume: if the user just logged in after
+  // clicking "Log in" from here for this exact destination, re-open the
+  // picker automatically instead of making them click "Add to Trip" again.
+  useEffect(() => {
+    if (isAuthenticated && consumePendingAddToTrip(destination.providerPlaceId)) {
+      setIsOpen(true);
+      setResumedFromLogin(true);
+    }
+  }, [isAuthenticated, destination.providerPlaceId]);
 
   if (!isAuthenticated) {
     const loginUrl = buildLoginUrl(`${location.pathname}${location.search}`);
@@ -56,7 +68,11 @@ export function AddToTripControl({ destination }: AddToTripControlProps) {
           Add to Trip
         </button>
         <p className="text-label-sm font-label-sm text-on-surface-variant">
-          <Link to={loginUrl} className="text-primary font-semibold hover:underline">
+          <Link
+            to={loginUrl}
+            className="text-primary font-semibold hover:underline"
+            onClick={() => rememberPendingAddToTrip(destination.providerPlaceId)}
+          >
             Log in
           </Link>{' '}
           to add this to a trip.
@@ -93,6 +109,7 @@ export function AddToTripControl({ destination }: AddToTripControlProps) {
       {isOpen && (
         <AddToTripForm
           destination={destination}
+          autoFocusTripSelect={resumedFromLogin}
           onAdded={(tripName) => {
             setConfirmation(`Added to ${tripName}.`);
             setIsOpen(false);
@@ -106,12 +123,15 @@ export function AddToTripControl({ destination }: AddToTripControlProps) {
 interface AddToTripFormProps {
   destination: AddableDestination;
   onAdded: (tripName: string) => void;
+  /** F3-US8 AC5 — focus the trip picker when re-opened automatically after login. */
+  autoFocusTripSelect?: boolean;
 }
 
-function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
+function AddToTripForm({ destination, onAdded, autoFocusTripSelect = false }: AddToTripFormProps) {
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const tripsQuery = useTrips();
+  const tripSelectRef = useRef<HTMLSelectElement | null>(null);
 
   const {
     register,
@@ -124,6 +144,13 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
   });
 
   const selectedTripId = watch('tripId');
+  const { ref: registerTripSelectRef, ...tripSelectFieldProps } = register('tripId');
+
+  useEffect(() => {
+    if (autoFocusTripSelect && !tripsQuery.isLoading) {
+      tripSelectRef.current?.focus();
+    }
+  }, [autoFocusTripSelect, tripsQuery.isLoading]);
 
   const selectedTripQuery = useQuery({
     queryKey: tripQueryKey(selectedTripId),
@@ -200,7 +227,11 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
         <select
           id="add-to-trip-tripId"
           className={INPUT_CLASSES}
-          {...register('tripId')}
+          {...tripSelectFieldProps}
+          ref={(node) => {
+            registerTripSelectRef(node);
+            tripSelectRef.current = node;
+          }}
           aria-invalid={Boolean(errors.tripId)}
           aria-describedby={errors.tripId ? 'add-to-trip-tripId-error' : undefined}
         >

@@ -1,3 +1,4 @@
+using Application.Common.Utils;
 using Application.Dtos.Destinations;
 using Application.Interfaces.Cqrs;
 using Application.Interfaces.Providers;
@@ -24,10 +25,15 @@ public class SearchLocationsQueryHandler(IGeocodingProvider geocodingProvider)
         SearchLocationsQuery request,
         CancellationToken cancellationToken)
     {
-        var items = await geocodingProvider.SearchLocationsAsync(
+        var candidates = await geocodingProvider.SearchLocationsAsync(
             request.Query,
             request.MaxResults,
             cancellationToken);
+
+        // The provider may return unranked/duplicate/over-the-limit candidates (see
+        // IGeocodingProvider remarks) — dedup, exact-first ranking, and clamping is applied here
+        // so the business rule (F1-US2: max 5, no duplicates, exact match first) is provider-agnostic.
+        var items = LocationResultRanker.Rank(candidates, request.Query, request.MaxResults);
 
         return new LocationSearchResultDto
         {
