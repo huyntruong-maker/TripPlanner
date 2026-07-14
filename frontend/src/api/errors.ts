@@ -1,12 +1,6 @@
 import axios from 'axios';
 import type { ApiEnvelope } from '../types';
-
-/** User-facing text per backend errorCode (docs/API.md); codes not listed fall through to the caller's fallback. */
-const errorCodeMessages: Record<string, string> = {
-  'Trip.NotFound': 'This trip no longer exists or you do not have access to it.',
-  'Trip.AddDestination.ItineraryDayNotFound': 'That itinerary day is not part of this trip.',
-  'Trip.SetDates.InvalidDateRange': 'The start date must be on or before the end date.',
-};
+import { apiErrorMessages } from './errorMessages';
 
 /** Reads a message from the backend's custom error envelope (not RFC 7807); falls back when the shape is unexpected. */
 export function getApiErrorMessage(error: unknown, fallback: string): string {
@@ -19,8 +13,8 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
     return fallback;
   }
 
-  if (body.errorCode && errorCodeMessages[body.errorCode]) {
-    return errorCodeMessages[body.errorCode];
+  if (body.errorCode && apiErrorMessages[body.errorCode]) {
+    return apiErrorMessages[body.errorCode];
   }
 
   if (body.error) {
