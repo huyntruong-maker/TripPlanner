@@ -68,6 +68,52 @@ public class FoursquareDestinationProvider(
         }
     }
 
+    /// <summary>
+    /// Finds the Foursquare place nearest to <paramref name="latitude"/>/<paramref name="longitude"/> whose name
+    /// best matches <paramref name="name"/>, used to enrich an OpenTripMap POI (which keeps its own <c>xid</c> as
+    /// the public <c>ProviderPlaceId</c> — see <c>FoursquareEnrichedDestinationProvider</c>). Best-effort: returns
+    /// null when disabled (no API key), not found, or on any request/parse failure.
+    /// </summary>
+    public async Task<AttractionDto?> FindNearestMatchAsync(
+        string name,
+        double latitude,
+        double longitude,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(ApiKey))
+            return null;
+
+        const int matchRadiusMeters = 300;
+        var url = $"{BaseUrl}/search"
+                  + $"?query={Uri.EscapeDataString(name)}"
+                  + $"&ll={latitude},{longitude}"
+                  + $"&radius={matchRadiusMeters}"
+                  + "&limit=1"
+                  + "&fields=fsq_id,name,categories,rating,geocodes,location,photos,description,hours,website";
+
+        var (statusCode, body) = await restfulService.Get(url, AuthHeader);
+        if (statusCode != HttpStatusCode.OK || string.IsNullOrWhiteSpace(body))
+        {
+            logger.LogWarning("[Foursquare] Nearest-match search returned {Status} for '{Name}'", statusCode, name);
+            return null;
+        }
+
+        try
+        {
+            var doc = JsonDocument.Parse(body);
+            if (!doc.RootElement.TryGetProperty("results", out var results) || results.ValueKind != JsonValueKind.Array)
+                return null;
+
+            var first = results.EnumerateArray().FirstOrDefault();
+            return first.ValueKind == JsonValueKind.Object ? MapPlace(first) : null;
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError("[Foursquare] Failed to parse nearest-match response for '{Name}': {Ex}", name, ex);
+            return null;
+        }
+    }
+
     public async Task<AttractionDto?> GetAttractionDetailAsync(
         string providerPlaceId,
         CancellationToken cancellationToken = default)

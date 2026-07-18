@@ -179,17 +179,17 @@ public class OpenTripMapDestinationProvider(
             }
         }
 
-        double? rate = properties.TryGetProperty("rate", out var rateProp) && rateProp.ValueKind == JsonValueKind.Number
-            ? rateProp.GetDouble()
-            : null;
-
         return new AttractionDto
         {
             ProviderPlaceId = xid,
             Name = name,
             Category = category,
             Tags = tags,
-            Rating = rate,
+            // Rating is exposed on a 0-10 scale (Foursquare reviews). OpenTripMap's "rate" is a
+            // 1-7 POI-importance class, not a review score — mapping it here would leak an
+            // incompatible scale to the frontend rating filter. Left null; the Foursquare
+            // enrichment decorator (FoursquareEnrichedDestinationProvider) is the only source of Rating.
+            Rating = null,
             Latitude = lat,
             Longitude = lon
         };
@@ -241,10 +241,6 @@ public class OpenTripMapDestinationProvider(
             address = parts.Count > 0 ? string.Join(", ", parts) : null;
         }
 
-        double? rate = root.TryGetProperty("rate", out var rateProp) && rateProp.ValueKind == JsonValueKind.Number
-            ? rateProp.GetDouble()
-            : null;
-
         // Description — OpenTripMap returns "wikipedia_extracts.text" on detail calls.
         string? description = null;
         if (root.TryGetProperty("wikipedia_extracts", out var extracts)
@@ -265,7 +261,9 @@ public class OpenTripMapDestinationProvider(
             Name = name,
             Category = category,
             Tags = tags,
-            Rating = rate,
+            // See MapFeature: Rating is Foursquare-only (0-10 review score); OpenTripMap's "rate"
+            // (1-7 importance class) must not leak into this field.
+            Rating = null,
             Latitude = lat,
             Longitude = lon,
             ThumbnailUrl = thumbnail,

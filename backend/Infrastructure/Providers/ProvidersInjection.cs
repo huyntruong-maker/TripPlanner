@@ -2,6 +2,7 @@ using Application.Interfaces.Caching;
 using Application.Interfaces.Providers;
 using Domain.Constants;
 using Infrastructure.Providers.Caching;
+using Infrastructure.Providers.Enrichment;
 using Infrastructure.Providers.Foursquare;
 using Infrastructure.Providers.Nominatim;
 using Infrastructure.Providers.OpenTripMap;
@@ -40,14 +41,20 @@ public static class ProvidersInjection
             return new CachedGeocodingProvider(inner, sp.GetRequiredService<ICacheManager>(), logger);
         });
 
-        // IDestinationProvider: cached wrapper over OpenTripMap.
-        // Foursquare is registered separately for direct injection in enrichment scenarios.
+        // IDestinationProvider: Cached(Enriched(OpenTripMap, Foursquare)) — caching wraps the outermost
+        // (already-enriched) result so enriched attractions are what gets cached (PDF requirement:
+        // "Call Foursquare to enrich with categories and reviews").
         collection.AddScoped<IDestinationProvider>(sp =>
         {
-            var inner = sp.GetRequiredService<OpenTripMapDestinationProvider>();
+            var openTripMap = sp.GetRequiredService<OpenTripMapDestinationProvider>();
+            var foursquare = sp.GetRequiredService<FoursquareDestinationProvider>();
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            var enrichLogger = sp.GetRequiredService<ILogger<FoursquareEnrichedDestinationProvider>>();
+            var enriched = new FoursquareEnrichedDestinationProvider(openTripMap, foursquare, configuration, enrichLogger);
+
             var cache = sp.GetRequiredService<ICacheManager>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CachedDestinationProvider>>();
-            return new CachedDestinationProvider(inner, cache, logger);
+            var cacheLogger = sp.GetRequiredService<ILogger<CachedDestinationProvider>>();
+            return new CachedDestinationProvider(enriched, cache, cacheLogger);
         });
     }
 
