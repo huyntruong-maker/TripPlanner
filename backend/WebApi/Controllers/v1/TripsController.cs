@@ -1,6 +1,7 @@
 using Application.Dtos.Trips;
 using Application.Features.Trips.Commands.AddDestinationToTripCommand;
 using Application.Features.Trips.Commands.CreateTripCommand;
+using Application.Features.Trips.Commands.MoveTripDestinationCommand;
 using Application.Features.Trips.Commands.RemoveDestinationFromTripCommand;
 using Application.Features.Trips.Commands.SetTripDatesCommand;
 using Application.Features.Trips.Queries.GetTripDetailQuery;
@@ -237,7 +238,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>Adds a destination to an itinerary day (F3-US3); the day must belong to this trip.</summary>
+    /// <summary>Adds a destination to the trip (F3-US3); a null <c>itineraryDayId</c> saves it to "Saved Places" (F3-US4).</summary>
     [HttpPost("{id:guid}/destinations")]
     [ProducesResponseType(typeof(ResultRes<TripDestinationDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ResultRes<TripDestinationDto>), StatusCodes.Status400BadRequest)]
@@ -254,12 +255,6 @@ public class TripsController(
         try
         {
             response.Success = false;
-
-            if (request.ItineraryDayId is null)
-            {
-                response.ErrorCode = TripControllerMsg.AddDestination.ItineraryDayIdRequired;
-                return BadRequest(response);
-            }
 
             if (string.IsNullOrWhiteSpace(request.ProviderPlaceId))
             {
@@ -284,7 +279,7 @@ public class TripsController(
             {
                 TripId = id,
                 UserId = userId.Value,
-                ItineraryDayId = request.ItineraryDayId.Value,
+                ItineraryDayId = request.ItineraryDayId,
                 ProviderPlaceId = request.ProviderPlaceId.Trim(),
                 Name = request.Name.Trim(),
                 Category = request.Category?.Trim(),
@@ -296,7 +291,9 @@ public class TripsController(
             if (!string.IsNullOrWhiteSpace(errorCode))
             {
                 response.ErrorCode = errorCode;
-                return NotFound(response);
+                return errorCode == TripControllerMsg.AddDestination.DuplicateInDay
+                    ? BadRequest(response)
+                    : NotFound(response);
             }
 
             response.Result = result;
@@ -307,6 +304,62 @@ public class TripsController(
         {
             response.ErrorCode = TripControllerMsg.AddDestination.Exception;
             Logger.LogError("AddDestination failed for trip '{Id}': {Ex}", id, ex);
+            return InternalServerError(response);
+        }
+    }
+
+    /// <summary>Moves/reorders a destination between itinerary days or Saved Places (F3-US4/US5/US6); returns full trip detail.</summary>
+    [HttpPut("{id:guid}/destinations/{tripDestinationId:guid}")]
+    [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> MoveDestination(
+        ISender sender,
+        [FromRoute] Guid id,
+        [FromRoute] Guid tripDestinationId,
+        [FromBody] MoveTripDestinationReq request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = new ResultRes<TripDto>();
+
+        try
+        {
+            response.Success = false;
+
+            var userId = GetCurrentUserId();
+            if (userId is null)
+            {
+                response.ErrorCode = TripControllerMsg.NotFound;
+                return Unauthorized(response);
+            }
+
+            var (errorCode, result) = await sender.Send(new MoveTripDestinationCommand
+            {
+                TripId = id,
+                TripDestinationId = tripDestinationId,
+                UserId = userId.Value,
+                ItineraryDayId = request.ItineraryDayId,
+                Position = request.Position
+            }, cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(errorCode))
+            {
+                response.ErrorCode = errorCode;
+                return errorCode == TripControllerMsg.MoveDestination.DuplicateInDay
+                    ? BadRequest(response)
+                    : NotFound(response);
+            }
+
+            response.Result = result;
+            response.Success = true;
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            response.ErrorCode = TripControllerMsg.MoveDestination.Exception;
+            Logger.LogError("MoveDestination failed for trip '{TripId}', destination '{DestId}': {Ex}",
+                id, tripDestinationId, ex);
             return InternalServerError(response);
         }
     }
