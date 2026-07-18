@@ -2,8 +2,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../auth/AuthContext';
+
+// jsdom cannot run real Leaflet (no layout/canvas); only the render-guard and
+// label wiring in MapView are under test here, not Leaflet itself.
+vi.mock('leaflet', () => {
+  const map = { remove: vi.fn() };
+  const layer = { addTo: vi.fn(() => layer), bindPopup: vi.fn(() => layer) };
+  return {
+    default: {
+      map: vi.fn(() => map),
+      tileLayer: vi.fn(() => layer),
+      marker: vi.fn(() => layer),
+      divIcon: vi.fn(() => ({})),
+    },
+  };
+});
 import { buildFakeJwt } from '../../test/buildFakeJwt';
 import {
   FULL_DETAIL_ID,
@@ -40,7 +55,8 @@ describe('DestinationDetailPage', () => {
     expect(screen.getByText('landmark')).toBeInTheDocument();
     expect(screen.getByText('Rating 9.5')).toBeInTheDocument();
     expect(screen.getByText(/Famous iron lattice tower/)).toBeInTheDocument();
-    expect(screen.getByText('Champ de Mars, Paris, France')).toBeInTheDocument();
+    // Shown both in "Visiting Info" and next to the map (F2-US3).
+    expect(screen.getAllByText('Champ de Mars, Paris, France').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Visit website' })).toHaveAttribute(
       'href',
       'https://toureiffel.paris',
@@ -97,6 +113,26 @@ describe('DestinationDetailPage', () => {
 
       await user.click(screen.getByRole('button', { name: 'Previous photo' }));
       expect(screen.getByAltText('Eiffel Tower photo 1 of 2')).toBeInTheDocument();
+    });
+  });
+
+  describe('map (F2-US3)', () => {
+    it('renders the map with the address label when coordinates and an address are available', async () => {
+      renderDetailPage(FULL_DETAIL_ID);
+
+      await screen.findByRole('heading', { name: 'Eiffel Tower', level: 1 });
+
+      const mapRegion = screen.getByRole('region', { name: 'Map showing Eiffel Tower' });
+      expect(mapRegion).toBeInTheDocument();
+      expect(mapRegion.nextElementSibling).toHaveTextContent('Champ de Mars, Paris, France');
+    });
+
+    it('renders the map without a label when no address is available', async () => {
+      renderDetailPage(PARTIAL_DETAIL_ID);
+
+      await screen.findByRole('heading', { name: 'Mystery Ruin', level: 1 });
+
+      expect(screen.getByRole('region', { name: 'Map showing Mystery Ruin' })).toBeInTheDocument();
     });
   });
 

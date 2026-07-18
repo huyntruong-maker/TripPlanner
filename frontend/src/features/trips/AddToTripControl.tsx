@@ -15,6 +15,8 @@ const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 const TOGGLE_BUTTON_BASE_CLASSES =
   'inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-label-md transition-all';
+/** Select value representing "Saved Places (schedule later)"; converted to `itineraryDayId: null` on submit. */
+export const SAVED_PLACES_OPTION_VALUE = 'saved-places';
 
 export interface AddableDestination {
   providerPlaceId: string;
@@ -130,7 +132,8 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
   const addMutation = useMutation({
     mutationFn: (values: AddToTripFormValues) =>
       addTripDestination(values.tripId, {
-        itineraryDayId: values.itineraryDayId,
+        itineraryDayId:
+          values.itineraryDayId === SAVED_PLACES_OPTION_VALUE ? null : values.itineraryDayId,
         providerPlaceId: destination.providerPlaceId,
         name: destination.name,
         category: destination.category,
@@ -177,8 +180,6 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
   }
 
   const availableDays = selectedTripQuery.data?.itineraryDays ?? [];
-  const hasSelectedTripWithNoDays =
-    Boolean(selectedTripId) && selectedTripQuery.isSuccess && availableDays.length === 0;
 
   return (
     <form
@@ -218,17 +219,7 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
         <p className="text-on-surface-variant text-body-md">Loading days…</p>
       )}
 
-      {hasSelectedTripWithNoDays && (
-        <p className="text-body-md text-on-surface-variant">
-          This trip has no dates yet.{' '}
-          <Link to={`/trips/${selectedTripId}`} className="text-primary font-semibold hover:underline">
-            Set dates
-          </Link>{' '}
-          first.
-        </p>
-      )}
-
-      {availableDays.length > 0 && (
+      {selectedTripId && selectedTripQuery.isSuccess && (
         <div className="space-y-2">
           <label
             htmlFor="add-to-trip-itineraryDayId"
@@ -243,7 +234,8 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
             aria-invalid={Boolean(errors.itineraryDayId)}
             aria-describedby={errors.itineraryDayId ? 'add-to-trip-itineraryDayId-error' : undefined}
           >
-            <option value="">Choose a day…</option>
+            <option value="">Choose where to add it…</option>
+            <option value={SAVED_PLACES_OPTION_VALUE}>Saved Places (schedule later)</option>
             {availableDays.map((day) => (
               <option key={day.id} value={day.id}>
                 Day {day.dayIndex} — {day.date}
@@ -258,6 +250,18 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
               {errors.itineraryDayId.message}
             </p>
           )}
+          {availableDays.length === 0 && (
+            <p className="text-body-md text-on-surface-variant">
+              This trip has no dates yet. Choose Saved Places to add it now, or{' '}
+              <Link
+                to={`/trips/${selectedTripId}`}
+                className="text-primary font-semibold hover:underline"
+              >
+                set dates
+              </Link>{' '}
+              to schedule a specific day.
+            </p>
+          )}
         </div>
       )}
 
@@ -269,7 +273,7 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
 
       <button
         type="submit"
-        disabled={isSubmitting || availableDays.length === 0}
+        disabled={isSubmitting}
         className="w-full bg-primary text-on-primary py-3 rounded-lg font-label-md hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isSubmitting ? 'Adding…' : 'Add'}

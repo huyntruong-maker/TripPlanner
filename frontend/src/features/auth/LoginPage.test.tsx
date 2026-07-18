@@ -35,7 +35,7 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Log in' }));
 
     expect(
-      await screen.findByText('Invalid email or password.', { selector: 'p[role="alert"]' }),
+      await screen.findByText('Incorrect username or password.', { selector: 'p[role="alert"]' }),
     ).toBeInTheDocument();
   });
 
@@ -48,7 +48,7 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Log in' }));
 
     expect(
-      await screen.findByText('Invalid email or password.', { selector: '.toast span' }),
+      await screen.findByText('Incorrect username or password.', { selector: '.toast span' }),
     ).toBeInTheDocument();
   });
 });

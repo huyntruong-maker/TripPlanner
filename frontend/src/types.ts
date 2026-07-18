@@ -95,7 +95,7 @@ export interface ItineraryDay {
   tripDestinations: TripDestination[];
 }
 
-/** `itineraryDays` is always `[]` from the list endpoint; only the detail endpoint populates it. */
+/** `itineraryDays` and `savedPlaces` are always `[]` from the list endpoint; only the detail endpoint populates them. */
 export interface Trip {
   id: string;
   name: string;
@@ -104,4 +104,6 @@ export interface Trip {
   createdAt: string;
   updatedAt: string;
   itineraryDays: ItineraryDay[];
+  /** Destinations not yet scheduled to a day, ordered by `position`. */
+  savedPlaces: TripDestination[];
 }

@@ -11,6 +11,8 @@ export const ATTRACTIONS_ERROR_CITY_QUERY = 'AttractionsErrorCity';
 export const LOCATION_SEARCH_ERROR_QUERY = 'LocationSearchError';
 export const NO_MATCHING_LOCATIONS_QUERY = 'Zzzzz';
 export const SLOW_CITY_QUERY = 'SlowCity';
+export const MANY_MATCHES_QUERY = 'ManyMatches';
+export const FILTER_SORT_CITY_QUERY = 'FilterSortCity';
 
 const PARIS: LocationSuggestion = {
   name: 'Paris',
@@ -72,6 +74,74 @@ const LOUVRE: AttractionSummary = {
   address: null,
 };
 
+// F1-US1: a query with more matches than the 5-suggestion cap.
+const MANY_MATCHES_LOCATIONS: LocationSuggestion[] = Array.from({ length: 7 }, (_, index) => ({
+  name: `ManyMatches${index}`,
+  displayName: `ManyMatches ${index}, Testland`,
+  latitude: 10 + index,
+  longitude: 10 + index,
+  locationType: 'city',
+  country: 'Testland',
+}));
+
+const FILTER_SORT_CITY: LocationSuggestion = {
+  name: 'FilterSortCity',
+  displayName: 'FilterSortCity, Testland',
+  latitude: 20,
+  longitude: 20,
+  locationType: 'city',
+  country: 'Testland',
+};
+
+// F1-US4/US5: distinct categories and a mix of ratings (including a missing one) to exercise filter/sort.
+const MUSEUM_ALPHA: AttractionSummary = {
+  providerPlaceId: 'F1',
+  name: 'Museum Alpha',
+  category: 'museum',
+  tags: ['museum'],
+  rating: 8.0,
+  thumbnailUrl: null,
+  latitude: 20.01,
+  longitude: 20.01,
+  address: null,
+};
+
+const PARK_BETA: AttractionSummary = {
+  providerPlaceId: 'F2',
+  name: 'Park Beta',
+  category: 'park',
+  tags: ['park', 'nature'],
+  rating: 6.5,
+  thumbnailUrl: null,
+  latitude: 20.02,
+  longitude: 20.02,
+  address: null,
+};
+
+const LANDMARK_GAMMA: AttractionSummary = {
+  providerPlaceId: 'F3',
+  name: 'Landmark Gamma',
+  category: 'landmark',
+  tags: ['landmark'],
+  rating: null,
+  thumbnailUrl: null,
+  latitude: 20.03,
+  longitude: 20.03,
+  address: null,
+};
+
+const MUSEUM_DELTA: AttractionSummary = {
+  providerPlaceId: 'F4',
+  name: 'Museum Delta',
+  category: 'museum',
+  tags: ['museum', 'historic'],
+  rating: 9.2,
+  thumbnailUrl: null,
+  latitude: 20.04,
+  longitude: 20.04,
+  address: null,
+};
+
 export const destinationHandlers = [
   http.get(`${BASE_URL}/destinations/locations/search`, async ({ request }) => {
     const query = new URL(request.url).searchParams.get('query') ?? '';
@@ -129,6 +199,26 @@ export const destinationHandlers = [
       });
     }
 
+    if (query === MANY_MATCHES_QUERY) {
+      return HttpResponse.json({
+        success: true,
+        errorCode: null,
+        error: null,
+        validates: [],
+        result: { items: MANY_MATCHES_LOCATIONS, totalCount: MANY_MATCHES_LOCATIONS.length },
+      });
+    }
+
+    if (query === FILTER_SORT_CITY_QUERY) {
+      return HttpResponse.json({
+        success: true,
+        errorCode: null,
+        error: null,
+        validates: [],
+        result: { items: [FILTER_SORT_CITY], totalCount: 1 },
+      });
+    }
+
     return HttpResponse.json({
       success: true,
       errorCode: null,
@@ -171,6 +261,19 @@ export const destinationHandlers = [
         error: null,
         validates: [],
         result: { items: [EIFFEL_TOWER], totalCount: 1 },
+      });
+    }
+
+    if (latitude === FILTER_SORT_CITY.latitude) {
+      return HttpResponse.json({
+        success: true,
+        errorCode: null,
+        error: null,
+        validates: [],
+        result: {
+          items: [MUSEUM_ALPHA, PARK_BETA, LANDMARK_GAMMA, MUSEUM_DELTA],
+          totalCount: 4,
+        },
       });
     }
 

@@ -11,14 +11,21 @@ import { registerToastListener } from './toastBus';
 
 const TOAST_AUTO_DISMISS_MS = 8000;
 
+export interface ToastAction {
+  /** Button label, e.g. "Retry". */
+  label: string;
+  onAction: () => void;
+}
+
 interface ToastItem {
   id: number;
   message: string;
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
-  /** Shows an error popup with the given message. */
-  showToast: (message: string) => void;
+  /** Shows an error popup with the given message, optionally with an action button (e.g. Retry). */
+  showToast: (message: string, action?: ToastAction) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
@@ -33,9 +40,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showToast = useCallback(
-    (message: string) => {
+    (message: string, action?: ToastAction) => {
       const id = nextId.current++;
-      setToasts((current) => [...current, { id, message }]);
+      setToasts((current) => [...current, { id, message, action }]);
       setTimeout(() => dismissToast(id), TOAST_AUTO_DISMISS_MS);
     },
     [dismissToast],
@@ -57,16 +64,30 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role="alert"
           >
             <span className="text-label-md font-label-md">{toast.message}</span>
-            <button
-              type="button"
-              className="text-on-error-container/70 hover:text-on-error-container transition-colors flex-shrink-0"
-              onClick={() => dismissToast(toast.id)}
-              aria-label="Dismiss notification"
-            >
-              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
-                close
-              </span>
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {toast.action && (
+                <button
+                  type="button"
+                  className="text-on-error-container font-label-md underline hover:no-underline"
+                  onClick={() => {
+                    toast.action?.onAction();
+                    dismissToast(toast.id);
+                  }}
+                >
+                  {toast.action.label}
+                </button>
+              )}
+              <button
+                type="button"
+                className="text-on-error-container/70 hover:text-on-error-container transition-colors"
+                onClick={() => dismissToast(toast.id)}
+                aria-label="Dismiss notification"
+              >
+                <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                  close
+                </span>
+              </button>
+            </div>
           </div>
         ))}
       </div>

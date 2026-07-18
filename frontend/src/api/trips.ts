@@ -49,7 +49,8 @@ export async function setTripDates(
 }
 
 export interface AddTripDestinationPayload {
-  itineraryDayId: string;
+  /** `null` adds the destination to the trip's unscheduled "Saved Places" list. */
+  itineraryDayId: string | null;
   providerPlaceId: string;
   name: string;
   category: string | null;
@@ -58,7 +59,7 @@ export interface AddTripDestinationPayload {
   lng: number;
 }
 
-/** Adds a destination to a specific itinerary day. */
+/** Adds a destination to a specific itinerary day, or to Saved Places when `itineraryDayId` is null. */
 export async function addTripDestination(
   tripId: string,
   payload: AddTripDestinationPayload,
@@ -78,4 +79,24 @@ export async function removeTripDestination(
   await apiClient.delete<ApiEnvelope<boolean>>(
     `/trips/${encodeURIComponent(tripId)}/destinations/${encodeURIComponent(tripDestinationId)}`,
   );
+}
+
+export interface MoveTripDestinationPayload {
+  /** `null` moves the destination to Saved Places. */
+  itineraryDayId: string | null;
+  /** 1-based; `null` appends at the end of the target list. */
+  position: number | null;
+}
+
+/** Moves/reorders a destination between Saved Places and itinerary days (F3-US4/US5/US6); returns the full updated trip. */
+export async function moveTripDestination(
+  tripId: string,
+  tripDestinationId: string,
+  payload: MoveTripDestinationPayload,
+): Promise<Trip> {
+  const { data } = await apiClient.put<ApiEnvelope<Trip>>(
+    `/trips/${encodeURIComponent(tripId)}/destinations/${encodeURIComponent(tripDestinationId)}`,
+    payload,
+  );
+  return data.result;
 }
