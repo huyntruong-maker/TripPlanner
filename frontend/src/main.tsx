@@ -7,6 +7,8 @@ import { AuthProvider } from './auth/AuthContext';
 import { ToastProvider } from './components/toast/ToastProvider';
 import { createAppQueryClient } from './queryClient';
 import './styles.css';
+// Global (not per-component) so component tests don't need to process Leaflet's CSS under jsdom.
+import 'leaflet/dist/leaflet.css';
 
 // A single shared QueryClient for all server-state data fetching (TanStack
 // Query). Wires every query/mutation failure to the global error toast.

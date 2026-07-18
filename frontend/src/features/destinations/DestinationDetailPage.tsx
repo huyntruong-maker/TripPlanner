@@ -4,6 +4,7 @@ import { getDestinationDetail } from '../../api/destinations';
 import { getApiErrorMessage } from '../../api/errors';
 import type { OpeningHours } from '../../types';
 import { AddToTripControl } from '../trips/AddToTripControl';
+import { MapView } from './MapView';
 import { PhotoCarousel } from './PhotoCarousel';
 
 const BACK_LINK_CLASSES = 'inline-flex items-center gap-2 text-primary font-label-md hover:underline';
@@ -44,6 +45,8 @@ export function DestinationDetailPage() {
 
   // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = data.tags.filter((tag) => tag !== data.category);
+  // F2-US3: only render the map when the provider actually gave us usable coordinates.
+  const hasCoordinates = Number.isFinite(data.latitude) && Number.isFinite(data.longitude);
 
   return (
     <div className="space-y-8">
@@ -162,6 +165,18 @@ export function DestinationDetailPage() {
               )}
             </ul>
           </div>
+
+          {hasCoordinates && (
+            <div className="bg-white rounded-xl p-6 elevation-l1 border border-outline-variant/30 mt-6">
+              <h2 className="font-headline-md text-headline-md text-on-surface mb-4">Location</h2>
+              <MapView
+                latitude={data.latitude}
+                longitude={data.longitude}
+                name={data.name}
+                label={data.address}
+              />
+            </div>
+          )}
         </aside>
       </div>
     </div>

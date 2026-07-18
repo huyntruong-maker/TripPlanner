@@ -18,16 +18,24 @@ public static class TripControllerMsg
 
     public struct AddDestination
     {
-        public const string ItineraryDayIdRequired = "Trip.AddDestination.ItineraryDayIdRequired";
         public const string ProviderPlaceIdRequired = "Trip.AddDestination.ProviderPlaceIdRequired";
         public const string NameRequired = "Trip.AddDestination.NameRequired";
         public const string ItineraryDayNotFound = "Trip.AddDestination.ItineraryDayNotFound";
+        public const string DuplicateInDay = "Trip.AddDestination.DuplicateInDay";
         public const string Exception = "Trip.AddDestination.Exception";
     }
 
     public struct RemoveDestination
     {
         public const string Exception = "Trip.RemoveDestination.Exception";
+    }
+
+    public struct MoveDestination
+    {
+        public const string DestinationNotFound = "Trip.MoveDestination.DestinationNotFound";
+        public const string ItineraryDayNotFound = "Trip.MoveDestination.ItineraryDayNotFound";
+        public const string DuplicateInDay = "Trip.MoveDestination.DuplicateInDay";
+        public const string Exception = "Trip.MoveDestination.Exception";
     }
 
     public struct GetTrips

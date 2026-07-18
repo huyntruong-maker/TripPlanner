@@ -19,4 +19,7 @@ public class TripDto
 
     /// <summary>Itinerary days ordered by day index; populated only in detail responses.</summary>
     public IReadOnlyList<ItineraryDayDto> ItineraryDays { get; set; } = [];
+
+    /// <summary>Unscheduled destinations ("Saved Places"), ordered by position; populated only in detail responses.</summary>
+    public IReadOnlyList<TripDestinationDto> SavedPlaces { get; set; } = [];
 }

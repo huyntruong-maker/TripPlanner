@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { searchLocations } from '../../api/destinations';
 
-const MIN_QUERY_LENGTH = 1;
+const MIN_QUERY_LENGTH = 2;
 const LOCATIONS_STALE_TIME_MS = 60_000;
 
-/** Requires at least 1 character before querying. */
+/** Requires at least 2 characters before querying (F1-US1 autocomplete). */
 export function useLocationSearch(query: string) {
   const trimmedQuery = query.trim();
 

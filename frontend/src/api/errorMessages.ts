@@ -51,8 +51,11 @@ export const apiErrorMessages: Record<string, string> = {
   'Trip.SetDates.StartDateRequired': 'Select a start date.',
   'Trip.SetDates.EndDateRequired': 'Select an end date.',
   'Trip.SetDates.InvalidDateRange': 'The start date must be on or before the end date.',
-  'Trip.AddDestination.ItineraryDayIdRequired': 'Select an itinerary day.',
   'Trip.AddDestination.ProviderPlaceIdRequired': 'Could not identify this destination.',
   'Trip.AddDestination.NameRequired': 'Could not identify this destination.',
   'Trip.AddDestination.ItineraryDayNotFound': 'That itinerary day is not part of this trip.',
+  'Trip.AddDestination.DuplicateInDay': 'This destination is already in that day.',
+  'Trip.MoveDestination.DestinationNotFound': 'This destination is no longer part of the trip.',
+  'Trip.MoveDestination.ItineraryDayNotFound': 'That itinerary day is not part of this trip.',
+  'Trip.MoveDestination.DuplicateInDay': 'This destination is already in that day.',
 };

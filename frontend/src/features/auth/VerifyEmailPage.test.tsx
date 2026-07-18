@@ -40,6 +40,6 @@ describe('VerifyEmailPage', () => {
   it('shows an invalid/expired state for an unrecognized token', async () => {
     renderVerifyEmail('/verify-email?token=garbage');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('This verification link is invalid.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('The verification link is invalid.');
   });
 });

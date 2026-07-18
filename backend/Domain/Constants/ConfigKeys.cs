@@ -89,5 +89,16 @@ public static class ConfigKeys
             public const string BaseUrl = "Providers:Foursquare:BaseUrl";
             public const string ApiKey = "Providers:Foursquare:ApiKey";
         }
+
+        public struct Nominatim
+        {
+            public const string BaseUrl = "Providers:Nominatim:BaseUrl";
+        }
+
+        public struct Geocoding
+        {
+            /// <summary>Selects the active <c>IGeocodingProvider</c>: "Nominatim" (default) or "OpenTripMap".</summary>
+            public const string Provider = "Providers:Geocoding:Provider";
+        }
     }
 }

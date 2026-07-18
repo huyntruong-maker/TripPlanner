@@ -68,7 +68,7 @@ describe('AddToTripControl', () => {
       expect(await screen.findByRole('status')).toHaveTextContent('Added to Paris 2026.');
     });
 
-    it('prompts to set dates first when the chosen trip has no itinerary days', async () => {
+    it('offers Saved Places (schedule later) and a hint when the chosen trip has no itinerary days', async () => {
       const user = userEvent.setup();
       renderControl();
 
@@ -76,7 +76,22 @@ describe('AddToTripControl', () => {
       await user.selectOptions(await screen.findByLabelText('Trip'), TRIP_WITHOUT_DATES_ID);
 
       expect(await screen.findByText(/This trip has no dates yet/)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+      expect(
+        screen.getByRole('option', { name: 'Saved Places (schedule later)' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Add' })).toBeEnabled();
+    });
+
+    it('adds the destination to Saved Places when the trip has no itinerary days yet (F3-US4)', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
+      await user.selectOptions(await screen.findByLabelText('Trip'), TRIP_WITHOUT_DATES_ID);
+      await user.selectOptions(screen.getByLabelText('Day'), 'saved-places');
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+
+      expect(await screen.findByRole('status')).toHaveTextContent('Added to Someday Trip.');
     });
 
     it('shows a message when the user has no trips yet', async () => {
