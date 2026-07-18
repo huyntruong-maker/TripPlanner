@@ -9,6 +9,8 @@
       - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__ReadDatabase=Host=postgres;Port=5432;Database=trip-planner;Username=postgres;Password=Password@1234
       - ConnectionStrings__WriteDatabase=Host=postgres;Port=5432;Database=trip-planner;Username=postgres;Password=Password@1234
+      - Redis__Connection=redis:6379
+      - MinIO__Endpoint=minio:9000
     ports:
       - "5501:8080"
     depends_on:
