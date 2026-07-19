@@ -8,7 +8,7 @@ async function fillAndSubmit(
   user: ReturnType<typeof userEvent.setup>,
   { firstName, email, password }: { firstName: string; email: string; password: string },
 ) {
-  if (firstName) await user.type(screen.getByLabelText('First name'), firstName);
+  if (firstName) await user.type(screen.getByLabelText('Name'), firstName);
   if (email) await user.type(screen.getByLabelText('Email'), email);
   if (password) await user.type(screen.getByLabelText(/Password/), password);
   await user.click(screen.getByRole('button', { name: 'Sign up' }));
@@ -21,7 +21,7 @@ describe('RegisterPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Sign up' }));
 
-    expect(await screen.findByText('First name is required')).toBeInTheDocument();
+    expect(await screen.findByText('Name is required')).toBeInTheDocument();
     expect(screen.getByText('Email is required')).toBeInTheDocument();
     expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
   });

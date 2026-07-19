@@ -90,7 +90,7 @@ export function RegisterPage() {
                 className="block text-label-md font-label-md text-on-surface-variant"
                 htmlFor="register-firstName"
               >
-                First name
+                Name
               </label>
               <input
                 id="register-firstName"
