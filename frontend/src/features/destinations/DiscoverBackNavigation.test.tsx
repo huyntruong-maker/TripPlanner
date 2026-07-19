@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { AuthProvider } from '../../auth/AuthContext';
 import { CITY_WITH_ATTRACTIONS_QUERY } from '../../test/msw/handlers/destinations';
 import { DestinationDetailPage } from './DestinationDetailPage';
@@ -77,5 +77,28 @@ describe('Discover -> destination detail -> Back preserves search state (real na
     await user.click(screen.getByRole('button', { name: 'Simulate browser Back' }));
 
     await expectDiscoverStateRestored();
+  });
+
+  describe('when the detail page has no in-app history (e.g. after a dev-server full reload)', () => {
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    it('restores the last search from sessionStorage instead of landing on a bare "/"', async () => {
+      const user = userEvent.setup();
+      sessionStorage.setItem(
+        'discover:lastSearch',
+        '?q=Paris%2C+France&lat=48.8566&lng=2.3522&name=Paris&locationType=city&country=France',
+      );
+
+      // The detail URL is the FIRST history entry — location.key is 'default', navigate(-1) has
+      // nowhere to go. This is exactly the post-reload state the user reported.
+      renderApp(['/destinations/W214242']);
+      await screen.findByRole('heading', { name: 'Eiffel Tower', level: 1 });
+
+      await user.click(screen.getByRole('button', { name: 'Back to search' }));
+
+      await expectDiscoverStateRestored();
+    });
   });
 });

@@ -132,6 +132,24 @@ describe('TripPlannerPage', () => {
       expect(document.querySelector('.overflow-x-auto')).not.toBeInTheDocument();
     });
 
+    it('uses a narrower minimum column width so more days fit on one row before wrapping', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const dayOneHeading = await screen.findByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      const daysGrid = dayOneHeading.closest('div')?.parentElement as HTMLElement;
+
+      expect(daysGrid).toHaveClass('grid-cols-[repeat(auto-fill,minmax(210px,1fr))]');
+    });
+
+    it('slims the Saved Places sidebar down from its previous width', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const savedPlacesHeading = await screen.findByRole('heading', { name: 'Saved Places' });
+      const sidebar = savedPlacesHeading.closest('aside');
+
+      expect(sidebar).toHaveClass('lg:w-[240px]');
+    });
+
     it('keeps Saved Places out of the day-columns grid — two independent containers, not one grid with a hole', async () => {
       renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
 
@@ -147,18 +165,37 @@ describe('TripPlannerPage', () => {
       expect(daysGrid.closest('aside')).toBeNull();
     });
 
-    it('gives every day/Saved Places card a consistent minimum height and clamps long item names', async () => {
+    it('gives every day/Saved Places card the same compact minimum height, empty or not', async () => {
       renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
 
       await screen.findByText('Louvre Museum');
 
       const savedPlacesCard = screen.getByRole('heading', { name: 'Saved Places' }).closest('div');
       const dayOneCard = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' }).closest('div');
-      expect(savedPlacesCard).toHaveClass('min-h-[280px]');
-      expect(dayOneCard).toHaveClass('min-h-[280px]');
+      const dayTwoCard = screen.getByRole('heading', { name: 'Day 2 — 2026-09-02' }).closest('div');
+      // Day 2 is empty; it must share the same min-height class as the populated cards, not a
+      // taller one from its own empty-state box.
+      expect(savedPlacesCard).toHaveClass('min-h-[160px]');
+      expect(dayOneCard).toHaveClass('min-h-[160px]');
+      expect(dayTwoCard).toHaveClass('min-h-[160px]');
+    });
 
-      const itemName = screen.getByText('Louvre Museum');
-      expect(itemName).toHaveClass('line-clamp-2');
+    it('shows a compact single-line day heading (full date kept as the accessible name)', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const heading = await screen.findByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      // Accessible name (aria-label) stays the full date; visible text is the compact form.
+      expect(heading).toHaveTextContent('Day 1 · Sep 1');
+      expect(heading).toHaveClass('truncate');
+      expect(heading).toHaveAttribute('title', 'Day 1 — 2026-09-01');
+    });
+
+    it('truncates a long item name to a single line instead of wrapping/growing the row', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const itemName = await screen.findByText('Louvre Museum');
+      expect(itemName).toHaveClass('truncate');
+      expect(itemName).toHaveAttribute('title', 'Louvre Museum');
     });
 
     it('offers a mobile collapse toggle for Saved Places, expanded by default', async () => {

@@ -46,6 +46,21 @@ describe('buildPlannerColumns', () => {
     expect(columns[0].itineraryDayId).toBeNull();
     expect(columns[1].title).toBe('Day 1 — 2026-01-01');
   });
+
+  it('gives each day column a compact single-line shortTitle, keeping the full date in title', () => {
+    const columns = buildPlannerColumns(buildTrip());
+
+    expect(columns[1].shortTitle).toBe('Day 1 · Jan 1');
+    expect(columns[1].title).toBe('Day 1 — 2026-01-01');
+    expect(columns[2].shortTitle).toBe('Day 2 · Jan 2');
+  });
+
+  it('uses the same text for Saved Places\' title and shortTitle (no date to shorten)', () => {
+    const columns = buildPlannerColumns(buildTrip());
+
+    expect(columns[0].title).toBe('Saved Places');
+    expect(columns[0].shortTitle).toBe('Saved Places');
+  });
 });
 
 describe('resolveDropTarget', () => {

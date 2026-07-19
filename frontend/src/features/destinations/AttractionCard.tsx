@@ -2,10 +2,14 @@ import { Link } from 'react-router-dom';
 import type { AttractionSummary } from '../../types';
 import { AddToTripControl } from '../trips/AddToTripControl';
 import { QuickSaveControl } from '../trips/QuickSaveControl';
+import type { DiscoverSearchLinkState } from './discoverSearchStorage';
 import { humanizeKind } from './humanizeKind';
 
 interface AttractionCardProps {
   attraction: AttractionSummary;
+  /** Current Discover search string; threaded onto the destination Link as router state so
+   * "Back to search" can restore this exact search (see `discoverSearchStorage.ts`). */
+  discoverSearch: string;
 }
 
 const MAX_VISIBLE_TAGS = 3;
@@ -15,7 +19,7 @@ const MAX_VISIBLE_TAGS = 3;
  * a hover/focus "Save place" icon (trip-only, straight to Saved Places) and the full "Add to
  * Trip" control in the footer (trip + day picker).
  */
-export function AttractionCard({ attraction }: AttractionCardProps) {
+export function AttractionCard({ attraction, discoverSearch }: AttractionCardProps) {
   // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = attraction.tags.filter((tag) => tag !== attraction.category);
   const visibleTags = additionalTags.slice(0, MAX_VISIBLE_TAGS);
@@ -37,6 +41,7 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
 
         <Link
           to={`/destinations/${attraction.providerPlaceId}`}
+          state={discoverSearch ? ({ discoverSearch } satisfies DiscoverSearchLinkState) : undefined}
           className="flex flex-col flex-grow"
         >
           <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">

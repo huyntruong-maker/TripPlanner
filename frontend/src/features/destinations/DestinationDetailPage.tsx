@@ -4,6 +4,7 @@ import { getDestinationDetail } from '../../api/destinations';
 import { getApiErrorMessage } from '../../api/errors';
 import type { OpeningHours } from '../../types';
 import { AddToTripControl } from '../trips/AddToTripControl';
+import { readLastDiscoverSearch, type DiscoverSearchLinkState } from './discoverSearchStorage';
 import { humanizeKind } from './humanizeKind';
 import { MapView } from './MapView';
 import { PhotoCarousel } from './PhotoCarousel';
@@ -15,7 +16,10 @@ const BACK_LINK_CLASSES = 'inline-flex items-center gap-2 text-primary font-labe
  * URL) instead of pushing a fresh, param-less "/" — a plain `<Link to="/">` here was the actual
  * cause of "Back to Discover loses my search": it always navigated to a blank Discover, even
  * when the user arrived from a Discover page that already had `?q=...&lat=...` in its URL.
- * Falls back to "/" only when there's no in-app history to go back to (e.g. a direct link).
+ * When there's no usable in-app history (e.g. a direct link, or a dev-server full reload while
+ * sitting on this page), it still restores the search by falling back to the search string the
+ * card's Link carried in router state, then to the sessionStorage copy Discover keeps — only a
+ * genuinely fresh visitor lands on a bare "/".
  */
 function BackToSearchButton() {
   const navigate = useNavigate();
@@ -23,10 +27,20 @@ function BackToSearchButton() {
   // react-router marks the very first history entry with key "default" — nothing to go back to.
   const canGoBack = location.key !== 'default';
 
+  function goBackToSearch() {
+    if (canGoBack) {
+      navigate(-1);
+      return;
+    }
+    const linkState = location.state as DiscoverSearchLinkState | null;
+    const search = linkState?.discoverSearch ?? readLastDiscoverSearch() ?? '';
+    navigate(`/${search}`);
+  }
+
   return (
     <button
       type="button"
-      onClick={() => (canGoBack ? navigate(-1) : navigate('/'))}
+      onClick={goBackToSearch}
       className={BACK_LINK_CLASSES}
     >
       <span className="material-symbols-outlined" aria-hidden="true">

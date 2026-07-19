@@ -25,7 +25,7 @@ function renderCard(attraction: AttractionSummary) {
         <MemoryRouter>
           <AuthProvider>
             <ul>
-              <AttractionCard attraction={attraction} />
+              <AttractionCard attraction={attraction} discoverSearch="?q=Test&lat=1&lng=2" />
             </ul>
           </AuthProvider>
         </MemoryRouter>

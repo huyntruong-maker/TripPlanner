@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '../../api/errors';
 import { useLocationSearch } from './useLocationSearch';
 import { useAttractions } from './useAttractions';
 import { AttractionCard } from './AttractionCard';
+import { saveLastDiscoverSearch } from './discoverSearchStorage';
 import { humanizeKind, kindKey } from './humanizeKind';
 import type { AttractionSummary, LocationSuggestion, PagedResult } from '../../types';
 
@@ -99,6 +100,18 @@ export function SearchPage() {
     setIsDropdownDismissed(Boolean(restored));
     setActiveIndex(-1);
   }, [navigationType, searchParams]);
+
+  const discoverSearch = searchParams.toString() ? `?${searchParams.toString()}` : '';
+
+  // Belt-and-suspenders restore path for BackToSearchButton (DestinationDetailPage): in-app
+  // history/Link state can both be lost (e.g. a Vite-dev full reload while on the detail page
+  // resets `location.key` to 'default' and drops any router state), so also keep the last
+  // non-empty search string in sessionStorage as a history-independent fallback.
+  useEffect(() => {
+    if (discoverSearch) {
+      saveLastDiscoverSearch(discoverSearch);
+    }
+  }, [discoverSearch]);
 
   function handleQueryChange(nextQuery: string) {
     setQuery(nextQuery);
@@ -211,6 +224,7 @@ export function SearchPage() {
           key={`${selectedLocation.latitude},${selectedLocation.longitude}`}
           location={selectedLocation}
           query={attractionsQuery}
+          discoverSearch={discoverSearch}
         />
       )}
     </div>
@@ -285,6 +299,10 @@ function LocationResults({ query, suggestions, activeIndex, onSelect, onHover }:
 interface AttractionsGridProps {
   location: LocationSuggestion;
   query: UseQueryResult<PagedResult<AttractionSummary>>;
+  /** Current Discover URL search string (e.g. `"?q=...&lat=..."`); threaded onto each card's
+   * destination Link as router state so Back-navigation can restore this exact search even when
+   * in-app history is unavailable (see `BackToSearchButton` in DestinationDetailPage.tsx). */
+  discoverSearch: string;
 }
 
 type SortOrder = 'recommended' | 'rating';
@@ -352,7 +370,7 @@ function buildCategoryOptions(attractions: AttractionSummary[]): CategoryOption[
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
 
-function AttractionsGrid({ location, query }: AttractionsGridProps) {
+function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategoryKeys, setSelectedCategoryKeys] = useState<string[]>(() =>
     categoryKeysFromSearchParams(searchParams),
@@ -588,7 +606,11 @@ function AttractionsGrid({ location, query }: AttractionsGridProps) {
       {sortedAttractions.length > 0 && (
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter items-stretch">
           {sortedAttractions.map((attraction) => (
-            <AttractionCard key={attraction.providerPlaceId} attraction={attraction} />
+            <AttractionCard
+              key={attraction.providerPlaceId}
+              attraction={attraction}
+              discoverSearch={discoverSearch}
+            />
           ))}
         </ul>
       )}

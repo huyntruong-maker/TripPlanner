@@ -155,7 +155,7 @@ export function TripPlannerPage() {
               grid) is what avoids the day grid "reserving" Saved Places' cell and offsetting
               every row after it. */}
           <div className="lg:flex lg:items-start lg:gap-gutter">
-            <aside className="mb-gutter lg:mb-0 lg:w-[300px] lg:flex-shrink-0 lg:sticky lg:top-6">
+            <aside className="mb-gutter lg:mb-0 lg:w-[240px] lg:flex-shrink-0 lg:sticky lg:top-6">
               <button
                 type="button"
                 onClick={() => setIsSavedPlacesOpen((open) => !open)}
@@ -191,7 +191,7 @@ export function TripPlannerPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-gutter grid-cols-[repeat(auto-fill,minmax(260px,1fr))] items-start">
+                <div className="grid gap-gutter grid-cols-[repeat(auto-fill,minmax(210px,1fr))] items-start">
                   {dayColumns.map((column) => (
                     <PlannerColumnView
                       key={column.id}
@@ -246,14 +246,22 @@ function PlannerColumnView({ column, onRemove, removingId, emptyMessage }: Plann
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
-    <div className="min-h-[280px] bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-6">
-      <header className="flex justify-between items-center mb-6">
-        <h3 className="text-headline-md font-headline-md text-on-surface">{column.title}</h3>
+    <div className="min-h-[160px] bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-4">
+      <header className="flex justify-between items-center gap-2 mb-3">
+        {/* Full text lives in title/aria-label so the compact visible heading never loses
+            information — the accessible name comes from aria-label, not the truncated text. */}
+        <h3
+          className="min-w-0 truncate whitespace-nowrap text-label-md font-label-md text-on-surface"
+          title={column.title}
+          aria-label={column.title}
+        >
+          {column.shortTitle}
+        </h3>
         <span
-          className="bg-surface-container text-primary p-2 rounded-lg flex-shrink-0"
+          className="bg-surface-container text-primary p-1 rounded-lg flex-shrink-0"
           aria-hidden="true"
         >
-          <span className="material-symbols-outlined">
+          <span className="material-symbols-outlined text-[18px]">
             {column.itineraryDayId === null ? 'bookmark' : 'event'}
           </span>
         </span>
@@ -265,19 +273,19 @@ function PlannerColumnView({ column, onRemove, removingId, emptyMessage }: Plann
       >
         <div
           ref={setNodeRef}
-          className={`min-h-[96px] rounded-lg transition-colors ${
+          className={`rounded-lg transition-colors ${
             isOver ? 'bg-primary/10 ring-2 ring-inset ring-primary' : ''
           }`}
         >
           {column.destinations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 min-h-[96px] py-8 rounded-lg border-2 border-dashed border-outline-variant/40 text-center">
-              <span className="material-symbols-outlined text-2xl text-outline" aria-hidden="true">
+            <div className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg border-2 border-dashed border-outline-variant/40 text-center">
+              <span className="material-symbols-outlined text-lg text-outline" aria-hidden="true">
                 {column.itineraryDayId === null ? 'bookmark_border' : 'add_location_alt'}
               </span>
-              <p className="text-on-surface-variant text-body-md px-4">{emptyMessage}</p>
+              <p className="text-on-surface-variant text-label-sm px-2">{emptyMessage}</p>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-2">
               {column.destinations.map((destination) => (
                 <SortableDestinationItem
                   key={destination.id}
@@ -315,7 +323,7 @@ function SortableDestinationItem({ destination, onRemove, isRemoving }: Sortable
     <li
       ref={setNodeRef}
       style={style}
-      className="min-h-[64px] p-4 rounded-lg bg-surface border border-outline-variant/30 flex items-center gap-3"
+      className="min-h-[48px] p-2.5 rounded-lg bg-surface border border-outline-variant/30 flex items-center gap-2"
     >
       <button
         type="button"
@@ -326,7 +334,10 @@ function SortableDestinationItem({ destination, onRemove, isRemoving }: Sortable
       >
         drag_indicator
       </button>
-      <span className="font-label-md text-on-surface flex-grow line-clamp-2" title={destination.name}>
+      <span
+        className="font-label-md text-on-surface flex-grow min-w-0 truncate"
+        title={destination.name}
+      >
         {destination.name}
       </span>
       <button
