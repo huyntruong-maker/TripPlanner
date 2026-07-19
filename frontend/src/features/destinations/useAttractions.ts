@@ -6,7 +6,11 @@ export interface Coordinates {
   longitude: number;
 }
 
-const ATTRACTIONS_STALE_TIME_MS = 30_000;
+// Generous windows so browsing detail pages and coming Back re-shows the same list instantly
+// (and keeps showing it even if a background refetch fails); the backend's own Redis cache is
+// the source of freshness, so a stale-ish client copy is fine.
+const ATTRACTIONS_STALE_TIME_MS = 5 * 60_000;
+const ATTRACTIONS_GC_TIME_MS = 30 * 60_000;
 
 /** `null` coords means "no location chosen yet". */
 export function useAttractions(coordinates: Coordinates | null) {
@@ -15,5 +19,6 @@ export function useAttractions(coordinates: Coordinates | null) {
     queryFn: () => getAttractions(coordinates as Coordinates),
     enabled: coordinates !== null,
     staleTime: ATTRACTIONS_STALE_TIME_MS,
+    gcTime: ATTRACTIONS_GC_TIME_MS,
   });
 }
