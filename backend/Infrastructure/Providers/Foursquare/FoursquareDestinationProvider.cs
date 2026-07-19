@@ -9,7 +9,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Foursquare;
 
-/// <summary>Fetches attraction data (categories, ratings, photos) from the Foursquare Places API v3.</summary>
+/// <summary>Fetches attraction data (categories, ratings, photos) from the new Foursquare Places API
+/// (<c>places-api.foursquare.com</c>).</summary>
 public class FoursquareDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
@@ -17,13 +18,31 @@ public class FoursquareDestinationProvider(
 {
     private const int MaxPageSize = 20;
 
+    private const string PlacesApiVersionHeaderName = "X-Places-Api-Version";
+    private const string PlacesApiVersion = "2025-06-17";
+
+    private const string CoreFields = "fsq_place_id,name,categories,latitude,longitude,location";
+    private const string PremiumFields = "rating,photos,hours,description,website";
+    private const string FullFields = CoreFields + "," + PremiumFields;
+
+    // Set for the process lifetime once the account is found to have no premium API credits, so every
+    // subsequent call requests core fields only instead of paying the round-trip cost of a failed premium call.
+    private static int _premiumFieldsDisabled;
+
+    private static bool IsPremiumFieldsDisabled =>
+        Interlocked.CompareExchange(ref _premiumFieldsDisabled, 0, 0) == 1;
+
     private string BaseUrl => configuration.GetSection(ConfigKeys.Providers.Foursquare.BaseUrl).Value
-                              ?? "https://api.foursquare.com/v3/places";
+                              ?? "https://places-api.foursquare.com";
 
     private string ApiKey => configuration.GetSection(ConfigKeys.Providers.Foursquare.ApiKey).Value
                              ?? string.Empty;
 
-    private Dictionary<string, string> AuthHeader => new() { ["Authorization"] = ApiKey };
+    private Dictionary<string, string> AuthHeaders => new()
+    {
+        ["Authorization"] = $"Bearer {ApiKey}",
+        [PlacesApiVersionHeaderName] = PlacesApiVersion
+    };
 
     public async Task<AttractionSearchResultDto> GetAttractionsAsync(
         double latitude,
@@ -35,13 +54,14 @@ public class FoursquareDestinationProvider(
     {
         var effectivePageSize = Math.Min(pageSize, MaxPageSize);
 
-        var url = $"{BaseUrl}/search"
-                  + $"?ll={latitude},{longitude}"
-                  + $"&radius={radiusMeters}"
-                  + $"&limit={effectivePageSize}"
-                  + "&fields=fsq_id,name,categories,rating,geocodes,location,photos";
+        string BuildUrl(string fields) =>
+            $"{BaseUrl}/places/search"
+            + $"?ll={latitude},{longitude}"
+            + $"&radius={radiusMeters}"
+            + $"&limit={effectivePageSize}"
+            + $"&fields={fields}";
 
-        var (statusCode, body) = await restfulService.Get(url, AuthHeader);
+        var (statusCode, body) = await GetWithPremiumFallbackAsync(BuildUrl);
         if (statusCode != HttpStatusCode.OK || string.IsNullOrWhiteSpace(body))
         {
             logger.LogWarning("[Foursquare] Nearby search returned {Status}", statusCode);
@@ -84,14 +104,16 @@ public class FoursquareDestinationProvider(
             return null;
 
         const int matchRadiusMeters = 300;
-        var url = $"{BaseUrl}/search"
-                  + $"?query={Uri.EscapeDataString(name)}"
-                  + $"&ll={latitude},{longitude}"
-                  + $"&radius={matchRadiusMeters}"
-                  + "&limit=1"
-                  + "&fields=fsq_id,name,categories,rating,geocodes,location,photos,description,hours,website";
 
-        var (statusCode, body) = await restfulService.Get(url, AuthHeader);
+        string BuildUrl(string fields) =>
+            $"{BaseUrl}/places/search"
+            + $"?query={Uri.EscapeDataString(name)}"
+            + $"&ll={latitude},{longitude}"
+            + $"&radius={matchRadiusMeters}"
+            + "&limit=1"
+            + $"&fields={fields}";
+
+        var (statusCode, body) = await GetWithPremiumFallbackAsync(BuildUrl);
         if (statusCode != HttpStatusCode.OK || string.IsNullOrWhiteSpace(body))
         {
             logger.LogWarning("[Foursquare] Nearest-match search returned {Status} for '{Name}'", statusCode, name);
@@ -118,17 +140,18 @@ public class FoursquareDestinationProvider(
         string providerPlaceId,
         CancellationToken cancellationToken = default)
     {
-        var url = $"{BaseUrl}/{Uri.EscapeDataString(providerPlaceId)}"
-                  + "?fields=fsq_id,name,categories,rating,geocodes,location,photos,description,hours";
+        string BuildUrl(string fields) =>
+            $"{BaseUrl}/places/{Uri.EscapeDataString(providerPlaceId)}"
+            + $"?fields={fields}";
 
-        var (statusCode, body) = await restfulService.Get(url, AuthHeader);
+        var (statusCode, body) = await GetWithPremiumFallbackAsync(BuildUrl);
 
         if (statusCode == HttpStatusCode.NotFound)
             return null;
 
         if (statusCode != HttpStatusCode.OK || string.IsNullOrWhiteSpace(body))
         {
-            logger.LogWarning("[Foursquare] Detail fetch returned {Status} for fsq_id '{Id}'", statusCode, providerPlaceId);
+            logger.LogWarning("[Foursquare] Detail fetch returned {Status} for fsq_place_id '{Id}'", statusCode, providerPlaceId);
             return null;
         }
 
@@ -144,9 +167,48 @@ public class FoursquareDestinationProvider(
         }
     }
 
+    /// <summary>
+    /// Issues the request with the current field set (full when premium is still assumed available, core-only
+    /// once it has been found to be disabled). If a full-field request fails with the account's "no premium
+    /// credits" error, flips the process-lifetime flag, logs once, and immediately retries with core fields only
+    /// so the caller still gets a usable (category/address) result instead of a hard failure.
+    /// </summary>
+    private async Task<(HttpStatusCode StatusCode, string Body)> GetWithPremiumFallbackAsync(Func<string, string> buildUrl)
+    {
+        var requestedFullFields = !IsPremiumFieldsDisabled;
+        var fields = requestedFullFields ? FullFields : CoreFields;
+
+        var (statusCode, body) = await restfulService.Get(buildUrl(fields), AuthHeaders);
+
+        if (requestedFullFields && IsPremiumCreditError(statusCode, body))
+        {
+            LogPremiumFieldsDisabledOnce();
+            (statusCode, body) = await restfulService.Get(buildUrl(CoreFields), AuthHeaders);
+        }
+
+        return (statusCode, body);
+    }
+
+    /// <summary>Defensive, best-effort detection of the Foursquare "no API credits remaining for Premium calls"
+    /// error — matched on the response body rather than a specific status code since Foursquare has not
+    /// documented a stable status code for this condition.</summary>
+    private static bool IsPremiumCreditError(HttpStatusCode statusCode, string body) =>
+        statusCode != HttpStatusCode.OK
+        && !string.IsNullOrWhiteSpace(body)
+        && body.Contains("credits", StringComparison.OrdinalIgnoreCase);
+
+    private void LogPremiumFieldsDisabledOnce()
+    {
+        if (Interlocked.Exchange(ref _premiumFieldsDisabled, 1) == 0)
+            logger.LogWarning(
+                "[Foursquare] Premium fields (rating, photos, hours, description, website) are unavailable — " +
+                "the account has no API credits remaining. Falling back to core fields (category/address) only " +
+                "for the rest of this process's lifetime; add credits and restart the app to re-enable them.");
+    }
+
     private static AttractionDto MapPlace(JsonElement place)
     {
-        var fsqId = place.TryGetProperty("fsq_id", out var idProp)
+        var fsqId = place.TryGetProperty("fsq_place_id", out var idProp)
             ? idProp.GetString() ?? string.Empty
             : string.Empty;
 
@@ -171,13 +233,12 @@ public class FoursquareDestinationProvider(
             ? ratingProp.GetDouble()
             : null;
 
+        // Coordinates are top-level on the new Places API (no more nested "geocodes.main").
         double lat = 0, lon = 0;
-        if (place.TryGetProperty("geocodes", out var geocodes)
-            && geocodes.TryGetProperty("main", out var main))
-        {
-            if (main.TryGetProperty("latitude", out var latProp)) lat = latProp.GetDouble();
-            if (main.TryGetProperty("longitude", out var lonProp)) lon = lonProp.GetDouble();
-        }
+        if (place.TryGetProperty("latitude", out var latProp) && latProp.ValueKind == JsonValueKind.Number)
+            lat = latProp.GetDouble();
+        if (place.TryGetProperty("longitude", out var lonProp) && lonProp.ValueKind == JsonValueKind.Number)
+            lon = lonProp.GetDouble();
 
         // Photos — build full URLs from prefix+size+suffix; collect all available.
         string? thumbnail = null;
@@ -201,11 +262,20 @@ public class FoursquareDestinationProvider(
         string? address = null;
         if (place.TryGetProperty("location", out var location))
         {
-            var parts = new List<string>();
-            if (location.TryGetProperty("address", out var addr) && addr.GetString() is { } a) parts.Add(a);
-            if (location.TryGetProperty("locality", out var city) && city.GetString() is { } c) parts.Add(c);
-            if (location.TryGetProperty("country", out var country) && country.GetString() is { } co) parts.Add(co);
-            address = parts.Count > 0 ? string.Join(", ", parts) : null;
+            if (location.TryGetProperty("formatted_address", out var formattedAddress)
+                && formattedAddress.GetString() is { } formatted)
+            {
+                address = formatted;
+            }
+            else
+            {
+                var parts = new List<string>();
+                if (location.TryGetProperty("address", out var addr) && addr.GetString() is { } a) parts.Add(a);
+                if (location.TryGetProperty("locality", out var city) && city.GetString() is { } c) parts.Add(c);
+                if (location.TryGetProperty("region", out var region) && region.GetString() is { } r) parts.Add(r);
+                if (location.TryGetProperty("country", out var country) && country.GetString() is { } co) parts.Add(co);
+                address = parts.Count > 0 ? string.Join(", ", parts) : null;
+            }
         }
 
         // Description — Foursquare returns "description" directly on detail calls.
