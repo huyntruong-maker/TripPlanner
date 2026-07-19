@@ -22,9 +22,7 @@ export function LoginPage() {
   const location = useLocation();
   const { showToast } = useToast();
   const [formError, setFormError] = useState<string | null>(null);
-  const [showVerifiedBanner, setShowVerifiedBanner] = useState(
-    () => Boolean((location.state as LoginLocationState | null)?.justVerified),
-  );
+  const showVerifiedBanner = Boolean((location.state as LoginLocationState | null)?.justVerified);
 
   const {
     register,
@@ -60,24 +58,17 @@ export function LoginPage() {
           {showVerifiedBanner && (
             <div
               role="status"
-              className="mb-6 flex items-start justify-between gap-3 rounded-lg border border-primary/30 bg-primary-container px-4 py-3"
+              className="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3"
             >
-              <p className="flex items-center gap-2 text-label-md font-label-md text-primary">
-                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+              <p className="flex items-center gap-2 text-label-md font-label-md text-green-900">
+                <span
+                  className="material-symbols-outlined text-[18px] text-green-600"
+                  aria-hidden="true"
+                >
                   check_circle
                 </span>
                 Email verified successfully — please log in.
               </p>
-              <button
-                type="button"
-                onClick={() => setShowVerifiedBanner(false)}
-                aria-label="Dismiss notification"
-                className="text-primary/70 hover:text-primary transition-colors flex-shrink-0"
-              >
-                <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
-                  close
-                </span>
-              </button>
             </div>
           )}
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>

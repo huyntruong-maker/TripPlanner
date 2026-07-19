@@ -69,19 +69,15 @@ describe('LoginPage', () => {
   });
 
   describe('arriving after email verification (VerifyEmailPage redirect)', () => {
-    it('shows a dismissible success banner when the justVerified flag is set', async () => {
-      const user = userEvent.setup();
+    it('shows a green success banner (no dismiss button) when the justVerified flag is set', async () => {
       renderAuthRoutes([{ pathname: '/login', state: { justVerified: true } }]);
 
-      expect(
-        await screen.findByText('Email verified successfully — please log in.'),
-      ).toBeInTheDocument();
+      const banner = await screen.findByRole('status');
+      expect(banner).toHaveTextContent('Email verified successfully — please log in.');
+      expect(banner.className).toContain('bg-green-50');
 
-      await user.click(screen.getByRole('button', { name: 'Dismiss notification' }));
-
-      expect(
-        screen.queryByText('Email verified successfully — please log in.'),
-      ).not.toBeInTheDocument();
+      // A success notice needs no dismiss affordance — logging in navigates away anyway.
+      expect(screen.queryByRole('button', { name: 'Dismiss notification' })).not.toBeInTheDocument();
     });
 
     it('does not show the banner on a normal visit to /login', () => {

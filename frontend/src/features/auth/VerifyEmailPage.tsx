@@ -112,7 +112,7 @@ interface VerifyEmailLayoutProps {
 
 const TONE_CLASSES: Record<VerifyEmailLayoutProps['tone'], string> = {
   neutral: 'bg-surface-container text-on-surface-variant',
-  success: 'bg-primary-container text-primary',
+  success: 'bg-green-100 text-green-600',
   error: 'bg-error-container text-error',
 };
 
