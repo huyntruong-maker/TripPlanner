@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { Link, useNavigationType, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
@@ -382,38 +382,31 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
   // Mirrors filters/sort into the URL (replace — no history spam) so they survive detail-page
   // back navigation alongside the selected location. This component remounts per location (see
   // the `key` on <AttractionsGrid> in SearchPage), so the lazy initializers above stay accurate.
-  // Skips its very first run: on mount, these values were only just *read* from the URL (or from
-  // SearchPage's own location-select navigation, which is still landing in the same commit), so
-  // writing them straight back here would race that other in-flight navigation.
-  const isFirstFilterSyncRef = useRef(true);
+  // Writes only when the URL actually differs from the filter state. A skip-first-run ref is NOT
+  // enough here: under StrictMode's double-invoked effects the second run raced SearchPage's
+  // location-select push with a stale `previous` and wiped the freshly-pushed ?q/lat params —
+  // the no-op comparison makes mount runs harmless no matter how many times they fire.
   useEffect(() => {
-    if (isFirstFilterSyncRef.current) {
-      isFirstFilterSyncRef.current = false;
-      return;
+    const next = new URLSearchParams(searchParams);
+    if (selectedCategoryKeys.length > 0) {
+      next.set(CATEGORY_PARAM, selectedCategoryKeys.join(','));
+    } else {
+      next.delete(CATEGORY_PARAM);
     }
-    setSearchParams(
-      (previous) => {
-        const next = new URLSearchParams(previous);
-        if (selectedCategoryKeys.length > 0) {
-          next.set(CATEGORY_PARAM, selectedCategoryKeys.join(','));
-        } else {
-          next.delete(CATEGORY_PARAM);
-        }
-        if (minRating !== null) {
-          next.set(RATING_PARAM, String(minRating));
-        } else {
-          next.delete(RATING_PARAM);
-        }
-        if (sortOrder !== 'recommended') {
-          next.set(SORT_PARAM, sortOrder);
-        } else {
-          next.delete(SORT_PARAM);
-        }
-        return next;
-      },
-      { replace: true },
-    );
-  }, [selectedCategoryKeys, minRating, sortOrder, setSearchParams]);
+    if (minRating !== null) {
+      next.set(RATING_PARAM, String(minRating));
+    } else {
+      next.delete(RATING_PARAM);
+    }
+    if (sortOrder !== 'recommended') {
+      next.set(SORT_PARAM, sortOrder);
+    } else {
+      next.delete(SORT_PARAM);
+    }
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [selectedCategoryKeys, minRating, sortOrder, searchParams, setSearchParams]);
 
   const attractions = query.data?.items ?? [];
 
