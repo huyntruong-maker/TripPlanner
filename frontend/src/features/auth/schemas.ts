@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
 const MIN_PASSWORD_LENGTH = 8;
-// Must mirror the backend policy (Domain/Constants/UserConstants.cs Password.RegexPattern):
-// at least one lowercase, one uppercase, one digit, one special character, min 8 chars.
+// Must mirror the backend policy (Domain/Constants/UserConstants.cs Password.RegexPattern).
 const PASSWORD_POLICY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
 export const PASSWORD_POLICY_MESSAGE =
   'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character';

@@ -1,5 +1,4 @@
-// User-facing text per backend errorCode (Domain/Messages/*ControllerMsg.cs, docs/API.md).
-// `.Exception` codes are intentionally unmapped — callers show their own action-specific fallback.
+// User-facing text per backend errorCode (docs/API.md); `.Exception` codes are unmapped — callers show their own fallback.
 export const apiErrorMessages: Record<string, string> = {
   // Auth
   'Auth.Login.InvalidCredential': 'Incorrect username or password.',

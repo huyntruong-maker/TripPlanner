@@ -91,8 +91,7 @@ describe('Discover -> destination detail -> Back preserves search state (real na
         '?q=Paris%2C+France&lat=48.8566&lng=2.3522&name=Paris&locationType=city&country=France',
       );
 
-      // The detail URL is the FIRST history entry — location.key is 'default', navigate(-1) has
-      // nowhere to go. This is exactly the post-reload state the user reported.
+      // The detail URL is the FIRST history entry — location.key is 'default', navigate(-1) has nowhere to go.
       renderApp(['/destinations/W214242']);
       await screen.findByRole('heading', { name: 'Eiffel Tower', level: 1 });
 

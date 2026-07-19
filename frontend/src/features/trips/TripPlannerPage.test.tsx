@@ -173,8 +173,7 @@ describe('TripPlannerPage', () => {
       const savedPlacesCard = screen.getByRole('heading', { name: 'Saved Places' }).closest('div');
       const dayOneCard = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' }).closest('div');
       const dayTwoCard = screen.getByRole('heading', { name: 'Day 2 — 2026-09-02' }).closest('div');
-      // Day 2 is empty; it must share the same min-height class as the populated cards, not a
-      // taller one from its own empty-state box.
+      // Day 2 is empty; it must share the same min-height class as the populated cards.
       expect(savedPlacesCard).toHaveClass('min-h-[160px]');
       expect(dayOneCard).toHaveClass('min-h-[160px]');
       expect(dayTwoCard).toHaveClass('min-h-[160px]');

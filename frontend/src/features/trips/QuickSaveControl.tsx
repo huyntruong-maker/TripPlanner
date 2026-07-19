@@ -24,11 +24,7 @@ interface QuickSaveControlProps {
   className?: string;
 }
 
-/**
- * The card's hover/focus "Save place" shortcut — deliberately distinct from `AddToTripControl`:
- * this only ever picks a trip (no day step) and saves straight to that trip's Saved Places
- * (`itineraryDayId: null`). Use `AddToTripControl` when a day picker is wanted.
- */
+/** The card's hover/focus "Save place" shortcut — picks only a trip (no day step) and saves straight to Saved Places (`itineraryDayId: null`); use `AddToTripControl` for the day picker. */
 export function QuickSaveControl({ destination, className }: QuickSaveControlProps) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
@@ -110,9 +106,7 @@ function QuickSavePopover({ destination, onClose }: QuickSavePopoverProps) {
       publishToast(`Saved to ${trip.name}.`, { tone: 'success' });
       onClose();
     } catch {
-      // The global mutation-error toast (queryClient.ts) already surfaced this — including
-      // Trip.AddDestination.DuplicateInDay, which can't actually happen here since Saved Places
-      // has no day to duplicate into, but any other API failure still shows there.
+      // The global mutation-error toast (queryClient.ts) already surfaced this failure.
     }
   }
 

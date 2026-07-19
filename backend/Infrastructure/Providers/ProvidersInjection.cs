@@ -23,8 +23,7 @@ public static class ProvidersInjection
         collection.AddTransient<OpenTripMapDestinationProvider>();
         collection.AddTransient<FoursquareDestinationProvider>();
 
-        // IGeocodingProvider: cached wrapper over the provider selected by Providers:Geocoding:Provider
-        // ("Nominatim" default — up to 5 ranked results, F1-US2; "OpenTripMap" — single best match only).
+        // IGeocodingProvider: cached wrapper over Providers:Geocoding:Provider ("Nominatim" default — up to 5 ranked results, F1-US2; "OpenTripMap" — single best match only).
         collection.AddScoped<IGeocodingProvider>(sp =>
         {
             var configuration = sp.GetRequiredService<IConfiguration>();
@@ -41,9 +40,7 @@ public static class ProvidersInjection
             return new CachedGeocodingProvider(inner, sp.GetRequiredService<ICacheManager>(), logger);
         });
 
-        // IDestinationProvider: Cached(Enriched(OpenTripMap, Foursquare)) — caching wraps the outermost
-        // (already-enriched) result so enriched attractions are what gets cached (PDF requirement:
-        // "Call Foursquare to enrich with categories and reviews").
+        // IDestinationProvider: Cached(Enriched(OpenTripMap, Foursquare)) — caching wraps the outermost, already-enriched result so enriched attractions are what gets cached.
         collection.AddScoped<IDestinationProvider>(sp =>
         {
             var openTripMap = sp.GetRequiredService<OpenTripMapDestinationProvider>();

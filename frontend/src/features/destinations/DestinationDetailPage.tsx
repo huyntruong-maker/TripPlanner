@@ -11,16 +11,7 @@ import { PhotoCarousel } from './PhotoCarousel';
 
 const BACK_LINK_CLASSES = 'inline-flex items-center gap-2 text-primary font-label-md hover:underline';
 
-/**
- * Goes back to wherever the user came from (preserving Discover's search/filter state in its
- * URL) instead of pushing a fresh, param-less "/" — a plain `<Link to="/">` here was the actual
- * cause of "Back to Discover loses my search": it always navigated to a blank Discover, even
- * when the user arrived from a Discover page that already had `?q=...&lat=...` in its URL.
- * When there's no usable in-app history (e.g. a direct link, or a dev-server full reload while
- * sitting on this page), it still restores the search by falling back to the search string the
- * card's Link carried in router state, then to the sessionStorage copy Discover keeps — only a
- * genuinely fresh visitor lands on a bare "/".
- */
+/** Goes back to wherever the user came from, preserving Discover's search/filter state; falls back to router state then sessionStorage when there's no in-app history to pop. */
 function BackToSearchButton() {
   const navigate = useNavigate();
   const location = useLocation();

@@ -9,8 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Foursquare;
 
-/// <summary>Fetches attraction data (categories, ratings, photos) from the new Foursquare Places API
-/// (<c>places-api.foursquare.com</c>).</summary>
+/// <summary>Fetches attraction data (categories, ratings, photos) from the new Foursquare Places API (places-api.foursquare.com).</summary>
 public class FoursquareDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
@@ -25,8 +24,7 @@ public class FoursquareDestinationProvider(
     private const string PremiumFields = "rating,photos,hours,description,website";
     private const string FullFields = CoreFields + "," + PremiumFields;
 
-    // Set for the process lifetime once the account is found to have no premium API credits, so every
-    // subsequent call requests core fields only instead of paying the round-trip cost of a failed premium call.
+    // Set for the process lifetime once premium credits are found exhausted, so later calls skip straight to core fields.
     private static int _premiumFieldsDisabled;
 
     private static bool IsPremiumFieldsDisabled =>
@@ -88,12 +86,7 @@ public class FoursquareDestinationProvider(
         }
     }
 
-    /// <summary>
-    /// Finds the Foursquare place nearest to <paramref name="latitude"/>/<paramref name="longitude"/> whose name
-    /// best matches <paramref name="name"/>, used to enrich an OpenTripMap POI (which keeps its own <c>xid</c> as
-    /// the public <c>ProviderPlaceId</c> — see <c>FoursquareEnrichedDestinationProvider</c>). Best-effort: returns
-    /// null when disabled (no API key), not found, or on any request/parse failure.
-    /// </summary>
+    /// <summary>Finds the Foursquare place nearest the given coordinates matching name, to enrich an OpenTripMap POI (xid stays the public ProviderPlaceId); best-effort — returns null when disabled, not found, or on request/parse failure.</summary>
     public async Task<AttractionDto?> FindNearestMatchAsync(
         string name,
         double latitude,
@@ -167,12 +160,7 @@ public class FoursquareDestinationProvider(
         }
     }
 
-    /// <summary>
-    /// Issues the request with the current field set (full when premium is still assumed available, core-only
-    /// once it has been found to be disabled). If a full-field request fails with the account's "no premium
-    /// credits" error, flips the process-lifetime flag, logs once, and immediately retries with core fields only
-    /// so the caller still gets a usable (category/address) result instead of a hard failure.
-    /// </summary>
+    /// <summary>Requests with the current field set (full unless already disabled); on a "no premium credits" error, flips the process-lifetime flag and retries once with core fields only.</summary>
     private async Task<(HttpStatusCode StatusCode, string Body)> GetWithPremiumFallbackAsync(Func<string, string> buildUrl)
     {
         var requestedFullFields = !IsPremiumFieldsDisabled;
@@ -189,9 +177,7 @@ public class FoursquareDestinationProvider(
         return (statusCode, body);
     }
 
-    /// <summary>Defensive, best-effort detection of the Foursquare "no API credits remaining for Premium calls"
-    /// error — matched on the response body rather than a specific status code since Foursquare has not
-    /// documented a stable status code for this condition.</summary>
+    /// <summary>Best-effort detection of Foursquare's "no premium credits" error, matched on the response body since no stable status code is documented for it.</summary>
     private static bool IsPremiumCreditError(HttpStatusCode statusCode, string body) =>
         statusCode != HttpStatusCode.OK
         && !string.IsNullOrWhiteSpace(body)

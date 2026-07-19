@@ -28,8 +28,7 @@ export function VerifyEmailPage() {
   const isVerified = Boolean(token) && status === 'success';
   const [secondsRemaining, setSecondsRemaining] = useState(REDIRECT_DELAY_SECONDS);
 
-  // Standard SaaS pattern: land the user on /login (not straight into the app) after email
-  // verification, with a short visible countdown so the redirect isn't jarring.
+  // Standard SaaS pattern: land the user on /login (not straight into the app), with a short visible countdown.
   useEffect(() => {
     if (!isVerified) return;
 

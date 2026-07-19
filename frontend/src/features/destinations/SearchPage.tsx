@@ -19,8 +19,7 @@ const LOCATION_LISTBOX_ID = 'location-suggestions-listbox';
 const DROPDOWN_MESSAGE_CLASSES =
   'absolute z-10 top-full left-0 right-0 mt-2 bg-surface-container-lowest border border-outline-variant rounded-lg elevation-l1 px-4 py-3 text-body-md';
 
-// URL search-param keys — keep the selected location (and, in AttractionsGrid, the active
-// filters/sort) shareable and restorable across navigation (e.g. Back from the detail page).
+// URL search-param keys — keep the selected location and active filters/sort shareable and restorable across navigation.
 const QUERY_PARAM = 'q';
 const LAT_PARAM = 'lat';
 const LNG_PARAM = 'lng';
@@ -89,9 +88,7 @@ export function SearchPage() {
     [locationsQuery.data],
   );
 
-  // SearchPage stays mounted across same-route (search-param-only) history entries, so back/forward
-  // navigation doesn't remount it the way leaving for the destination detail page and returning does.
-  // Re-hydrate from the URL on those POP navigations to restore whatever was selected at that point.
+  // SearchPage stays mounted across same-route history entries, so re-hydrate from the URL on POP navigations.
   useEffect(() => {
     if (navigationType !== 'POP') return;
     const restored = locationFromSearchParams(searchParams);
@@ -103,10 +100,7 @@ export function SearchPage() {
 
   const discoverSearch = searchParams.toString() ? `?${searchParams.toString()}` : '';
 
-  // Belt-and-suspenders restore path for BackToSearchButton (DestinationDetailPage): in-app
-  // history/Link state can both be lost (e.g. a Vite-dev full reload while on the detail page
-  // resets `location.key` to 'default' and drops any router state), so also keep the last
-  // non-empty search string in sessionStorage as a history-independent fallback.
+  // Belt-and-suspenders fallback for BackToSearchButton: history/Link state can both be lost (e.g. a dev-server reload), so also keep the last search in sessionStorage.
   useEffect(() => {
     if (discoverSearch) {
       saveLastDiscoverSearch(discoverSearch);
@@ -128,8 +122,7 @@ export function SearchPage() {
     setQuery(location.displayName);
     setIsDropdownDismissed(true);
     setActiveIndex(-1);
-    // A genuinely new search — worth its own Back stop — so this pushes (default), dropping any
-    // filter/sort params from a previous location (AttractionsGrid re-derives fresh ones below).
+    // A genuinely new search — worth its own Back stop — so this pushes, dropping any filter/sort params from a previous location.
     setSearchParams(locationToSearchParams(location));
   }
 
@@ -218,8 +211,7 @@ export function SearchPage() {
       </section>
 
       {selectedLocation && (
-        // Keyed by coordinates so switching locations remounts the grid — its filters/sort are
-        // meant to be fresh per search, and a clean mount is what makes URL-hydration reliable.
+        // Keyed by coordinates so switching locations remounts the grid with fresh filters/sort.
         <AttractionsGrid
           key={`${selectedLocation.latitude},${selectedLocation.longitude}`}
           location={selectedLocation}
@@ -299,9 +291,7 @@ function LocationResults({ query, suggestions, activeIndex, onSelect, onHover }:
 interface AttractionsGridProps {
   location: LocationSuggestion;
   query: UseQueryResult<PagedResult<AttractionSummary>>;
-  /** Current Discover URL search string (e.g. `"?q=...&lat=..."`); threaded onto each card's
-   * destination Link as router state so Back-navigation can restore this exact search even when
-   * in-app history is unavailable (see `BackToSearchButton` in DestinationDetailPage.tsx). */
+  /** Current Discover URL search string; threaded onto each card's destination Link as router state so Back-navigation can restore it. */
   discoverSearch: string;
 }
 
@@ -344,11 +334,7 @@ function categoriesFor(attraction: AttractionSummary): string[] {
   return [...new Set(values)];
 }
 
-/**
- * Builds the category chip list from the loaded attractions: case-insensitive dedup (e.g.
- * "Art_galleries" / "art_galleries" collapse into one chip; "Bank" / "Banks" stay distinct
- * since they're genuinely different values), most-frequent first.
- */
+/** Builds the category chip list from the loaded attractions: case-insensitive dedup, most-frequent first. */
 function buildCategoryOptions(attractions: AttractionSummary[]): CategoryOption[] {
   const byKey = new Map<string, { label: string; count: number }>();
 
@@ -379,13 +365,8 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => sortOrderFromSearchParams(searchParams));
   const [showAllCategories, setShowAllCategories] = useState(false);
 
-  // Mirrors filters/sort into the URL (replace — no history spam) so they survive detail-page
-  // back navigation alongside the selected location. This component remounts per location (see
-  // the `key` on <AttractionsGrid> in SearchPage), so the lazy initializers above stay accurate.
-  // Writes only when the URL actually differs from the filter state. A skip-first-run ref is NOT
-  // enough here: under StrictMode's double-invoked effects the second run raced SearchPage's
-  // location-select push with a stale `previous` and wiped the freshly-pushed ?q/lat params —
-  // the no-op comparison makes mount runs harmless no matter how many times they fire.
+  // Mirrors filters/sort into the URL (replace, no history spam); writes only when the URL actually
+  // differs so StrictMode's double-invoked effects can't wipe a freshly-pushed ?q/lat with a stale `previous`.
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
     if (selectedCategoryKeys.length > 0) {

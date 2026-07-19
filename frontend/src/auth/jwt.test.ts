@@ -4,9 +4,7 @@ import { decodeUserFromToken } from './jwt';
 
 describe('decodeUserFromToken', () => {
   it('decodes id/email from the exact short claim names ASP.NET Core Identity issues', () => {
-    // Backed by source analysis, not a live token (no backend available here): .NET's
-    // default JwtSecurityTokenHandler maps ClaimTypes.NameIdentifier/Name to "nameid"/
-    // "unique_name"; re-verify against a real login response once the API is reachable.
+    // Backed by source analysis, not a live token: .NET's JwtSecurityTokenHandler maps NameIdentifier/Name to "nameid"/"unique_name".
     const token = buildFakeJwt({
       nameid: 'b3b1f5b0-1111-4a2b-9c3d-abcdef123456',
       unique_name: 'jane@example.com',

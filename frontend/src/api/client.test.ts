@@ -98,9 +98,7 @@ describe('apiClient response interceptor — silent token refresh', () => {
           { status: 401 },
         ),
       ),
-      // No override for PUT /auth/refresh — the default auth handler
-      // (src/test/msw/handlers/auth.ts) always fails, matching an expired
-      // refresh token.
+      // No override for PUT /auth/refresh — the default handler always fails, matching an expired refresh token.
     );
 
     await expect(apiClient.get('/trips')).rejects.toBeTruthy();

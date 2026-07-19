@@ -215,8 +215,7 @@ describe('SearchPage — attractions grid (F1/US3)', () => {
     const thumbnail = document.querySelector('img.attraction-thumbnail');
     expect(thumbnail).toHaveAttribute('src', 'https://example.test/eiffel.jpg');
     expect(thumbnail).toHaveAttribute('alt', '');
-    // Categories/tags are humanized (F1-US1 design pass); "Cultural"/"Landmark" also appear as
-    // filter-chip labels (F1-US4), so there may be more than one match.
+    // Categories/tags are humanized; "Cultural"/"Landmark" also appear as filter-chip labels, so there may be more than one match.
     expect(screen.getAllByText('Cultural').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Landmark').length).toBeGreaterThan(0);
     expect(screen.getByText('★ 9.5')).toBeInTheDocument();

@@ -41,8 +41,7 @@ export function TripPlannerPage() {
   const queryClient = useQueryClient();
   const tripQuery = useTrip(tripId);
   const [datesWarning, setDatesWarning] = useState<string | null>(null);
-  // Saved Places is a sticky sidebar on desktop (always visible) but a collapsible section on
-  // narrow screens, since there's no room for a permanent sidebar there.
+  // Saved Places is a sticky sidebar on desktop, but a collapsible section on narrow screens.
   const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(true);
 
   const removeMutation = useMutation({
@@ -140,20 +139,14 @@ export function TripPlannerPage() {
           <SavingIndicator tripId={trip.id} />
         </div>
 
-        {/* `autoScroll` (dnd-kit's default, kept explicit here) scrolls the page toward the
-            viewport edge the pointer nears mid-drag — with everything now in normal vertical
-            flow (no horizontal-scroll strip), that's plain window scrolling. */}
+        {/* autoScroll (dnd-kit default, kept explicit) scrolls the page toward the pointer mid-drag since layout is normal vertical flow. */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
           autoScroll
         >
-          {/* Two INDEPENDENT containers, not one grid: Saved Places is a fixed-width sticky
-              sidebar with its own column; the day columns live in a separate wrapping grid that
-              starts at its own left edge. Keeping them as siblings (not grid cells of the same
-              grid) is what avoids the day grid "reserving" Saved Places' cell and offsetting
-              every row after it. */}
+          {/* Two independent containers, not one grid — keeps the day grid from reserving Saved Places' cell and offsetting every row after it. */}
           <div className="lg:flex lg:items-start lg:gap-gutter">
             <aside className="mb-gutter lg:mb-0 lg:w-[240px] lg:flex-shrink-0 lg:sticky lg:top-6">
               <button
@@ -248,8 +241,7 @@ function PlannerColumnView({ column, onRemove, removingId, emptyMessage }: Plann
   return (
     <div className="min-h-[160px] bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-4">
       <header className="flex justify-between items-center gap-2 mb-3">
-        {/* Full text lives in title/aria-label so the compact visible heading never loses
-            information — the accessible name comes from aria-label, not the truncated text. */}
+        {/* Accessible name comes from aria-label (full text), not the truncated visible text. */}
         <h3
           className="min-w-0 truncate whitespace-nowrap text-label-md font-label-md text-on-surface"
           title={column.title}

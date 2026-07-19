@@ -1,8 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { buildFakeJwt } from '../../buildFakeJwt';
 
-// Matches apiClient's default baseURL (src/api/client.ts) when
-// VITE_API_BASE_URL is unset, which is how tests run.
+// Matches apiClient's default baseURL when VITE_API_BASE_URL is unset, which is how tests run.
 const BASE_URL = 'http://localhost:5080/api/v1';
 
 export const EXISTING_EMAIL = 'taken@example.com';

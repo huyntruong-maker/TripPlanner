@@ -45,8 +45,7 @@ public class AddDestinationToTripCommandHandler(IWriteUnitOfWork writeUnitOfWork
 
         var destinationRepo = writeUnitOfWork.GetRepository<TripDestination>();
 
-        // Null ItineraryDayId targets the Saved Places bucket; otherwise verify the day belongs to this trip
-        // (prevents cross-trip injection).
+        // Null ItineraryDayId targets the Saved Places bucket; otherwise verify the day belongs to this trip (prevents cross-trip injection).
         if (request.ItineraryDayId is not null)
         {
             var dayRepo = writeUnitOfWork.GetRepository<ItineraryDay>();

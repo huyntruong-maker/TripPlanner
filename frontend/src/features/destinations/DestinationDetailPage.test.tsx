@@ -5,8 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../auth/AuthContext';
 
-// jsdom cannot run real Leaflet (no layout/canvas); only the render-guard and
-// label wiring in MapView are under test here, not Leaflet itself.
+// jsdom cannot run real Leaflet; only MapView's render-guard and label wiring are under test here.
 vi.mock('leaflet', () => {
   const map = { remove: vi.fn() };
   const layer = { addTo: vi.fn(() => layer), bindPopup: vi.fn(() => layer) };

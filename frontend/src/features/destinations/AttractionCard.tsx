@@ -7,18 +7,13 @@ import { humanizeKind } from './humanizeKind';
 
 interface AttractionCardProps {
   attraction: AttractionSummary;
-  /** Current Discover search string; threaded onto the destination Link as router state so
-   * "Back to search" can restore this exact search (see `discoverSearchStorage.ts`). */
+  /** Current Discover search string; threaded onto the destination Link as router state so "Back to search" can restore it. */
   discoverSearch: string;
 }
 
 const MAX_VISIBLE_TAGS = 3;
 
-/**
- * One attraction result card: thumbnail, category/tags, rating, and two distinct save actions —
- * a hover/focus "Save place" icon (trip-only, straight to Saved Places) and the full "Add to
- * Trip" control in the footer (trip + day picker).
- */
+/** One attraction result card: thumbnail, category/tags, rating, and two save actions — hover/focus "Save place" (trip-only) and the footer "Add to Trip" control (trip + day picker). */
 export function AttractionCard({ attraction, discoverSearch }: AttractionCardProps) {
   // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = attraction.tags.filter((tag) => tag !== attraction.category);

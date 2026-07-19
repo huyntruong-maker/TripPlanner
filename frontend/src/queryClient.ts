@@ -22,9 +22,7 @@ export function createAppQueryClient(): QueryClient {
     },
     queryCache: new QueryCache({ onError: reportError }),
     mutationCache: new MutationCache({
-      // A mutation can opt out via `meta: { suppressGlobalToast: true }` when it
-      // shows its own toast — e.g. the planner's move mutation, which attaches a
-      // Retry action (F3-US9).
+      // A mutation can opt out via `meta: { suppressGlobalToast: true }` when it shows its own toast (e.g. planner move retry, F3-US9).
       onError: (error, _variables, _onMutateResult, mutation) => {
         if (mutation.meta?.suppressGlobalToast) return;
         reportError(error);

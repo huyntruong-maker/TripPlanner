@@ -66,8 +66,7 @@ describe('VerifyEmailPage', () => {
       renderVerifyEmail(`/verify-email?token=${VALID_VERIFY_TOKEN}`);
       await screen.findByRole('heading', { name: 'Email verified' });
 
-      // Each tick reschedules the next one from a React effect, so advance (and let React flush)
-      // one second at a time rather than jumping the whole 3000ms in one go.
+      // Each tick reschedules the next one from a React effect, so advance one second at a time.
       for (let tick = 0; tick < 3; tick += 1) {
         await act(async () => {
           vi.advanceTimersByTime(1000);

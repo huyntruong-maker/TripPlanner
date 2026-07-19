@@ -185,10 +185,7 @@ public class OpenTripMapDestinationProvider(
             Name = name,
             Category = category,
             Tags = tags,
-            // Rating is exposed on a 0-10 scale (Foursquare reviews). OpenTripMap's "rate" is a
-            // 1-7 POI-importance class, not a review score — mapping it here would leak an
-            // incompatible scale to the frontend rating filter. Left null; the Foursquare
-            // enrichment decorator (FoursquareEnrichedDestinationProvider) is the only source of Rating.
+            // Rating is a 0-10 scale (Foursquare reviews); OpenTripMap's "rate" is a 1-7 importance class, not a review score, so it's left null here.
             Rating = null,
             Latitude = lat,
             Longitude = lon
@@ -261,8 +258,7 @@ public class OpenTripMapDestinationProvider(
             Name = name,
             Category = category,
             Tags = tags,
-            // See MapFeature: Rating is Foursquare-only (0-10 review score); OpenTripMap's "rate"
-            // (1-7 importance class) must not leak into this field.
+            // See MapFeature: Rating is Foursquare-only (0-10 review score); OpenTripMap's "rate" (1-7 importance class) must not leak into this field.
             Rating = null,
             Latitude = lat,
             Longitude = lon,

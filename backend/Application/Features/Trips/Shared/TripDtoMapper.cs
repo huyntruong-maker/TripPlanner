@@ -6,10 +6,7 @@ namespace Application.Features.Trips.Shared;
 /// <summary>Maps a fully-loaded <see cref="Trip"/> (itinerary days + destinations) to its detail DTO.</summary>
 public static class TripDtoMapper
 {
-    /// <summary>
-    /// Requires <paramref name="trip"/> to have <c>ItineraryDays.TripDestinations</c> and the trip-level
-    /// <c>TripDestinations</c> (for Saved Places) already loaded/included.
-    /// </summary>
+    /// <summary>Requires trip.ItineraryDays.TripDestinations and the trip-level TripDestinations (Saved Places) to be already loaded/included.</summary>
     public static TripDto ToDetailDto(Trip trip)
     {
         var itineraryDays = trip.ItineraryDays

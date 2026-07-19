@@ -10,8 +10,7 @@ import './styles.css';
 // Global (not per-component) so component tests don't need to process Leaflet's CSS under jsdom.
 import 'leaflet/dist/leaflet.css';
 
-// A single shared QueryClient for all server-state data fetching (TanStack
-// Query). Wires every query/mutation failure to the global error toast.
+// Shared QueryClient for all server-state fetching; wires failures to the global error toast.
 const queryClient = createAppQueryClient();
 
 createRoot(document.getElementById('root')!).render(

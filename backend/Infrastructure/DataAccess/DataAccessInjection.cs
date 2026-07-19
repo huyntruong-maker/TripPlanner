@@ -31,16 +31,14 @@ public static class DataAccessInjection
         if (string.IsNullOrEmpty(connectionString))
             throw new ArgumentNullException(nameof(connectionString), "Write database connection string is null");
 
-        // EnableRetryOnFailure is incompatible with EF migrations (which use internal transactions).
-        // Use a plain context without retry for the migration step.
+        // EnableRetryOnFailure is incompatible with EF migrations (internal transactions), so use a plain context without retry here.
         var options = new DbContextOptionsBuilder<WriteDbContext>()
             .UseNpgsql(connectionString)
             .Options;
 
         using var context = new WriteDbContext(options);
 
-        // The database may still be starting when the app boots (e.g. docker compose cold start),
-        // so wait for it instead of crashing on the first refused connection.
+        // The database may still be starting when the app boots (e.g. docker compose cold start); wait instead of crashing on the first refused connection.
         var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(RunMigration));
         const int maxConnectAttempts = 10;
         var retryDelay = TimeSpan.FromSeconds(3);

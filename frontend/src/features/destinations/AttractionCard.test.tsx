@@ -16,8 +16,7 @@ import { AttractionCard } from './AttractionCard';
 const BASE_URL = 'http://localhost:5080/api/v1';
 
 function renderCard(attraction: AttractionSummary) {
-  // The real app's shared QueryClient (not a bare one) — its mutationCache is what actually
-  // wires mutation failures to the global error toast, which QuickSaveControl relies on.
+  // The real app's shared QueryClient — its mutationCache wires failures to the global error toast, which QuickSaveControl relies on.
   const queryClient = createAppQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>

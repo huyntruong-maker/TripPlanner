@@ -12,13 +12,7 @@ interface ModalProps {
   children: ReactNode;
 }
 
-/**
- * A minimal, reusable centered modal dialog: `role="dialog"` + `aria-modal`, a labelled title,
- * a focus trap (Tab/Shift+Tab cycle within it, initial focus on the first focusable element),
- * Escape and backdrop-click both close it, and focus returns to whatever was focused before the
- * dialog opened (typically its trigger button) once it closes. Rendered via a portal into
- * `document.body` so it isn't clipped by an ancestor's `overflow`/stacking context.
- */
+/** Centered modal dialog with a focus trap, Escape/backdrop close, and focus restore on close; rendered via a portal so it isn't clipped by an ancestor's overflow/stacking context. */
 export function Modal({ titleId, title, onClose, children }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
