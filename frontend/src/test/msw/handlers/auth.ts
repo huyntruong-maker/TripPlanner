@@ -1,12 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { buildFakeJwt } from '../../buildFakeJwt';
 
-// Matches apiClient's default baseURL (src/api/client.ts) when
-// VITE_API_BASE_URL is unset, which is how tests run.
+// Matches apiClient's default baseURL when VITE_API_BASE_URL is unset, which is how tests run.
 const BASE_URL = 'http://localhost:5080/api/v1';
 
 export const EXISTING_EMAIL = 'taken@example.com';
 export const VALID_CREDENTIALS = { email: 'jane@example.com', password: 'Secret123!' };
+export const UNVERIFIED_CREDENTIALS = { email: 'unverified@example.com', password: 'Secret123!' };
 export const VALID_VERIFY_TOKEN = 'valid-verify-token';
 export const ALREADY_VERIFIED_TOKEN = 'already-verified-token';
 
@@ -50,6 +50,21 @@ export const authHandlers = [
         validates: [],
         result: issueTokensFor(body.username),
       });
+    }
+
+    if (
+      body.username === UNVERIFIED_CREDENTIALS.email &&
+      body.password === UNVERIFIED_CREDENTIALS.password
+    ) {
+      return HttpResponse.json(
+        {
+          success: false,
+          errorCode: 'Auth.Login.InActive',
+          error: 'Your account is not active.',
+          validates: [],
+        },
+        { status: 400 },
+      );
     }
 
     return HttpResponse.json(

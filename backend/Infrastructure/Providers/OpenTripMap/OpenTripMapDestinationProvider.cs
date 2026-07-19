@@ -82,12 +82,31 @@ public class OpenTripMapDestinationProvider(
         }
     }
 
+    // OpenTripMap's free tier rate-limits bursts; a full page fired 20 concurrent detail calls
+    // and the throttled ones silently lost their thumbnail (visible as "No photo" cards whose
+    // detail page later showed an image). Cap the concurrency and retry once per item.
+    private const int ThumbnailEnrichmentConcurrency = 4;
+    private const int ThumbnailRetryDelayMs = 400;
+
     // Radius API omits photos; fetch them from the detail endpoint in parallel, best-effort.
     private async Task EnrichThumbnailsAsync(List<AttractionDto> attractions, CancellationToken cancellationToken)
     {
+        using var throttle = new SemaphoreSlim(ThumbnailEnrichmentConcurrency);
+
         var tasks = attractions
             .Where(a => !string.IsNullOrWhiteSpace(a.ProviderPlaceId))
-            .Select(a => EnrichThumbnailAsync(a, cancellationToken));
+            .Select(async attraction =>
+            {
+                await throttle.WaitAsync(cancellationToken);
+                try
+                {
+                    await EnrichThumbnailAsync(attraction, cancellationToken);
+                }
+                finally
+                {
+                    throttle.Release();
+                }
+            });
 
         await Task.WhenAll(tasks);
     }
@@ -97,6 +116,12 @@ public class OpenTripMapDestinationProvider(
         try
         {
             var detail = await GetAttractionDetailAsync(attraction.ProviderPlaceId, cancellationToken);
+            if (detail == null)
+            {
+                // Null is either a genuine 404 or a rate-limit miss; one delayed retry rescues the latter.
+                await Task.Delay(ThumbnailRetryDelayMs, cancellationToken);
+                detail = await GetAttractionDetailAsync(attraction.ProviderPlaceId, cancellationToken);
+            }
             attraction.ThumbnailUrl = detail?.ThumbnailUrl;
         }
         catch (Exception ex)
@@ -185,10 +210,7 @@ public class OpenTripMapDestinationProvider(
             Name = name,
             Category = category,
             Tags = tags,
-            // Rating is exposed on a 0-10 scale (Foursquare reviews). OpenTripMap's "rate" is a
-            // 1-7 POI-importance class, not a review score — mapping it here would leak an
-            // incompatible scale to the frontend rating filter. Left null; the Foursquare
-            // enrichment decorator (FoursquareEnrichedDestinationProvider) is the only source of Rating.
+            // Rating is a 0-10 scale (Foursquare reviews); OpenTripMap's "rate" is a 1-7 importance class, not a review score, so it's left null here.
             Rating = null,
             Latitude = lat,
             Longitude = lon
@@ -261,8 +283,7 @@ public class OpenTripMapDestinationProvider(
             Name = name,
             Category = category,
             Tags = tags,
-            // See MapFeature: Rating is Foursquare-only (0-10 review score); OpenTripMap's "rate"
-            // (1-7 importance class) must not leak into this field.
+            // See MapFeature: Rating is Foursquare-only (0-10 review score); OpenTripMap's "rate" (1-7 importance class) must not leak into this field.
             Rating = null,
             Latitude = lat,
             Longitude = lon,

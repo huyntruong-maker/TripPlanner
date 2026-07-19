@@ -7,12 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Enrichment;
 
-/// <summary>
-/// Enriches OpenTripMap attractions with Foursquare categories/reviews/photos/hours (PDF requirement:
-/// "Call Foursquare to enrich with categories and reviews"). Composes an inner <see cref="IDestinationProvider"/>
-/// (OpenTripMap) with <see cref="FoursquareDestinationProvider"/>; the OpenTripMap <c>xid</c> remains the public
-/// <c>ProviderPlaceId</c> — Foursquare is matched by name + coordinates on every call rather than persisted.
-/// </summary>
+/// <summary>Enriches OpenTripMap attractions with Foursquare categories/reviews/photos/hours; matches by name + coordinates on every call rather than persisting the match (OpenTripMap xid stays the public ProviderPlaceId).</summary>
 public class FoursquareEnrichedDestinationProvider(
     IDestinationProvider inner,
     FoursquareDestinationProvider foursquare,
@@ -44,11 +39,7 @@ public class FoursquareEnrichedDestinationProvider(
         if (result.Items.Count == 0)
             return result;
 
-        // Concurrent, best-effort, per-item enrichment. NFR-2 trade-off: IRestfulService has no per-call
-        // timeout hook today, so a slow Foursquare response can extend overall latency; we accept this
-        // because the outermost CachedDestinationProvider absorbs repeat queries (30-min list TTL), keeping
-        // p95 within budget for the common "same area searched again" case rather than adding new timeout
-        // infrastructure for this change.
+        // Concurrent, best-effort, per-item enrichment; NFR-2 trade-off accepted since CachedDestinationProvider's 30-min list TTL keeps repeat-query p95 within budget without per-call timeout support.
         var tasks = result.Items.Select(attraction => EnrichListItemAsync(attraction, cancellationToken));
         await Task.WhenAll(tasks);
 
@@ -97,10 +88,7 @@ public class FoursquareEnrichedDestinationProvider(
         }
     }
 
-    /// <summary>Rating always comes from Foursquare's 0-10 score (or stays null) — never OpenTripMap's 1-7 class.
-    /// Foursquare's photo is preferred as the thumbnail (unique per venue); OpenTripMap's Wikimedia thumbnail,
-    /// set later by <c>OpenTripMapDestinationProvider</c>'s own enrichment, is kept as the fallback when
-    /// Foursquare has no photo.</summary>
+    /// <summary>Rating always comes from Foursquare's 0-10 score (never OpenTripMap's 1-7 class); Foursquare's photo is preferred as the thumbnail, falling back to OpenTripMap's Wikimedia thumbnail when absent.</summary>
     private static void ApplyListEnrichment(AttractionDto attraction, AttractionDto match)
     {
         attraction.Rating = match.Rating;

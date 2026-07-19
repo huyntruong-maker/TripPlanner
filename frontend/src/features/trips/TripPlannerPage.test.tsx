@@ -118,6 +118,99 @@ describe('TripPlannerPage', () => {
         screen.getByRole('button', { name: `Reorder Duplicate Trigger Place` }),
       ).toBeInTheDocument();
     });
+
+    it('lays days out in a wrapping grid rather than a horizontal-scroll strip', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const dayOneHeading = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      const daysGrid = dayOneHeading.closest('div')?.parentElement;
+      expect(daysGrid).not.toBeNull();
+      expect(daysGrid).toHaveClass('grid');
+      // The old layout put everything (Saved Places + every day) in one overflow-x-auto flex row.
+      expect(document.querySelector('.overflow-x-auto')).not.toBeInTheDocument();
+    });
+
+    it('uses a narrower minimum column width so more days fit on one row before wrapping', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const dayOneHeading = await screen.findByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      const daysGrid = dayOneHeading.closest('div')?.parentElement as HTMLElement;
+
+      expect(daysGrid).toHaveClass('grid-cols-[repeat(auto-fill,minmax(210px,1fr))]');
+    });
+
+    it('slims the Saved Places sidebar down from its previous width', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const savedPlacesHeading = await screen.findByRole('heading', { name: 'Saved Places' });
+      const sidebar = savedPlacesHeading.closest('aside');
+
+      expect(sidebar).toHaveClass('lg:w-[240px]');
+    });
+
+    it('keeps Saved Places out of the day-columns grid — two independent containers, not one grid with a hole', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const dayOneHeading = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      const daysGrid = dayOneHeading.closest('div')?.parentElement as HTMLElement;
+      const savedPlacesHeading = screen.getByRole('heading', { name: 'Saved Places' });
+
+      expect(daysGrid.contains(savedPlacesHeading)).toBe(false);
+      // Saved Places sits in its own sticky sidebar, a sibling of (not inside) the days grid.
+      expect(savedPlacesHeading.closest('aside')).not.toBeNull();
+      expect(daysGrid.closest('aside')).toBeNull();
+    });
+
+    it('gives every day/Saved Places card the same compact minimum height, empty or not', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const savedPlacesCard = screen.getByRole('heading', { name: 'Saved Places' }).closest('div');
+      const dayOneCard = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' }).closest('div');
+      const dayTwoCard = screen.getByRole('heading', { name: 'Day 2 — 2026-09-02' }).closest('div');
+      // Day 2 is empty; it must share the same min-height class as the populated cards.
+      expect(savedPlacesCard).toHaveClass('min-h-[160px]');
+      expect(dayOneCard).toHaveClass('min-h-[160px]');
+      expect(dayTwoCard).toHaveClass('min-h-[160px]');
+    });
+
+    it('shows a compact single-line day heading (full date kept as the accessible name)', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const heading = await screen.findByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      // Accessible name (aria-label) stays the full date; visible text is the compact form.
+      expect(heading).toHaveTextContent('Day 1 · Sep 1');
+      expect(heading).toHaveClass('truncate');
+      expect(heading).toHaveAttribute('title', 'Day 1 — 2026-09-01');
+    });
+
+    it('truncates a long item name to a single line instead of wrapping/growing the row', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      const itemName = await screen.findByText('Louvre Museum');
+      expect(itemName).toHaveClass('truncate');
+      expect(itemName).toHaveAttribute('title', 'Louvre Museum');
+    });
+
+    it('offers a mobile collapse toggle for Saved Places, expanded by default', async () => {
+      const user = userEvent.setup();
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const toggle = screen.getByRole('button', { name: /Saved Places/ });
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('Louvre Museum')).toBeVisible();
+
+      await user.click(toggle);
+
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    });
   });
 
   describe('saving indicator (F3-US9)', () => {

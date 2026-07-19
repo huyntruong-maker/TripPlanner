@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, type InitialEntry } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthContext';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { ToastProvider } from '../components/toast/ToastProvider';
@@ -12,7 +12,7 @@ function TripsPageMarker() {
 }
 
 /** Renders the real auth routes so tests exercise the actual ProtectedRoute -> LoginPage -> returnTo round trip. */
-export function renderAuthRoutes(initialEntries: string[]) {
+export function renderAuthRoutes(initialEntries: InitialEntry[]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(

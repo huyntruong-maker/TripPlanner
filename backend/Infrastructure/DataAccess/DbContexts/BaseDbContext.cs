@@ -30,8 +30,7 @@ public class
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        // Must call base first so Identity (v10+) can configure its own entities
-        // (including IdentityPasskeyData added in .NET 10).
+        // Must call base first so Identity (v10+) can configure its own entities (including IdentityPasskeyData added in .NET 10).
         base.OnModelCreating(builder);
 
         builder.ApplyConfiguration(new UserConfiguration());

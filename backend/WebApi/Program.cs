@@ -59,15 +59,11 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 var app = builder.Build();
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Configuration.GetSection(ConfigKeys.EnableSwagger).Get<bool>())
     app.UseSwaggers();
 
-// In Development the frontend calls the HTTP endpoint directly; redirecting to HTTPS
-// breaks CORS preflights (browsers reject redirects on preflight requests).
+// In Development, redirecting to HTTPS breaks CORS preflights (browsers reject redirects on preflight requests).
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 

@@ -3,8 +3,7 @@ import type { AttractionSummary, LocationSuggestion } from '../../../types';
 
 const BASE_URL = 'http://localhost:5080/api/v1';
 
-// Query strings the tests type into the search box, each exercising a
-// distinct location-search state.
+// Query strings the tests type into the search box, each exercising a distinct location-search state.
 export const CITY_WITH_ATTRACTIONS_QUERY = 'Paris';
 export const CITY_WITH_NO_ATTRACTIONS_QUERY = 'Nowhereville';
 export const ATTRACTIONS_ERROR_CITY_QUERY = 'AttractionsErrorCity';

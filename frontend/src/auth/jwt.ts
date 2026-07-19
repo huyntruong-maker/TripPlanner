@@ -1,8 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
 import type { AuthenticatedUser } from '../types';
 
-// ASP.NET's JwtSecurityTokenHandler maps ClaimTypes to short names ("nameid"/"unique_name");
-// try every known form since there's no `/me` endpoint to fall back on.
+// ASP.NET maps ClaimTypes to short names ("nameid"/"unique_name"); try every known form since there's no `/me` endpoint.
 const ID_CLAIM_KEYS = [
   'nameid',
   'sub',

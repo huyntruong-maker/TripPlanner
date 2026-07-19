@@ -51,9 +51,29 @@ describe('AddToTripControl', () => {
     });
   });
 
-  describe('logged in', () => {
+  describe('logged in — modal dialog (trip + day only, no Saved Places option)', () => {
     beforeEach(() => {
       signInForTest();
+    });
+
+    it('opens a labelled, modal dialog when "Add to Trip" is clicked', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
+
+      const dialog = await screen.findByRole('dialog', { name: 'Add to trip' });
+      expect(dialog).toHaveAttribute('aria-modal', 'true');
+    });
+
+    it('never offers a "Saved Places" day option — trip + day selection only', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
+      await user.selectOptions(await screen.findByLabelText('Trip'), EXISTING_TRIP_ID);
+
+      expect(screen.queryByRole('option', { name: /Saved Places/ })).not.toBeInTheDocument();
     });
 
     it('adds the destination to a chosen trip and day', async () => {
@@ -66,9 +86,11 @@ describe('AddToTripControl', () => {
       await user.click(screen.getByRole('button', { name: 'Add' }));
 
       expect(await screen.findByRole('status')).toHaveTextContent('Added to Paris 2026.');
+      // The dialog closes once the destination is added.
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    it('offers Saved Places (schedule later) and a hint when the chosen trip has no itinerary days', async () => {
+    it('blocks adding (no day step to skip to) when the chosen trip has no itinerary days yet', async () => {
       const user = userEvent.setup();
       renderControl();
 
@@ -76,22 +98,8 @@ describe('AddToTripControl', () => {
       await user.selectOptions(await screen.findByLabelText('Trip'), TRIP_WITHOUT_DATES_ID);
 
       expect(await screen.findByText(/This trip has no dates yet/)).toBeInTheDocument();
-      expect(
-        screen.getByRole('option', { name: 'Saved Places (schedule later)' }),
-      ).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Add' })).toBeEnabled();
-    });
-
-    it('adds the destination to Saved Places when the trip has no itinerary days yet (F3-US4)', async () => {
-      const user = userEvent.setup();
-      renderControl();
-
-      await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
-      await user.selectOptions(await screen.findByLabelText('Trip'), TRIP_WITHOUT_DATES_ID);
-      await user.selectOptions(screen.getByLabelText('Day'), 'saved-places');
-      await user.click(screen.getByRole('button', { name: 'Add' }));
-
-      expect(await screen.findByRole('status')).toHaveTextContent('Added to Someday Trip.');
+      expect(screen.queryByLabelText('Day')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
     });
 
     it('shows a message when the user has no trips yet', async () => {
@@ -102,6 +110,45 @@ describe('AddToTripControl', () => {
       await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
 
       expect(await screen.findByText(/You don't have any trips yet/)).toBeInTheDocument();
+    });
+
+    it('closes on Escape and returns focus to the trigger button', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      const trigger = screen.getByRole('button', { name: 'Add to Trip' });
+      await user.click(trigger);
+      await screen.findByRole('dialog');
+
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+    });
+
+    it('closes when the backdrop (outside the dialog content) is clicked', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
+      const dialog = await screen.findByRole('dialog');
+
+      // The backdrop is the dialog's own positioning parent — click it directly, not the content.
+      await user.click(dialog.parentElement as HTMLElement);
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('closes via the dialog\'s own close (X) button', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
+      await screen.findByRole('dialog');
+
+      await user.click(screen.getByRole('button', { name: 'Close dialog' }));
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 });

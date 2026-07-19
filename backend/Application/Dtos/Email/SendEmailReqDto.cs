@@ -10,7 +10,5 @@ public class SendEmailReqDto
 
     public required string Subject { get; set; }
 
-    public required string TemplatePath { get; set; }
-
-    public Dictionary<string, string>? DataBinding { get; set; }
+    public required string Body { get; set; }
 }

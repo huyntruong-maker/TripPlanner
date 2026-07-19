@@ -1,4 +1,5 @@
-﻿using Application.Dtos.Base;
+﻿using Application.Common.Email;
+using Application.Dtos.Base;
 using Application.Dtos.Email;
 using Application.Interfaces.Cqrs;
 using Application.Interfaces.DataAccess;
@@ -59,25 +60,18 @@ namespace Application.Features.Auth.Commands.ResetPasswordCommand
 
         public async Task<string> SendResetPasswordSuccessEmail(User user)
         {
-            var emailTemplate = configuration.GetSection(ConfigKeys.Security.Email.ResetPasswordSuccessNotification).Get<EmailTemplateDto>();
-            if (string.IsNullOrEmpty(user.Email)
-                || emailTemplate == null
-                || string.IsNullOrEmpty(emailTemplate.Path))
+            if (string.IsNullOrEmpty(user.Email))
             {
                 return AuthControllerMsg.ResetPassword.SendEmailFailed;
             }
 
-            var dataBinding = new Dictionary<string, string>()
-            {
-                { "{{UserName}}", user.UserName! },
-            };
+            var emailTemplate = configuration.GetSection(ConfigKeys.Security.Email.ResetPasswordSuccessNotification).Get<EmailTemplateDto>();
 
             var request = new SendEmailReqDto
             {
                 ToEmails = [user.Email],
-                Subject = string.IsNullOrEmpty(emailTemplate.Subject) ? "Reset your password." : emailTemplate.Subject,
-                TemplatePath = emailTemplate.Path,
-                DataBinding = dataBinding
+                Subject = string.IsNullOrEmpty(emailTemplate?.Subject) ? EmailTemplates.ResetPasswordSuccessSubject : emailTemplate.Subject,
+                Body = EmailTemplates.BuildResetPasswordSuccessEmail(user.UserName!)
             };
 
             return await emailService.SendEmail(request);

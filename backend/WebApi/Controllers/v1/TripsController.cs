@@ -27,9 +27,7 @@ public class TripsController(
     ILogger<TripsController> logger,
     IMapper mapper) : BaseController(logger, mapper)
 {
-    /// <summary>
-    /// Returns the authenticated user's trip list. Empty list when the user has no trips (F3-US10).
-    /// </summary>
+    /// <summary>Returns the authenticated user's trip list; empty list when the user has no trips (F3-US10).</summary>
     [HttpGet]
     [ProducesResponseType(typeof(ResultRes<IReadOnlyList<TripDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -54,8 +54,7 @@ describe('useMoveTripDestination', () => {
       });
     });
 
-    // Applied to the cache well before the (artificially delayed) server responds — the
-    // onMutate projection in useMoveTripDestination, backed by moveDestinationInTrip.
+    // Applied to the cache well before the (artificially delayed) server responds — the onMutate projection.
     await waitFor(() => {
       const currentTrip = queryClient.getQueryData<Trip>(tripQueryKey(PLANNER_TRIP_ID));
       const day2 = currentTrip?.itineraryDays.find((day) => day.id === PLANNER_DAY_2_ID);
@@ -78,8 +77,7 @@ describe('useMoveTripDestination', () => {
     const { result } = renderHook(() => useMoveTripDestination(PLANNER_TRIP_ID), { wrapper });
 
     act(() => {
-      // Moving the saved "duplicate source" into Day 1, which already has a
-      // destination with the same providerPlaceId.
+      // Moving the saved "duplicate source" into Day 1, which already has a destination with the same providerPlaceId.
       result.current.mutate({
         tripDestinationId: PLANNER_DUPLICATE_SAVED_PLACE_ID,
         itineraryDayId: PLANNER_DAY_1_ID,

@@ -41,7 +41,7 @@ public class EmailService(
         {
             From = new MailAddress(smtpConfig.From),
             Subject = request.Subject,
-            Body = BindingDataToTemplate(request.TemplatePath, request.DataBinding),
+            Body = request.Body,
             IsBodyHtml = true
         };
 
@@ -81,21 +81,6 @@ public class EmailService(
 
             return EmailControllerMsg.Create.Exception;
         }
-    }
-
-    private string BindingDataToTemplate(string templatePath, Dictionary<string, string>? dataBinding)
-    {
-        var bodyContent = File.ReadAllText(templatePath);
-
-        if (dataBinding != null)
-        {
-            foreach (var item in dataBinding)
-            {
-                bodyContent = bodyContent.Replace(item.Key, item.Value);
-            }
-        }
-
-        return bodyContent;
     }
 
     private (SmtpConfig?, bool) LoadSmtpConfig()

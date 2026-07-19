@@ -5,10 +5,24 @@ export const SAVED_PLACES_COLUMN_ID = 'saved-places';
 
 export interface PlannerColumn {
   id: string;
+  /** Full text, e.g. "Day 1 — 2026-08-01" — used as the column's accessible name (`aria-label`)
+   * and hover tooltip (`title`) so shortening the visible heading never loses information. */
   title: string;
+  /** Compact one-line visible heading, e.g. "Day 1 · Aug 1" (same as `title` for Saved Places). */
+  shortTitle: string;
   /** `null` for the Saved Places column. */
   itineraryDayId: string | null;
   destinations: TripDestination[];
+}
+
+/** Renders an ISO date (`"2026-08-01"`) as `"Aug 1"`; falls back to the raw string if unparsable. */
+function formatShortDate(isoDate: string): string {
+  // Append a local (non-UTC) time so the date doesn't shift a day back in negative-offset zones.
+  const date = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return isoDate;
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 /** Projects a trip into the planner board's columns: Saved Places, then one column per itinerary day. */
@@ -17,12 +31,14 @@ export function buildPlannerColumns(trip: Trip): PlannerColumn[] {
     {
       id: SAVED_PLACES_COLUMN_ID,
       title: 'Saved Places',
+      shortTitle: 'Saved Places',
       itineraryDayId: null,
       destinations: trip.savedPlaces,
     },
     ...trip.itineraryDays.map((day) => ({
       id: day.id,
       title: `Day ${day.dayIndex} — ${day.date}`,
+      shortTitle: `Day ${day.dayIndex} · ${formatShortDate(day.date)}`,
       itineraryDayId: day.id,
       destinations: day.tripDestinations,
     })),

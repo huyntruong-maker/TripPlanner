@@ -87,8 +87,7 @@ public class MoveTripDestinationCommandHandler(IWriteUnitOfWork writeUnitOfWork)
 
         targetBucket.Insert(insertIndex, destination);
 
-        // Persist the bucket change explicitly — ReindexBucket below only touches rows whose Position changes,
-        // but ItineraryDayId must always be saved when the destination moves between buckets.
+        // Persist the bucket change explicitly — ReindexBucket below only touches rows whose Position changes, but ItineraryDayId must always be saved when the destination moves between buckets.
         destination.ItineraryDayId = targetDayId;
         destination.UpdatedAt = DateTimeOffset.UtcNow;
         destination.UpdatedBy = request.UserId;

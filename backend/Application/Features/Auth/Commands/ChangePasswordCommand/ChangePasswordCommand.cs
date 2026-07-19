@@ -1,4 +1,5 @@
-﻿using Application.Common.Services;
+﻿using Application.Common.Email;
+using Application.Common.Services;
 using Application.Common.Validators;
 using Application.Dtos.Base;
 using Application.Dtos.Email;
@@ -103,23 +104,11 @@ public class ChangePasswordHandler(
         var emailTemplate = configuration.GetSection(ConfigKeys.Security.Email.ChangePasswordNotification)
             .Get<EmailTemplateDto>();
 
-        if (emailTemplate == null || string.IsNullOrEmpty(emailTemplate.Path))
-        {
-            logger.LogWarning("Template or template path for send mail change password not found");
-            return string.Empty;
-        }
-
-        var dataBinding = new Dictionary<string, string>
-        {
-          { "{{UserName}}", user.UserName! }
-        };
-
         var request = new SendEmailReqDto
         {
             ToEmails = [user.Email],
-            Subject = string.IsNullOrEmpty(emailTemplate.Subject) ? "Change password notification" : emailTemplate.Subject,
-            TemplatePath = emailTemplate.Path,
-            DataBinding = dataBinding
+            Subject = string.IsNullOrEmpty(emailTemplate?.Subject) ? EmailTemplates.ChangePasswordSubject : emailTemplate.Subject,
+            Body = EmailTemplates.BuildChangePasswordNotificationEmail(user.UserName!)
         };
 
         return await emailService.SendEmail(request);

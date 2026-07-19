@@ -6,8 +6,7 @@ const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-// Avoids importing Leaflet's default marker image assets (the well-known
-// bundler-breaks-marker-icons issue) by rendering the pin as a plain divIcon.
+// Avoids importing Leaflet's default marker image assets (the well-known bundler-breaks-marker-icons issue) by using a plain divIcon.
 const markerIcon = L.divIcon({
   className: 'trip-planner-map-marker',
   html: '<span class="material-symbols-outlined" style="font-size:36px;color:#DC2626;" aria-hidden="true">location_on</span>',

@@ -3,9 +3,7 @@ using System.Text.Json;
 
 namespace Domain.Helpers;
 
-/// <summary>
-/// Builds a ZIP archive in memory with various content types
-/// </summary>
+/// <summary>Builds a ZIP archive in memory with various content types.</summary>
 public class ZipArchiveBuilder : IDisposable
 {
     private readonly MemoryStream _archiveStream;

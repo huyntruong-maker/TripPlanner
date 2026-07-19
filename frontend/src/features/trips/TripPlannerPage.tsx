@@ -41,6 +41,8 @@ export function TripPlannerPage() {
   const queryClient = useQueryClient();
   const tripQuery = useTrip(tripId);
   const [datesWarning, setDatesWarning] = useState<string | null>(null);
+  // Saved Places is a sticky sidebar on desktop, but a collapsible section on narrow screens.
+  const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(true);
 
   const removeMutation = useMutation({
     mutationKey: tripMutationScopeKey(tripId ?? ''),
@@ -137,32 +139,64 @@ export function TripPlannerPage() {
           <SavingIndicator tripId={trip.id} />
         </div>
 
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="overflow-x-auto flex gap-gutter pb-4">
-            <PlannerColumnView
-              column={savedPlacesColumn}
-              onRemove={(id) => removeMutation.mutate(id)}
-              removingId={removingId}
-              emptyMessage="No destinations saved yet."
-            />
-
-            {trip.itineraryDays.length === 0 ? (
-              <div className="min-w-[320px] flex-shrink-0 bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-6 flex items-center justify-center text-center">
-                <p className="text-on-surface-variant text-body-md">
-                  Set the trip dates above to generate your itinerary days.
-                </p>
-              </div>
-            ) : (
-              dayColumns.map((column) => (
+        {/* autoScroll (dnd-kit default, kept explicit) scrolls the page toward the pointer mid-drag since layout is normal vertical flow. */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          autoScroll
+        >
+          {/* Two independent containers, not one grid — keeps the day grid from reserving Saved Places' cell and offsetting every row after it. */}
+          <div className="lg:flex lg:items-start lg:gap-gutter">
+            <aside className="mb-gutter lg:mb-0 lg:w-[240px] lg:flex-shrink-0 lg:sticky lg:top-6">
+              <button
+                type="button"
+                onClick={() => setIsSavedPlacesOpen((open) => !open)}
+                aria-expanded={isSavedPlacesOpen}
+                aria-controls="saved-places-panel"
+                className="lg:hidden w-full flex items-center justify-between gap-3 mb-3 bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-4"
+              >
+                <span className="flex items-center gap-2 font-label-md text-on-surface">
+                  <span className="material-symbols-outlined text-primary" aria-hidden="true">
+                    bookmark
+                  </span>
+                  Saved Places ({savedPlacesColumn.destinations.length})
+                </span>
+                <span className="material-symbols-outlined text-on-surface-variant" aria-hidden="true">
+                  {isSavedPlacesOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              </button>
+              <div id="saved-places-panel" className={isSavedPlacesOpen ? undefined : 'hidden lg:block'}>
                 <PlannerColumnView
-                  key={column.id}
-                  column={column}
+                  column={savedPlacesColumn}
                   onRemove={(id) => removeMutation.mutate(id)}
                   removingId={removingId}
-                  emptyMessage="No destinations scheduled for this day yet."
+                  emptyMessage="No destinations saved yet."
                 />
-              ))
-            )}
+              </div>
+            </aside>
+
+            <div className="flex-1 min-w-0">
+              {trip.itineraryDays.length === 0 ? (
+                <div className="bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-10 text-center">
+                  <p className="text-on-surface-variant text-body-md">
+                    Set the trip dates above to generate your itinerary days.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-gutter grid-cols-[repeat(auto-fill,minmax(210px,1fr))] items-start">
+                  {dayColumns.map((column) => (
+                    <PlannerColumnView
+                      key={column.id}
+                      column={column}
+                      onRemove={(id) => removeMutation.mutate(id)}
+                      removingId={removingId}
+                      emptyMessage="No destinations scheduled for this day yet."
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </DndContext>
       </section>
@@ -205,14 +239,21 @@ function PlannerColumnView({ column, onRemove, removingId, emptyMessage }: Plann
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
-    <div className="min-w-[320px] flex-shrink-0 bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-6">
-      <header className="flex justify-between items-center mb-6">
-        <h3 className="text-headline-md font-headline-md text-on-surface">{column.title}</h3>
+    <div className="min-h-[160px] bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-4">
+      <header className="flex justify-between items-center gap-2 mb-3">
+        {/* Accessible name comes from aria-label (full text), not the truncated visible text. */}
+        <h3
+          className="min-w-0 truncate whitespace-nowrap text-label-md font-label-md text-on-surface"
+          title={column.title}
+          aria-label={column.title}
+        >
+          {column.shortTitle}
+        </h3>
         <span
-          className="bg-surface-container text-primary p-2 rounded-lg flex-shrink-0"
+          className="bg-surface-container text-primary p-1 rounded-lg flex-shrink-0"
           aria-hidden="true"
         >
-          <span className="material-symbols-outlined">
+          <span className="material-symbols-outlined text-[18px]">
             {column.itineraryDayId === null ? 'bookmark' : 'event'}
           </span>
         </span>
@@ -224,12 +265,19 @@ function PlannerColumnView({ column, onRemove, removingId, emptyMessage }: Plann
       >
         <div
           ref={setNodeRef}
-          className={`min-h-[80px] rounded-lg transition-colors ${isOver ? 'bg-primary/5' : ''}`}
+          className={`rounded-lg transition-colors ${
+            isOver ? 'bg-primary/10 ring-2 ring-inset ring-primary' : ''
+          }`}
         >
           {column.destinations.length === 0 ? (
-            <p className="text-on-surface-variant text-body-md text-center py-8">{emptyMessage}</p>
+            <div className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg border-2 border-dashed border-outline-variant/40 text-center">
+              <span className="material-symbols-outlined text-lg text-outline" aria-hidden="true">
+                {column.itineraryDayId === null ? 'bookmark_border' : 'add_location_alt'}
+              </span>
+              <p className="text-on-surface-variant text-label-sm px-2">{emptyMessage}</p>
+            </div>
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-2">
               {column.destinations.map((destination) => (
                 <SortableDestinationItem
                   key={destination.id}
@@ -267,7 +315,7 @@ function SortableDestinationItem({ destination, onRemove, isRemoving }: Sortable
     <li
       ref={setNodeRef}
       style={style}
-      className="p-4 rounded-lg bg-surface border border-outline-variant/30 flex justify-between items-center gap-3"
+      className="min-h-[48px] p-2.5 rounded-lg bg-surface border border-outline-variant/30 flex items-center gap-2"
     >
       <button
         type="button"
@@ -278,7 +326,12 @@ function SortableDestinationItem({ destination, onRemove, isRemoving }: Sortable
       >
         drag_indicator
       </button>
-      <span className="font-label-md text-on-surface flex-grow">{destination.name}</span>
+      <span
+        className="font-label-md text-on-surface flex-grow min-w-0 truncate"
+        title={destination.name}
+      >
+        {destination.name}
+      </span>
       <button
         type="button"
         className="text-error bg-error-container/20 px-3 py-1 rounded-full text-label-sm hover:bg-error-container/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0"

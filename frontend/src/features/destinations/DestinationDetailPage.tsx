@@ -1,13 +1,46 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getDestinationDetail } from '../../api/destinations';
 import { getApiErrorMessage } from '../../api/errors';
 import type { OpeningHours } from '../../types';
 import { AddToTripControl } from '../trips/AddToTripControl';
+import { readLastDiscoverSearch, type DiscoverSearchLinkState } from './discoverSearchStorage';
+import { humanizeKind } from './humanizeKind';
 import { MapView } from './MapView';
 import { PhotoCarousel } from './PhotoCarousel';
 
 const BACK_LINK_CLASSES = 'inline-flex items-center gap-2 text-primary font-label-md hover:underline';
+
+/** Goes back to wherever the user came from, preserving Discover's search/filter state; falls back to router state then sessionStorage when there's no in-app history to pop. */
+function BackToSearchButton() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  // react-router marks the very first history entry with key "default" — nothing to go back to.
+  const canGoBack = location.key !== 'default';
+
+  function goBackToSearch() {
+    if (canGoBack) {
+      navigate(-1);
+      return;
+    }
+    const linkState = location.state as DiscoverSearchLinkState | null;
+    const search = linkState?.discoverSearch ?? readLastDiscoverSearch() ?? '';
+    navigate(`/${search}`);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={goBackToSearch}
+      className={BACK_LINK_CLASSES}
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        arrow_back
+      </span>
+      Back to search
+    </button>
+  );
+}
 
 /** Must render even when every optional field is null or empty (graceful partial data). */
 export function DestinationDetailPage() {
@@ -33,12 +66,7 @@ export function DestinationDetailPage() {
         <p className="text-error text-body-md" role="alert">
           {getApiErrorMessage(error, 'Could not load this destination.')}
         </p>
-        <Link to="/" className={BACK_LINK_CLASSES}>
-          <span className="material-symbols-outlined" aria-hidden="true">
-            arrow_back
-          </span>
-          Back to search
-        </Link>
+        <BackToSearchButton />
       </div>
     );
   }
@@ -50,12 +78,7 @@ export function DestinationDetailPage() {
 
   return (
     <div className="space-y-8">
-      <Link to="/" className={BACK_LINK_CLASSES}>
-        <span className="material-symbols-outlined" aria-hidden="true">
-          arrow_back
-        </span>
-        Back to search
-      </Link>
+      <BackToSearchButton />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
         <div className="lg:col-span-8 space-y-8">
@@ -65,7 +88,7 @@ export function DestinationDetailPage() {
             <div>
               {data.category && (
                 <p className="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-1">
-                  {data.category}
+                  {humanizeKind(data.category)}
                 </p>
               )}
               <h1 className="text-headline-lg font-headline-lg text-on-surface mb-2">{data.name}</h1>
@@ -90,7 +113,7 @@ export function DestinationDetailPage() {
                     key={tag}
                     className="px-4 py-1.5 rounded-full bg-[#E0F2FE] text-primary font-label-md"
                   >
-                    {tag}
+                    {humanizeKind(tag)}
                   </li>
                 ))}
               </ul>

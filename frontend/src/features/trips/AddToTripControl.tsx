@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { buildLoginUrl } from '../../auth/returnTo';
 import { getApiErrorMessage } from '../../api/errors';
 import { addTripDestination, getTrip } from '../../api/trips';
+import { Modal } from '../../components/Modal';
 import { useTrips } from './useTrips';
 import { tripQueryKey } from './useTrip';
 import { addToTripSchema, type AddToTripFormValues } from './schemas';
@@ -15,8 +16,6 @@ const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 const TOGGLE_BUTTON_BASE_CLASSES =
   'inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-label-md transition-all';
-/** Select value representing "Saved Places (schedule later)"; converted to `itineraryDayId: null` on submit. */
-export const SAVED_PLACES_OPTION_VALUE = 'saved-places';
 
 export interface AddableDestination {
   providerPlaceId: string;
@@ -31,12 +30,18 @@ interface AddToTripControlProps {
   destination: AddableDestination;
 }
 
-/** "Add to Trip" action, reused across pages; disabled (not hidden) when logged out, with a login link that returns here after. */
+/**
+ * "Add to Trip" action (trip + day picker) — opens as a centered modal dialog, reused across
+ * pages; disabled (not hidden) when logged out, with a login link that returns here after.
+ * Strictly trip + day: see `QuickSaveControl` for the card's separate hover "Save place"
+ * (trip-only, straight to Saved Places) shortcut — the two are intentionally kept apart.
+ */
 export function AddToTripControl({ destination }: AddToTripControlProps) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const titleId = useId();
 
   if (!isAuthenticated) {
     const loginUrl = buildLoginUrl(`${location.pathname}${location.search}`);
@@ -64,23 +69,19 @@ export function AddToTripControl({ destination }: AddToTripControlProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <button
         type="button"
-        onClick={() => setIsOpen((open) => !open)}
-        aria-expanded={isOpen}
-        className={
-          isOpen
-            ? `${TOGGLE_BUTTON_BASE_CLASSES} border border-outline-variant text-on-surface-variant hover:bg-surface-container`
-            : `${TOGGLE_BUTTON_BASE_CLASSES} bg-primary text-on-primary hover:opacity-90 active:scale-95`
-        }
+        onClick={() => setIsOpen(true)}
+        aria-haspopup="dialog"
+        className={`${TOGGLE_BUTTON_BASE_CLASSES} bg-primary text-on-primary hover:opacity-90 active:scale-95`}
       >
         <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
-          {isOpen ? 'close' : 'add_circle'}
+          add_circle
         </span>
-        {isOpen ? 'Cancel' : 'Add to Trip'}
+        Add to Trip
       </button>
-      {confirmation && !isOpen && (
+      {confirmation && (
         <p className="flex items-center gap-2 text-label-md font-label-md text-primary" role="status">
           <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
             check_circle
@@ -89,13 +90,15 @@ export function AddToTripControl({ destination }: AddToTripControlProps) {
         </p>
       )}
       {isOpen && (
-        <AddToTripForm
-          destination={destination}
-          onAdded={(tripName) => {
-            setConfirmation(`Added to ${tripName}.`);
-            setIsOpen(false);
-          }}
-        />
+        <Modal titleId={titleId} title="Add to trip" onClose={() => setIsOpen(false)}>
+          <AddToTripForm
+            destination={destination}
+            onAdded={(tripName) => {
+              setConfirmation(`Added to ${tripName}.`);
+              setIsOpen(false);
+            }}
+          />
+        </Modal>
       )}
     </div>
   );
@@ -132,8 +135,7 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
   const addMutation = useMutation({
     mutationFn: (values: AddToTripFormValues) =>
       addTripDestination(values.tripId, {
-        itineraryDayId:
-          values.itineraryDayId === SAVED_PLACES_OPTION_VALUE ? null : values.itineraryDayId,
+        itineraryDayId: values.itineraryDayId,
         providerPlaceId: destination.providerPlaceId,
         name: destination.name,
         category: destination.category,
@@ -180,13 +182,11 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
   }
 
   const availableDays = selectedTripQuery.data?.itineraryDays ?? [];
+  const hasSelectedTripWithNoDays =
+    Boolean(selectedTripId) && selectedTripQuery.isSuccess && availableDays.length === 0;
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="space-y-4 bg-surface-container-low rounded-lg p-4 border border-outline-variant/30"
-    >
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       <div className="space-y-2">
         <label
           htmlFor="add-to-trip-tripId"
@@ -219,7 +219,17 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
         <p className="text-on-surface-variant text-body-md">Loading days…</p>
       )}
 
-      {selectedTripId && selectedTripQuery.isSuccess && (
+      {hasSelectedTripWithNoDays && (
+        <p className="text-body-md text-on-surface-variant">
+          This trip has no dates yet.{' '}
+          <Link to={`/trips/${selectedTripId}`} className="text-primary font-semibold hover:underline">
+            Set dates
+          </Link>{' '}
+          first.
+        </p>
+      )}
+
+      {availableDays.length > 0 && (
         <div className="space-y-2">
           <label
             htmlFor="add-to-trip-itineraryDayId"
@@ -234,8 +244,7 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
             aria-invalid={Boolean(errors.itineraryDayId)}
             aria-describedby={errors.itineraryDayId ? 'add-to-trip-itineraryDayId-error' : undefined}
           >
-            <option value="">Choose where to add it…</option>
-            <option value={SAVED_PLACES_OPTION_VALUE}>Saved Places (schedule later)</option>
+            <option value="">Choose a day…</option>
             {availableDays.map((day) => (
               <option key={day.id} value={day.id}>
                 Day {day.dayIndex} — {day.date}
@@ -250,18 +259,6 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
               {errors.itineraryDayId.message}
             </p>
           )}
-          {availableDays.length === 0 && (
-            <p className="text-body-md text-on-surface-variant">
-              This trip has no dates yet. Choose Saved Places to add it now, or{' '}
-              <Link
-                to={`/trips/${selectedTripId}`}
-                className="text-primary font-semibold hover:underline"
-              >
-                set dates
-              </Link>{' '}
-              to schedule a specific day.
-            </p>
-          )}
         </div>
       )}
 
@@ -273,7 +270,7 @@ function AddToTripForm({ destination, onAdded }: AddToTripFormProps) {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || availableDays.length === 0}
         className="w-full bg-primary text-on-primary py-3 rounded-lg font-label-md hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isSubmitting ? 'Adding…' : 'Add'}

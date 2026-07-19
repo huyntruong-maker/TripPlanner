@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
 const MIN_PASSWORD_LENGTH = 8;
-// Must mirror the backend policy (Domain/Constants/UserConstants.cs Password.RegexPattern):
-// at least one lowercase, one uppercase, one digit, one special character, min 8 chars.
+// Must mirror the backend policy (Domain/Constants/UserConstants.cs Password.RegexPattern).
 const PASSWORD_POLICY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
 export const PASSWORD_POLICY_MESSAGE =
   'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character';
@@ -15,7 +14,7 @@ export const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100, 'First name is too long'),
+  firstName: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
   password: z
     .string()
