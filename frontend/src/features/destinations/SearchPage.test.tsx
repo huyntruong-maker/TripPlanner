@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useSearchParams } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../auth/AuthContext';
 import {
@@ -16,11 +16,11 @@ import {
 } from '../../test/msw/handlers/destinations';
 import { SearchPage } from './SearchPage';
 
-function renderSearchPage() {
+function renderSearchPage(initialEntries: string[] = ['/']) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <AuthProvider>
           <SearchPage />
         </AuthProvider>
@@ -215,10 +215,11 @@ describe('SearchPage — attractions grid (F1/US3)', () => {
     const thumbnail = document.querySelector('img.attraction-thumbnail');
     expect(thumbnail).toHaveAttribute('src', 'https://example.test/eiffel.jpg');
     expect(thumbnail).toHaveAttribute('alt', '');
-    // "cultural"/"landmark" also appear as filter-checkbox labels (F1-US4), so there may be more than one match.
-    expect(screen.getAllByText('cultural').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('landmark').length).toBeGreaterThan(0);
-    expect(screen.getByText('Rating 9.5')).toBeInTheDocument();
+    // Categories/tags are humanized (F1-US1 design pass); "Cultural"/"Landmark" also appear as
+    // filter-chip labels (F1-US4), so there may be more than one match.
+    expect(screen.getAllByText('Cultural').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Landmark').length).toBeGreaterThan(0);
+    expect(screen.getByText('★ 9.5')).toBeInTheDocument();
 
     // Louvre has no thumbnail/rating — placeholder + no rating line, not a crash.
     expect(screen.getByRole('heading', { name: 'Louvre Museum' })).toBeInTheDocument();
@@ -254,18 +255,23 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     await screen.findByRole('heading', { name: 'Museum Alpha' });
   }
 
-  it('renders a checkbox per distinct category and filters by selection', async () => {
+  it('shows a results count and renders a toggle chip per distinct (humanized) category, filtering by selection', async () => {
     const user = userEvent.setup();
     await selectFilterSortCity(user);
 
+    expect(screen.getByText('4 of 4 attractions')).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: /Museum|Park|Landmark/ })).toHaveLength(4);
 
-    await user.click(screen.getByRole('checkbox', { name: 'museum' }));
+    const museumChip = screen.getByRole('button', { name: 'Museum' });
+    expect(museumChip).toHaveAttribute('aria-pressed', 'false');
+    await user.click(museumChip);
+    expect(museumChip).toHaveAttribute('aria-pressed', 'true');
 
     expect(screen.getByRole('heading', { name: 'Museum Alpha' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Museum Delta' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Park Beta' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Landmark Gamma' })).not.toBeInTheDocument();
+    expect(screen.getByText('2 of 4 attractions')).toBeInTheDocument();
   });
 
   it('filters by minimum rating, excluding attractions with no rating', async () => {
@@ -284,11 +290,24 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     const user = userEvent.setup();
     await selectFilterSortCity(user);
 
-    await user.click(screen.getByRole('checkbox', { name: 'museum' }));
+    await user.click(screen.getByRole('button', { name: 'Museum' }));
     await user.selectOptions(screen.getByLabelText('Minimum rating'), '9');
 
     expect(screen.getByRole('heading', { name: 'Museum Delta' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Museum Alpha' })).not.toBeInTheDocument();
+  });
+
+  it('shows an active-filters summary with a Clear all action once something is selected', async () => {
+    const user = userEvent.setup();
+    await selectFilterSortCity(user);
+
+    expect(screen.queryByText('Active filters:')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Museum' }));
+
+    const summary = screen.getByText('Active filters:').closest('div') as HTMLElement;
+    expect(within(summary).getByText('Museum')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear all' })).toBeInTheDocument();
   });
 
   it('shows a friendly empty state when filters exclude everything', async () => {
@@ -296,7 +315,7 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     await selectFilterSortCity(user);
 
     await user.selectOptions(screen.getByLabelText('Minimum rating'), '9');
-    await user.click(screen.getByRole('checkbox', { name: 'park' }));
+    await user.click(screen.getByRole('button', { name: 'Park' }));
 
     expect(
       await screen.findByText('No attractions match the selected filters.'),
@@ -307,13 +326,13 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     const user = userEvent.setup();
     await selectFilterSortCity(user);
 
-    await user.click(screen.getByRole('checkbox', { name: 'museum' }));
+    await user.click(screen.getByRole('button', { name: 'Museum' }));
     expect(screen.queryByRole('heading', { name: 'Park Beta' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await user.click(screen.getByRole('button', { name: 'Clear all' }));
 
     expect(screen.getByRole('heading', { name: 'Park Beta' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'museum' })).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'Museum' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('sorts by highest rating, with missing ratings last', async () => {
@@ -329,5 +348,87 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
       'Park Beta',
       'Landmark Gamma',
     ]);
+  });
+});
+
+/** Exposes the current URL's search params for assertions — SearchPage itself doesn't render them. */
+function SearchParamsProbe() {
+  const [searchParams] = useSearchParams();
+  return <div data-testid="url-params">{searchParams.toString()}</div>;
+}
+
+describe('SearchPage — search state survives navigation (URL search params)', () => {
+  function renderSearchPageWithProbe(initialEntries: string[]) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={initialEntries}>
+          <AuthProvider>
+            <SearchPage />
+            <SearchParamsProbe />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  it('hydrates the selected location from the URL on mount and loads attractions without re-searching', async () => {
+    const params = new URLSearchParams({
+      q: 'Paris, France',
+      lat: '48.8566',
+      lng: '2.3522',
+      name: 'Paris',
+      locationType: 'city',
+      country: 'France',
+    });
+    renderSearchPage([`/?${params.toString()}`]);
+
+    // The search box already shows the restored location — no need to type/select again.
+    expect(screen.getByDisplayValue('Paris, France')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Eiffel Tower' })).toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('writes the selected location into the URL when a suggestion is picked (shareable/restorable)', async () => {
+    const user = userEvent.setup();
+    renderSearchPageWithProbe(['/']);
+
+    await typeQuery(user, CITY_WITH_ATTRACTIONS_QUERY);
+    await user.click(await screen.findByRole('option', { name: 'Paris, France' }));
+    await screen.findByRole('heading', { name: 'Eiffel Tower' });
+
+    const params = new URLSearchParams(screen.getByTestId('url-params').textContent ?? '');
+    expect(params.get('q')).toBe('Paris, France');
+    expect(params.get('lat')).toBe('48.8566');
+    expect(params.get('lng')).toBe('2.3522');
+  });
+
+  it('clears the location from the URL once the user starts a new search', async () => {
+    const user = userEvent.setup();
+    renderSearchPageWithProbe(['/']);
+
+    await typeQuery(user, CITY_WITH_ATTRACTIONS_QUERY);
+    await user.click(await screen.findByRole('option', { name: 'Paris, France' }));
+    await screen.findByRole('heading', { name: 'Eiffel Tower' });
+
+    await user.clear(screen.getByLabelText('Search a city or country'));
+    await user.type(screen.getByLabelText('Search a city or country'), 'Tokyo');
+
+    const params = new URLSearchParams(screen.getByTestId('url-params').textContent ?? '');
+    expect(params.get('q')).toBeNull();
+  });
+
+  it('mirrors the active category filter into the URL (restorable alongside the location)', async () => {
+    const user = userEvent.setup();
+    renderSearchPageWithProbe(['/']);
+
+    await typeQuery(user, FILTER_SORT_CITY_QUERY);
+    await user.click(await screen.findByRole('option', { name: 'FilterSortCity, Testland' }));
+    await screen.findByRole('heading', { name: 'Museum Alpha' });
+
+    await user.click(screen.getByRole('button', { name: 'Museum' }));
+
+    const params = new URLSearchParams(screen.getByTestId('url-params').textContent ?? '');
+    expect(params.get('cat')).toBe('museum');
   });
 });

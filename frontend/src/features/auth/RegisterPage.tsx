@@ -43,15 +43,27 @@ export function RegisterPage() {
       <div className="flex items-center justify-center">
         <div className="w-full max-w-[480px]">
           <div className="bg-surface-container-lowest rounded-xl p-8 md:p-10 elevation-l1 border border-outline-variant/30 text-center">
+            <div
+              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary-container"
+              aria-hidden="true"
+            >
+              <span className="material-symbols-outlined text-primary text-[32px]">
+                mark_email_read
+              </span>
+            </div>
             <h1 className="text-headline-md font-headline-md text-on-surface mb-2">
               Check your email
             </h1>
-            <p className="text-body-md font-body-md text-on-surface-variant mb-6">
-              We sent a verification link to {registeredEmail}. Verify your account, then log in.
+            <p className="text-body-md font-body-md text-on-surface-variant mb-2">
+              We sent a verification link to <strong className="text-on-surface">{registeredEmail}</strong>.
+              Click the link to activate your account, then come back and log in.
+            </p>
+            <p className="text-label-sm font-label-sm text-on-surface-variant mb-6">
+              Don&apos;t see it? Check your spam or junk folder.
             </p>
             <p className="text-body-md font-body-md text-on-surface-variant">
               <Link to="/login" className="text-primary font-bold hover:underline">
-                Log in
+                Back to log in
               </Link>
             </p>
           </div>

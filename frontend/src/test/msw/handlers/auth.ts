@@ -7,6 +7,7 @@ const BASE_URL = 'http://localhost:5080/api/v1';
 
 export const EXISTING_EMAIL = 'taken@example.com';
 export const VALID_CREDENTIALS = { email: 'jane@example.com', password: 'Secret123!' };
+export const UNVERIFIED_CREDENTIALS = { email: 'unverified@example.com', password: 'Secret123!' };
 export const VALID_VERIFY_TOKEN = 'valid-verify-token';
 export const ALREADY_VERIFIED_TOKEN = 'already-verified-token';
 
@@ -50,6 +51,21 @@ export const authHandlers = [
         validates: [],
         result: issueTokensFor(body.username),
       });
+    }
+
+    if (
+      body.username === UNVERIFIED_CREDENTIALS.email &&
+      body.password === UNVERIFIED_CREDENTIALS.password
+    ) {
+      return HttpResponse.json(
+        {
+          success: false,
+          errorCode: 'Auth.Login.InActive',
+          error: 'Your account is not active.',
+          validates: [],
+        },
+        { status: 400 },
+      );
     }
 
     return HttpResponse.json(

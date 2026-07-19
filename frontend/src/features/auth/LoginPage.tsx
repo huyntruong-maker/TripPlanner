@@ -11,12 +11,20 @@ import { loginSchema, type LoginFormValues } from './schemas';
 const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 
+interface LoginLocationState {
+  /** Set by VerifyEmailPage's success redirect. */
+  justVerified?: boolean;
+}
+
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
   const [formError, setFormError] = useState<string | null>(null);
+  const [showVerifiedBanner, setShowVerifiedBanner] = useState(
+    () => Boolean((location.state as LoginLocationState | null)?.justVerified),
+  );
 
   const {
     register,
@@ -49,6 +57,29 @@ export function LoginPage() {
               Continue your journey with TripPlanner.
             </p>
           </div>
+          {showVerifiedBanner && (
+            <div
+              role="status"
+              className="mb-6 flex items-start justify-between gap-3 rounded-lg border border-primary/30 bg-primary-container px-4 py-3"
+            >
+              <p className="flex items-center gap-2 text-label-md font-label-md text-primary">
+                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                  check_circle
+                </span>
+                Email verified successfully — please log in.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowVerifiedBanner(false)}
+                aria-label="Dismiss notification"
+                className="text-primary/70 hover:text-primary transition-colors flex-shrink-0"
+              >
+                <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                  close
+                </span>
+              </button>
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="space-y-2">
               <label

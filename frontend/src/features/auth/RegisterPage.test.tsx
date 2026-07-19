@@ -34,6 +34,8 @@ describe('RegisterPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
     expect(screen.getByText(/new\.user@example\.com/)).toBeInTheDocument();
+    expect(screen.getByText(/check your spam or junk folder/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to log in' })).toHaveAttribute('href', '/login');
   });
 
   it('shows the server error message for a duplicate email', async () => {

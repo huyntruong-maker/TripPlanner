@@ -5,7 +5,8 @@ export const apiErrorMessages: Record<string, string> = {
   'Auth.Login.InvalidCredential': 'Incorrect username or password.',
   'Auth.Login.WillBeLockedOut': 'Incorrect password — one more failed attempt will lock your account.',
   'Auth.Login.LockedOut': 'Your account is temporarily locked. Please try again later.',
-  'Auth.Login.InActive': 'Your email is not verified yet. Check your inbox for the verification link.',
+  'Auth.Login.InActive':
+    'Please verify your email before logging in — check your inbox for the verification link.',
   'Auth.Login.EmptyField': 'Enter your username and password.',
   'Auth.RefreshToken.RequiredToken': 'Your session has expired. Please sign in again.',
   'Auth.RefreshToken.Failed': 'Your session has expired. Please sign in again.',

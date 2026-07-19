@@ -4,6 +4,7 @@ import { getDestinationDetail } from '../../api/destinations';
 import { getApiErrorMessage } from '../../api/errors';
 import type { OpeningHours } from '../../types';
 import { AddToTripControl } from '../trips/AddToTripControl';
+import { humanizeKind } from './humanizeKind';
 import { MapView } from './MapView';
 import { PhotoCarousel } from './PhotoCarousel';
 
@@ -65,7 +66,7 @@ export function DestinationDetailPage() {
             <div>
               {data.category && (
                 <p className="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-1">
-                  {data.category}
+                  {humanizeKind(data.category)}
                 </p>
               )}
               <h1 className="text-headline-lg font-headline-lg text-on-surface mb-2">{data.name}</h1>
@@ -90,7 +91,7 @@ export function DestinationDetailPage() {
                     key={tag}
                     className="px-4 py-1.5 rounded-full bg-[#E0F2FE] text-primary font-label-md"
                   >
-                    {tag}
+                    {humanizeKind(tag)}
                   </li>
                 ))}
               </ul>

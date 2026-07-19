@@ -118,6 +118,34 @@ describe('TripPlannerPage', () => {
         screen.getByRole('button', { name: `Reorder Duplicate Trigger Place` }),
       ).toBeInTheDocument();
     });
+
+    it('lays days out in a wrapping grid rather than a horizontal-scroll strip', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const dayOneHeading = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      const daysGrid = dayOneHeading.closest('div')?.parentElement;
+      expect(daysGrid).not.toBeNull();
+      expect(daysGrid).toHaveClass('grid');
+      // The old layout put everything (Saved Places + every day) in one overflow-x-auto flex row.
+      expect(document.querySelector('.overflow-x-auto')).not.toBeInTheDocument();
+    });
+
+    it('offers a mobile collapse toggle for Saved Places, expanded by default', async () => {
+      const user = userEvent.setup();
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const toggle = screen.getByRole('button', { name: /Saved Places/ });
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('Louvre Museum')).toBeVisible();
+
+      await user.click(toggle);
+
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    });
   });
 
   describe('saving indicator (F3-US9)', () => {

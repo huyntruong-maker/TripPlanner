@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { buildLoginUrl } from '../../auth/returnTo';
 import { getApiErrorMessage } from '../../api/errors';
 import { addTripDestination, getTrip } from '../../api/trips';
+import { publishToast } from '../../components/toast/toastBus';
 import { useTrips } from './useTrips';
 import { tripQueryKey } from './useTrip';
 import { addToTripSchema, type AddToTripFormValues } from './schemas';
@@ -15,6 +16,12 @@ const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 const TOGGLE_BUTTON_BASE_CLASSES =
   'inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-label-md transition-all';
+/** Circular icon-only trigger (the card "quick-save" affordance); visibility/position come from `className`. */
+const ICON_TRIGGER_BASE_CLASSES =
+  'inline-flex items-center justify-center w-9 h-9 rounded-full bg-on-surface/70 text-on-primary hover:bg-on-surface/90 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
+/** Hidden until the card is hovered/keyboard-focused; always shown on small (touch-first) breakpoints as a fallback affordance. */
+const ICON_TRIGGER_HIDDEN_CLASSES =
+  'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-100';
 /** Select value representing "Saved Places (schedule later)"; converted to `itineraryDayId: null` on submit. */
 export const SAVED_PLACES_OPTION_VALUE = 'saved-places';
 
@@ -29,17 +36,43 @@ export interface AddableDestination {
 
 interface AddToTripControlProps {
   destination: AddableDestination;
+  /**
+   * `button` (default): the full-width "Add to Trip" pill with an inline confirmation message —
+   * used on the destination detail page. `icon`: a compact circular trigger meant to be
+   * overlaid on an `AttractionCard`'s image (revealed on hover/focus, always shown on small
+   * breakpoints); confirms via the global toast instead of inline text so it doesn't need
+   * extra card real estate. Both variants drive the exact same add-to-trip form/mutation.
+   */
+  variant?: 'button' | 'icon';
+  /** Positions the icon-variant trigger (e.g. `"absolute top-3 left-3 z-20"`); ignored for `variant="button"`. */
+  className?: string;
 }
 
 /** "Add to Trip" action, reused across pages; disabled (not hidden) when logged out, with a login link that returns here after. */
-export function AddToTripControl({ destination }: AddToTripControlProps) {
+export function AddToTripControl({ destination, variant = 'button', className }: AddToTripControlProps) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
 
+  const loginUrl = buildLoginUrl(`${location.pathname}${location.search}`);
+
   if (!isAuthenticated) {
-    const loginUrl = buildLoginUrl(`${location.pathname}${location.search}`);
+    if (variant === 'icon') {
+      return (
+        <Link
+          to={loginUrl}
+          aria-label="Save to trip"
+          title="Log in to save this to a trip"
+          className={`${ICON_TRIGGER_BASE_CLASSES} ${ICON_TRIGGER_HIDDEN_CLASSES} ${className ?? ''}`}
+        >
+          <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+            bookmark_border
+          </span>
+        </Link>
+      );
+    }
+
     return (
       <div className="space-y-2">
         <button
@@ -59,6 +92,35 @@ export function AddToTripControl({ destination }: AddToTripControlProps) {
           </Link>{' '}
           to add this to a trip.
         </p>
+      </div>
+    );
+  }
+
+  if (variant === 'icon') {
+    return (
+      <div className={`relative ${className ?? ''}`}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((open) => !open)}
+          aria-expanded={isOpen}
+          aria-label={isOpen ? 'Close save to trip' : 'Save to trip'}
+          className={`${ICON_TRIGGER_BASE_CLASSES} ${isOpen ? 'opacity-100' : ICON_TRIGGER_HIDDEN_CLASSES}`}
+        >
+          <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+            {isOpen ? 'close' : 'bookmark_border'}
+          </span>
+        </button>
+        {isOpen && (
+          <div className="absolute z-20 top-full left-0 mt-2 w-72 max-w-[85vw]">
+            <AddToTripForm
+              destination={destination}
+              onAdded={(tripName) => {
+                publishToast(`Added to ${tripName}.`);
+                setIsOpen(false);
+              }}
+            />
+          </div>
+        )}
       </div>
     );
   }

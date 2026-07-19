@@ -51,8 +51,9 @@ describe('DestinationDetailPage', () => {
     renderDetailPage(FULL_DETAIL_ID);
 
     expect(await screen.findByRole('heading', { name: 'Eiffel Tower', level: 1 })).toBeInTheDocument();
-    expect(screen.getAllByText('cultural').length).toBeGreaterThan(0);
-    expect(screen.getByText('landmark')).toBeInTheDocument();
+    // Categories/tags are humanized from the raw provider slug (e.g. "cultural" -> "Cultural").
+    expect(screen.getAllByText('Cultural').length).toBeGreaterThan(0);
+    expect(screen.getByText('Landmark')).toBeInTheDocument();
     expect(screen.getByText('Rating 9.5')).toBeInTheDocument();
     expect(screen.getByText(/Famous iron lattice tower/)).toBeInTheDocument();
     // Shown both in "Visiting Info" and next to the map (F2-US3).
@@ -67,7 +68,7 @@ describe('DestinationDetailPage', () => {
     renderDetailPage(PARTIAL_DETAIL_ID);
 
     expect(await screen.findByRole('heading', { name: 'Mystery Ruin', level: 1 })).toBeInTheDocument();
-    expect(screen.queryByText('cultural')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cultural')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Visit website' })).not.toBeInTheDocument();
     expect(screen.getByText('No photos available')).toBeInTheDocument();
     expect(screen.getByText('Opening hours not available.')).toBeInTheDocument();
