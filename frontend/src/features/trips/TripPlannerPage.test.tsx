@@ -132,6 +132,35 @@ describe('TripPlannerPage', () => {
       expect(document.querySelector('.overflow-x-auto')).not.toBeInTheDocument();
     });
 
+    it('keeps Saved Places out of the day-columns grid — two independent containers, not one grid with a hole', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const dayOneHeading = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' });
+      const daysGrid = dayOneHeading.closest('div')?.parentElement as HTMLElement;
+      const savedPlacesHeading = screen.getByRole('heading', { name: 'Saved Places' });
+
+      expect(daysGrid.contains(savedPlacesHeading)).toBe(false);
+      // Saved Places sits in its own sticky sidebar, a sibling of (not inside) the days grid.
+      expect(savedPlacesHeading.closest('aside')).not.toBeNull();
+      expect(daysGrid.closest('aside')).toBeNull();
+    });
+
+    it('gives every day/Saved Places card a consistent minimum height and clamps long item names', async () => {
+      renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
+
+      await screen.findByText('Louvre Museum');
+
+      const savedPlacesCard = screen.getByRole('heading', { name: 'Saved Places' }).closest('div');
+      const dayOneCard = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' }).closest('div');
+      expect(savedPlacesCard).toHaveClass('min-h-[280px]');
+      expect(dayOneCard).toHaveClass('min-h-[280px]');
+
+      const itemName = screen.getByText('Louvre Museum');
+      expect(itemName).toHaveClass('line-clamp-2');
+    });
+
     it('offers a mobile collapse toggle for Saved Places, expanded by default', async () => {
       const user = userEvent.setup();
       renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);

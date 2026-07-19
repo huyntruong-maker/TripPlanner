@@ -1,6 +1,6 @@
-import type { ToastAction } from './ToastProvider';
+import type { ToastOptions } from './ToastProvider';
 
-type ToastListener = (message: string, action?: ToastAction) => void;
+type ToastListener = (message: string, options?: ToastOptions) => void;
 
 let listener: ToastListener | null = null;
 
@@ -9,11 +9,12 @@ export function registerToastListener(handler: ToastListener | null): void {
   listener = handler;
 }
 
+/** Always the (red, `role="alert"`) error tone. */
 export function publishErrorToast(message: string): void {
-  listener?.(message);
+  listener?.(message, { tone: 'error' });
 }
 
-/** Same delivery mechanism as `publishErrorToast`, for non-error confirmations (e.g. the AttractionCard quick-save toast). */
-export function publishToast(message: string, action?: ToastAction): void {
-  listener?.(message, action);
+/** Same delivery mechanism as `publishErrorToast`, for any tone (e.g. the green "Saved to {trip}" quick-save confirmation). */
+export function publishToast(message: string, options?: ToastOptions): void {
+  listener?.(message, options);
 }

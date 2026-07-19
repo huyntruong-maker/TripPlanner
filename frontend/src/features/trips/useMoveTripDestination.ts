@@ -61,7 +61,10 @@ export function useMoveTripDestination(tripId: string) {
         queryClient.setQueryData(tripQueryKey(tripId), context.previousTrip);
       }
       const message = getApiErrorMessage(error, MOVE_FALLBACK_MESSAGE);
-      showToast(message, { label: 'Retry', onAction: () => mutation.mutate(variables) });
+      showToast(message, {
+        tone: 'error',
+        action: { label: 'Retry', onAction: () => mutation.mutate(variables) },
+      });
     },
     onSuccess: (trip) => {
       queryClient.setQueryData(tripQueryKey(tripId), trip);

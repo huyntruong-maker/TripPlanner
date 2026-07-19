@@ -149,6 +149,11 @@ export function TripPlannerPage() {
           onDragEnd={handleDragEnd}
           autoScroll
         >
+          {/* Two INDEPENDENT containers, not one grid: Saved Places is a fixed-width sticky
+              sidebar with its own column; the day columns live in a separate wrapping grid that
+              starts at its own left edge. Keeping them as siblings (not grid cells of the same
+              grid) is what avoids the day grid "reserving" Saved Places' cell and offsetting
+              every row after it. */}
           <div className="lg:flex lg:items-start lg:gap-gutter">
             <aside className="mb-gutter lg:mb-0 lg:w-[300px] lg:flex-shrink-0 lg:sticky lg:top-6">
               <button
@@ -241,7 +246,7 @@ function PlannerColumnView({ column, onRemove, removingId, emptyMessage }: Plann
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-6">
+    <div className="min-h-[280px] bg-surface-container-lowest rounded-xl elevation-l1 border border-outline-variant/20 p-6">
       <header className="flex justify-between items-center mb-6">
         <h3 className="text-headline-md font-headline-md text-on-surface">{column.title}</h3>
         <span
@@ -310,7 +315,7 @@ function SortableDestinationItem({ destination, onRemove, isRemoving }: Sortable
     <li
       ref={setNodeRef}
       style={style}
-      className="p-4 rounded-lg bg-surface border border-outline-variant/30 flex justify-between items-center gap-3"
+      className="min-h-[64px] p-4 rounded-lg bg-surface border border-outline-variant/30 flex items-center gap-3"
     >
       <button
         type="button"
@@ -321,7 +326,9 @@ function SortableDestinationItem({ destination, onRemove, isRemoving }: Sortable
       >
         drag_indicator
       </button>
-      <span className="font-label-md text-on-surface flex-grow">{destination.name}</span>
+      <span className="font-label-md text-on-surface flex-grow line-clamp-2" title={destination.name}>
+        {destination.name}
+      </span>
       <button
         type="button"
         className="text-error bg-error-container/20 px-3 py-1 rounded-full text-label-sm hover:bg-error-container/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0"

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { AttractionSummary } from '../../types';
 import { AddToTripControl } from '../trips/AddToTripControl';
+import { QuickSaveControl } from '../trips/QuickSaveControl';
 import { humanizeKind } from './humanizeKind';
 
 interface AttractionCardProps {
@@ -9,29 +10,30 @@ interface AttractionCardProps {
 
 const MAX_VISIBLE_TAGS = 3;
 
-/** One attraction result card: thumbnail, category/tags, rating, and a hover/focus "save to trip" quick action. */
+/**
+ * One attraction result card: thumbnail, category/tags, rating, and two distinct save actions —
+ * a hover/focus "Save place" icon (trip-only, straight to Saved Places) and the full "Add to
+ * Trip" control in the footer (trip + day picker).
+ */
 export function AttractionCard({ attraction }: AttractionCardProps) {
   // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = attraction.tags.filter((tag) => tag !== attraction.category);
   const visibleTags = additionalTags.slice(0, MAX_VISIBLE_TAGS);
   const hiddenTagCount = additionalTags.length - visibleTags.length;
+  const destination = {
+    providerPlaceId: attraction.providerPlaceId,
+    name: attraction.name,
+    category: attraction.category,
+    thumbnailUrl: attraction.thumbnailUrl,
+    lat: attraction.latitude,
+    lng: attraction.longitude,
+  };
 
   return (
     <li className="h-full">
       <article className="group relative h-full bg-white rounded-xl elevation-l1 hover:elevation-l2 transition-all duration-300 flex flex-col border border-outline-variant/20">
         {/* Sibling of the destination Link (not nested in it) so this button doesn't trigger navigation. */}
-        <AddToTripControl
-          variant="icon"
-          className="absolute top-3 left-3 z-20"
-          destination={{
-            providerPlaceId: attraction.providerPlaceId,
-            name: attraction.name,
-            category: attraction.category,
-            thumbnailUrl: attraction.thumbnailUrl,
-            lat: attraction.latitude,
-            lng: attraction.longitude,
-          }}
-        />
+        <QuickSaveControl className="absolute top-3 left-3 z-20" destination={destination} />
 
         <Link
           to={`/destinations/${attraction.providerPlaceId}`}
@@ -75,7 +77,7 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
               </h3>
             </div>
             {visibleTags.length > 0 && (
-              <ul className="flex flex-wrap gap-2">
+              <ul className="flex flex-wrap gap-2 mb-stack-lg">
                 {visibleTags.map((tag) => (
                   <li
                     key={tag}
@@ -93,6 +95,9 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
             )}
           </div>
         </Link>
+        <div className="px-stack-lg pb-stack-lg mt-auto">
+          <AddToTripControl destination={destination} />
+        </div>
       </article>
     </li>
   );
