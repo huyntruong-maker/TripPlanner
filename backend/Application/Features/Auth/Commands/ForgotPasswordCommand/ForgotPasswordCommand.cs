@@ -1,4 +1,5 @@
-﻿using Application.Dtos.Base;
+﻿using Application.Common.Email;
+using Application.Dtos.Base;
 using Application.Dtos.Email;
 using Application.Features.Auth.Shared;
 using Application.Interfaces.DataAccess;
@@ -58,24 +59,19 @@ namespace Application.Features.Auth.Commands.ForgotPasswordCommand
             var emailTemplate = configuration.GetSection(ConfigKeys.Security.Email.ResetPasswordNotification).Get<EmailTemplateDto>();
             if (string.IsNullOrEmpty(user.Email)
                 || emailTemplate == null
-                || string.IsNullOrEmpty(emailTemplate.Path))
+                || string.IsNullOrEmpty(emailTemplate.Url))
             {
                 return AuthControllerMsg.ForgotPassword.SendEmailFailed;
             }
 
             var urlencodedToken = HttpUtility.UrlEncode(token);
-            var dataBinding = new Dictionary<string, string>()
-            {
-                { "{{UserName}}", user.UserName! },
-                { "{{Url}}", $"{emailTemplate.Url}?token={urlencodedToken}" },
-            };
+            var resetUrl = $"{emailTemplate.Url}?token={urlencodedToken}";
 
             var request = new SendEmailReqDto
             {
                 ToEmails = [user.Email],
-                Subject = string.IsNullOrEmpty(emailTemplate.Subject) ? "Reset your password." : emailTemplate.Subject,
-                TemplatePath = emailTemplate.Path,
-                DataBinding = dataBinding
+                Subject = string.IsNullOrEmpty(emailTemplate.Subject) ? EmailTemplates.ResetPasswordSubject : emailTemplate.Subject,
+                Body = EmailTemplates.BuildResetPasswordEmail(user.UserName!, resetUrl, authShareService.ResetPasswordExpirationHours)
             };
 
             return await emailService.SendEmail(request);

@@ -1,3 +1,4 @@
+using Application.Common.Email;
 using Application.Dtos.Base;
 using Application.Dtos.Email;
 using Application.Interfaces.Cqrs;
@@ -30,6 +31,8 @@ public class RegisterCommandHandler(
     IConfiguration configuration,
     ILogger<RegisterCommandHandler> logger) : IRequestHandler<RegisterCommand, string>
 {
+    private const int VerificationTokenExpiryHours = 24;
+
     public async Task<string> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         var existingUser = await userManager.FindByEmailAsync(request.Email!);
@@ -60,7 +63,7 @@ public class RegisterCommandHandler(
         {
             UserId = user.Id,
             Token = token,
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(24)
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(VerificationTokenExpiryHours)
         };
 
         var tokenRepo = writeUnitOfWork.GetRepository<EmailVerificationToken>();
@@ -85,26 +88,21 @@ public class RegisterCommandHandler(
 
         if (string.IsNullOrEmpty(user.Email)
             || emailTemplate == null
-            || string.IsNullOrEmpty(emailTemplate.Path))
+            || string.IsNullOrEmpty(emailTemplate.Url))
         {
             return "EmailVerificationNotification template missing or user email absent.";
         }
 
         var urlEncodedToken = HttpUtility.UrlEncode(token);
-        var dataBinding = new Dictionary<string, string>
-        {
-            { "{{FirstName}}", user.FirstName },
-            { "{{Url}}", $"{emailTemplate.Url}?token={urlEncodedToken}" }
-        };
+        var verifyUrl = $"{emailTemplate.Url}?token={urlEncodedToken}";
 
         var sendRequest = new SendEmailReqDto
         {
             ToEmails = [user.Email],
             Subject = string.IsNullOrEmpty(emailTemplate.Subject)
-                ? "Verify your email address."
+                ? EmailTemplates.VerificationSubject
                 : emailTemplate.Subject,
-            TemplatePath = emailTemplate.Path,
-            DataBinding = dataBinding
+            Body = EmailTemplates.BuildVerificationEmail(user.FirstName, verifyUrl, VerificationTokenExpiryHours)
         };
 
         return await emailService.SendEmail(sendRequest);
