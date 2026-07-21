@@ -81,4 +81,10 @@ public static class GlobalConstants
         public const string Zip = ".zip";
         public const string Rar = ".rar";
     }
+
+    public struct SmtpPort
+    {
+        public const int ImplicitTls = 465;
+        public const int StartTls = 587;
+    }
 }

@@ -3,10 +3,11 @@ using Application.Interfaces.Email;
 using Domain.Constants;
 using Domain.Helpers;
 using Domain.Messages;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Net.Mail;
+using MimeKit;
 
 namespace Infrastructure.Email;
 
@@ -14,6 +15,8 @@ public class EmailService(
     ILogger<EmailService> logger,
     IConfiguration configuration) : IEmailService
 {
+    private const int SmtpTimeoutMilliseconds = 15000;
+
     public async Task<string> SendEmail(SendEmailReqDto request)
     {
         if (request.ToEmails.Count < 1 || request.ToEmails.Any(email => !email.IsValidEmail()))
@@ -37,26 +40,16 @@ public class EmailService(
         var (smtpConfig, isValid) = LoadSmtpConfig();
         if (smtpConfig == null || !isValid) return EmailControllerMsg.Create.ConfigurationLoadFailed;
 
-        var mailMessage = new MailMessage
-        {
-            From = new MailAddress(smtpConfig.From),
-            Subject = request.Subject,
-            Body = request.Body,
-            IsBodyHtml = true
-        };
-
-        if (request.CcEmails?.Count > 0) request.CcEmails.ForEach(mailMessage.CC.Add);
-
-        if (request.BccEmails?.Count > 0) request.BccEmails.ForEach(mailMessage.Bcc.Add);
-
         try
         {
-            var smtpClient = new SmtpClient(smtpConfig.Host)
+            using var smtpClient = new SmtpClient
             {
-                Port = smtpConfig.Port,
-                Credentials = new NetworkCredential(smtpConfig.Username, smtpConfig.Password),
-                EnableSsl = smtpConfig.EnableSsl
+                Timeout = SmtpTimeoutMilliseconds
             };
+
+            var secureSocketOptions = ResolveSecureSocketOptions(smtpConfig);
+            await smtpClient.ConnectAsync(smtpConfig.Host, smtpConfig.Port, secureSocketOptions);
+            await smtpClient.AuthenticateAsync(smtpConfig.Username, smtpConfig.Password);
 
             var i = 0;
             var toEmailsChunk = request.ToEmails
@@ -66,12 +59,14 @@ public class EmailService(
 
             foreach (var toEmails in toEmailsChunk)
             {
-                toEmails.ForEach(mailMessage.To.Add);
+                var mimeMessage = BuildMimeMessage(request, smtpConfig, toEmails);
 
-                await smtpClient.SendMailAsync(mailMessage);
+                await smtpClient.SendAsync(mimeMessage);
 
                 logger.LogInformation("Send email to {emails} successfully", string.Join(", ", toEmails));
             }
+
+            await smtpClient.DisconnectAsync(quit: true);
 
             return string.Empty;
         }
@@ -81,6 +76,36 @@ public class EmailService(
 
             return EmailControllerMsg.Create.Exception;
         }
+    }
+
+    private static SecureSocketOptions ResolveSecureSocketOptions(SmtpConfig smtpConfig)
+    {
+        if (!smtpConfig.EnableSsl) return SecureSocketOptions.None;
+
+        return smtpConfig.Port == GlobalConstants.SmtpPort.ImplicitTls
+            ? SecureSocketOptions.SslOnConnect
+            : SecureSocketOptions.StartTls;
+    }
+
+    private static MimeMessage BuildMimeMessage(SendEmailReqDto request, SmtpConfig smtpConfig, List<string> toEmails)
+    {
+        var mimeMessage = new MimeMessage
+        {
+            Subject = request.Subject
+        };
+
+        mimeMessage.From.Add(MailboxAddress.Parse(smtpConfig.From));
+        toEmails.ForEach(email => mimeMessage.To.Add(MailboxAddress.Parse(email)));
+
+        if (request.CcEmails?.Count > 0)
+            request.CcEmails.ForEach(email => mimeMessage.Cc.Add(MailboxAddress.Parse(email)));
+
+        if (request.BccEmails?.Count > 0)
+            request.BccEmails.ForEach(email => mimeMessage.Bcc.Add(MailboxAddress.Parse(email)));
+
+        mimeMessage.Body = new BodyBuilder { HtmlBody = request.Body }.ToMessageBody();
+
+        return mimeMessage;
     }
 
     private (SmtpConfig?, bool) LoadSmtpConfig()
