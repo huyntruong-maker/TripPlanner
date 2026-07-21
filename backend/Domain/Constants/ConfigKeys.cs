@@ -61,11 +61,14 @@ public static class ConfigKeys
         public const string ConnectTimeout = "Redis:ConnectTimeout";
     }
 
-    public struct Resend
+    public struct Smtp
     {
-        public const string ApiKey = "Resend:ApiKey";
-        public const string From = "Resend:From";
-        public const string BaseUrl = "Resend:BaseUrl";
+        public const string From = "Smtp:From";
+        public const string Port = "Smtp:Port";
+        public const string Username = "Smtp:Username";
+        public const string Password = "Smtp:Password";
+        public const string EnableSsl = "Smtp:EnableSsl";
+        public const string Host = "Smtp:Host";
     }
 
     public struct Replication

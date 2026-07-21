@@ -1,31 +1,19 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
 using Application.Dtos.Email;
 using Application.Interfaces.Email;
-using Application.Interfaces.Restful;
 using Domain.Constants;
 using Domain.Helpers;
 using Domain.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Net.Mail;
 
 namespace Infrastructure.Email;
 
-/// <summary>
-/// Sends transactional email through Resend's HTTPS API (https://api.resend.com) rather than
-/// raw SMTP. Railway blocks outbound SMTP (ports 465/587/2525) on the Free/Trial/Hobby plans,
-/// which made any SmtpClient-based sender (System.Net.Mail or MailKit) time out on connect
-/// regardless of library — the connection never reaches Gmail. An HTTPS API call on port 443
-/// is unaffected by that restriction.
-/// </summary>
 public class EmailService(
-    IRestfulService restfulService,
     ILogger<EmailService> logger,
     IConfiguration configuration) : IEmailService
 {
-    private const string DefaultBaseUrl = "https://api.resend.com";
-
     public async Task<string> SendEmail(SendEmailReqDto request)
     {
         if (request.ToEmails.Count < 1 || request.ToEmails.Any(email => !email.IsValidEmail()))
@@ -46,11 +34,30 @@ public class EmailService(
             return EmailControllerMsg.Create.ValidateBccEmailFailed;
         }
 
-        var (resendConfig, isValid) = LoadResendConfig();
-        if (resendConfig == null || !isValid) return EmailControllerMsg.Create.ConfigurationLoadFailed;
+        var (smtpConfig, isValid) = LoadSmtpConfig();
+        if (smtpConfig == null || !isValid) return EmailControllerMsg.Create.ConfigurationLoadFailed;
+
+        var mailMessage = new MailMessage
+        {
+            From = new MailAddress(smtpConfig.From),
+            Subject = request.Subject,
+            Body = request.Body,
+            IsBodyHtml = true
+        };
+
+        if (request.CcEmails?.Count > 0) request.CcEmails.ForEach(mailMessage.CC.Add);
+
+        if (request.BccEmails?.Count > 0) request.BccEmails.ForEach(mailMessage.Bcc.Add);
 
         try
         {
+            var smtpClient = new SmtpClient(smtpConfig.Host)
+            {
+                Port = smtpConfig.Port,
+                Credentials = new NetworkCredential(smtpConfig.Username, smtpConfig.Password),
+                EnableSsl = smtpConfig.EnableSsl
+            };
+
             var i = 0;
             var toEmailsChunk = request.ToEmails
                 .GroupBy(_ => i++ / GlobalConstants.MaxBatchSize.MaxBatch100)
@@ -59,13 +66,9 @@ public class EmailService(
 
             foreach (var toEmails in toEmailsChunk)
             {
-                var (statusCode, body) = await SendViaResendAsync(request, resendConfig, toEmails);
+                toEmails.ForEach(mailMessage.To.Add);
 
-                if (statusCode is not (HttpStatusCode.OK or HttpStatusCode.Created))
-                {
-                    logger.LogError("Send email failed. Resend API returned {Status}: {Body}", statusCode, body);
-                    return EmailControllerMsg.Create.Exception;
-                }
+                await smtpClient.SendMailAsync(mailMessage);
 
                 logger.LogInformation("Send email to {emails} successfully", string.Join(", ", toEmails));
             }
@@ -80,40 +83,30 @@ public class EmailService(
         }
     }
 
-    private Task<(HttpStatusCode, string)> SendViaResendAsync(
-        SendEmailReqDto request, ResendConfig resendConfig, List<string> toEmails)
+    private (SmtpConfig?, bool) LoadSmtpConfig()
     {
-        var payload = new Dictionary<string, object>
-        {
-            ["from"] = resendConfig.From,
-            ["to"] = toEmails,
-            ["subject"] = request.Subject,
-            ["html"] = request.Body
-        };
+        var smtpFromEmail = configuration.GetSection(ConfigKeys.Smtp.From).Value;
+        var smtpUserName = configuration.GetSection(ConfigKeys.Smtp.Username).Value;
+        var smtpPassword = configuration.GetSection(ConfigKeys.Smtp.Password).Value;
+        var smtpHost = configuration.GetSection(ConfigKeys.Smtp.Host).Value;
+        var smtpPort = configuration.GetSection(ConfigKeys.Smtp.Port).Get<int?>();
+        var smtpEnableSsl = configuration.GetSection(ConfigKeys.Smtp.EnableSsl).Get<bool?>();
 
-        if (request.CcEmails?.Count > 0) payload["cc"] = request.CcEmails;
-        if (request.BccEmails?.Count > 0) payload["bcc"] = request.BccEmails;
-
-        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        var headers = new Dictionary<string, string> { ["Authorization"] = $"Bearer {resendConfig.ApiKey}" };
-
-        return restfulService.Post($"{resendConfig.BaseUrl}/emails", content, headers);
-    }
-
-    private (ResendConfig?, bool) LoadResendConfig()
-    {
-        var apiKey = configuration.GetSection(ConfigKeys.Resend.ApiKey).Value;
-        var from = configuration.GetSection(ConfigKeys.Resend.From).Value;
-        var baseUrl = configuration.GetSection(ConfigKeys.Resend.BaseUrl).Value;
-
-        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(from))
+        if (string.IsNullOrWhiteSpace(smtpFromEmail)
+            || string.IsNullOrWhiteSpace(smtpUserName)
+            || string.IsNullOrWhiteSpace(smtpPassword)
+            || string.IsNullOrWhiteSpace(smtpHost)
+            || smtpPort == null)
             return (null, false);
 
-        var result = new ResendConfig
+        var result = new SmtpConfig
         {
-            ApiKey = apiKey,
-            From = from,
-            BaseUrl = string.IsNullOrWhiteSpace(baseUrl) ? DefaultBaseUrl : baseUrl
+            From = smtpFromEmail,
+            Username = smtpUserName,
+            Host = smtpHost,
+            Port = smtpPort.Value,
+            Password = smtpPassword,
+            EnableSsl = smtpEnableSsl ?? true
         };
 
         return (result, true);
