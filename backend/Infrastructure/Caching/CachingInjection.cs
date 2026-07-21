@@ -2,7 +2,6 @@ using Application.Interfaces.Caching;
 using Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace Infrastructure.Caching;
@@ -11,34 +10,33 @@ public static class CachingInjection
 {
     public static void AddRedis(this IServiceCollection collection, IConfiguration configuration)
     {
-        var connectionString = configuration.GetSection(ConfigKeys.Redis.Connection).Value ?? string.Empty;
-        var redisOptions = ConfigurationOptions.Parse(connectionString);
-        redisOptions.ConnectRetry = configuration.GetSection(ConfigKeys.Redis.ConnectRetry).Get<int>();
-        redisOptions.ConnectTimeout = configuration.GetSection(ConfigKeys.Redis.ConnectTimeout).Get<int>();
-        redisOptions.AbortOnConnectFail = false;
-
+        var connectionString = configuration.GetSection(ConfigKeys.Redis.Connection).Value;
         collection.AddStackExchangeRedisCache(options =>
         {
+            options.Configuration = connectionString;
             options.InstanceName = configuration.GetSection(ConfigKeys.Redis.InstanceName).Value;
-            options.ConfigurationOptions = redisOptions;
+            options.ConfigurationOptions = new ConfigurationOptions
+            {
+                ConnectRetry = configuration.GetSection(ConfigKeys.Redis.ConnectRetry).Get<int>(),
+                ConnectTimeout = configuration.GetSection(ConfigKeys.Redis.ConnectTimeout).Get<int>(),
+                AbortOnConnectFail = false
+            };
         });
 
         collection.AddSingleton<IConnectionMultiplexer>(provider =>
         {
-            var logger = provider.GetRequiredService<ILogger<IConnectionMultiplexer>>();
-
-            // AbortOnConnectFail = false means Connect() returns a multiplexer that keeps
-            // retrying in the background instead of throwing/staying null forever when the
-            // very first attempt at startup fails (e.g. Redis not reachable yet).
-            var connectionMultiplexer = ConnectionMultiplexer.Connect(redisOptions);
-
-            connectionMultiplexer.ConnectionFailed += (_, args) =>
-                logger.LogWarning("Redis connection failed: {FailureType} - {Exception}", args.FailureType, args.Exception);
-
-            connectionMultiplexer.ConnectionRestored += (_, _) =>
-                logger.LogInformation("Redis connection restored");
-
+            IConnectionMultiplexer? connectionMultiplexer = null;
+            try
+            {
+                connectionMultiplexer = ConnectionMultiplexer.Connect(connectionString ?? string.Empty);
+            }
+            catch (RedisConnectionException ex)
+            {
+                Console.WriteLine($"Could not connect to Redis: {ex.Message}");
+            }
+#pragma warning disable CS8603 // Possible null reference return.
             return connectionMultiplexer;
+#pragma warning restore CS8603 // Possible null reference return.
         });
 
         collection.AddScoped<ICacheManager, CacheManager>();
