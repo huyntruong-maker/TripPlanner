@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /*
+   * Height of the sticky app header (nav py-4 + a 40px control row). Single source of truth so
+   * anything that sticks *below* the header can offset by exactly this much.
+   */
+  --app-header-height: 4.5rem;
+}
+
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;

@@ -150,14 +150,39 @@ export function SearchPage() {
     }
   }
 
+  // Once a location is picked the page is about browsing its attractions, so the hero collapses
+  // to a slim bar pinned under the header: searching another city no longer needs a scroll back
+  // to the top, and the reclaimed height brings the results above the fold.
+  const isBrowsing = selectedLocation !== null;
+
   return (
     <div className="space-y-section-gap">
-      <section>
-        <div className="bg-surface-container-lowest rounded-xl p-8 elevation-l1 max-w-3xl mx-auto border border-outline-variant/30">
-          <h1 className="text-display font-display mb-stack-lg text-primary">Discover destinations</h1>
+      <section
+        className={
+          isBrowsing
+            ? 'sticky top-[var(--app-header-height)] z-40 py-3 bg-background'
+            : undefined
+        }
+      >
+        <div
+          className={
+            isBrowsing
+              ? 'bg-surface-container-lowest rounded-xl px-4 py-3 elevation-l1 border border-outline-variant/30'
+              : 'bg-surface-container-lowest rounded-xl p-8 elevation-l1 max-w-3xl mx-auto border border-outline-variant/30'
+          }
+        >
+          {!isBrowsing && (
+            <h1 className="text-display font-display mb-stack-lg text-primary">
+              Discover destinations
+            </h1>
+          )}
           <div className="relative space-y-2">
             <label
-              className="block text-label-md font-label-md text-on-surface-variant ml-1"
+              className={
+                isBrowsing
+                  ? 'sr-only'
+                  : 'block text-label-md font-label-md text-on-surface-variant ml-1'
+              }
               htmlFor="destination-search"
             >
               Search a city or country
@@ -184,7 +209,9 @@ export function SearchPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="e.g. Paris"
                 autoComplete="off"
-                className="w-full pl-12 pr-4 py-4 bg-surface border border-outline-variant rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-body-md transition-all"
+                className={`w-full pl-12 pr-4 bg-surface border border-outline-variant rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-body-md transition-all ${
+                  isBrowsing ? 'py-2.5' : 'py-4'
+                }`}
               />
             </div>
 
@@ -199,7 +226,7 @@ export function SearchPage() {
             )}
           </div>
 
-          {!isAuthenticated && (
+          {!isBrowsing && !isAuthenticated && (
             <p className="mt-stack-lg text-on-surface-variant text-body-md">
               <Link to="/login" className="text-primary font-bold hover:underline">
                 Log in
@@ -371,6 +398,8 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
   const [minRating, setMinRating] = useState<number | null>(() => minRatingFromSearchParams(searchParams));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => sortOrderFromSearchParams(searchParams));
   const [showAllCategories, setShowAllCategories] = useState(false);
+  // Only drives the sub-lg collapse; from lg up the sidebar is always shown.
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Mirrors filters/sort into the URL (replace, no history spam); writes only when the URL actually
   // differs so StrictMode's double-invoked effects can't wipe a freshly-pushed ?q/lat with a stale `previous`.
@@ -428,6 +457,7 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
   }, [filteredAttractions, sortOrder]);
 
   const hasActiveFilters = selectedCategoryKeys.length > 0 || minRating !== null;
+  const activeFilterCount = selectedCategoryKeys.length + (minRating !== null ? 1 : 0);
   const selectedCategoryLabels = categoryOptions
     .filter((option) => selectedCategoryKeys.includes(option.key))
     .map((option) => option.label);
@@ -491,126 +521,167 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
       )}
 
       {query.data && attractions.length > 0 && (
-        <div className="bg-surface-container-lowest rounded-xl p-4 elevation-l1 border border-outline-variant/20 space-y-3">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            {categoryOptions.length > 0 && (
-              // role=group rather than fieldset/legend so the "Show all" toggle can sit on the
-              // label line instead of competing with the chips for attention.
-              <div role="group" aria-labelledby="category-filter-label" className="min-w-0 flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <span
-                    id="category-filter-label"
-                    className="text-label-sm font-label-sm text-on-surface-variant"
-                  >
-                    Category
+        // Filters in their own column rather than a full-width bar: at 1200px of content the old
+        // `justify-between` row left ~300px of dead space between the chips and the rating, and
+        // everything scrolled out of reach. A sticky column also has room for more filters later.
+        <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-gutter lg:items-start">
+          {/* Sticks below both the header and the slim search bar that is pinned under it
+              (~5.5rem: the bar's card plus its wrapper padding), so filters stay in reach. */}
+          <aside className="mb-stack-lg lg:mb-0 lg:sticky lg:top-[calc(var(--app-header-height)+5.5rem)]">
+            <button
+              type="button"
+              onClick={() => setIsFilterOpen((open) => !open)}
+              aria-expanded={isFilterOpen}
+              aria-controls="attraction-filters"
+              className="lg:hidden w-full flex items-center justify-between gap-2 bg-surface-container-lowest rounded-xl px-4 py-3 elevation-l1 border border-outline-variant/20 text-label-md font-label-md text-on-surface"
+            >
+              <span className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                  tune
+                </span>
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-primary text-on-primary text-label-sm">
+                    {activeFilterCount}
                   </span>
-                  {hasMoreCategories && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllCategories((current) => !current)}
-                      className="text-label-sm font-label-sm text-primary hover:underline"
+                )}
+              </span>
+              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                {isFilterOpen ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+
+            <div
+              id="attraction-filters"
+              className={`${isFilterOpen ? 'block' : 'hidden'} lg:block mt-2 lg:mt-0 bg-surface-container-lowest rounded-xl p-4 elevation-l1 border border-outline-variant/20 space-y-4`}
+            >
+              {categoryOptions.length > 0 && (
+                // role=group rather than fieldset/legend so the "Show all" toggle can sit on the
+                // label line instead of competing with the options for attention.
+                <div role="group" aria-labelledby="category-filter-label">
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <span
+                      id="category-filter-label"
+                      className="text-label-sm font-label-sm text-on-surface-variant"
                     >
-                      {showAllCategories ? 'Show less' : `Show all (${categoryOptions.length})`}
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {visibleCategoryOptions.map((option) => {
-                    const isSelected = selectedCategoryKeys.includes(option.key);
-                    return (
+                      Category
+                    </span>
+                    {hasMoreCategories && (
                       <button
-                        key={option.key}
                         type="button"
-                        aria-pressed={isSelected}
-                        onClick={() => toggleCategory(option.key)}
-                        className={
-                          isSelected
-                            ? 'flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-label-sm font-label-sm bg-primary text-on-primary transition-colors'
-                            : 'flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors'
-                        }
+                        onClick={() => setShowAllCategories((current) => !current)}
+                        className="text-label-sm font-label-sm text-primary hover:underline"
                       >
-                        <span>{option.label}</span>
-                        {/* Counts let users skip one-result categories without trying them. */}
-                        <span
+                        {showAllCategories ? 'Show less' : `Show all (${categoryOptions.length})`}
+                      </button>
+                    )}
+                  </div>
+                  {/* Full-width rows, not wrapped pills: in a 260px column pills wrap raggedly and
+                      the counts no longer line up for scanning. */}
+                  <div className="flex flex-col gap-1">
+                    {visibleCategoryOptions.map((option) => {
+                      const isSelected = selectedCategoryKeys.includes(option.key);
+                      return (
+                        <button
+                          key={option.key}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => toggleCategory(option.key)}
                           className={
                             isSelected
-                              ? 'text-label-sm opacity-80'
-                              : 'text-label-sm text-outline'
+                              ? 'w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-label-sm font-label-sm bg-primary text-on-primary transition-colors text-left'
+                              : 'w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container transition-colors text-left'
                           }
                         >
-                          {option.count}
-                        </span>
-                      </button>
-                    );
-                  })}
+                          <span className="min-w-0 truncate">{option.label}</span>
+                          {/* Counts let users skip one-result categories without trying them. */}
+                          <span
+                            className={
+                              isSelected ? 'opacity-80 flex-shrink-0' : 'text-outline flex-shrink-0'
+                            }
+                          >
+                            {option.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+
+              <div className="space-y-1 border-t border-outline-variant/20 pt-4">
+                <label
+                  htmlFor="attractions-min-rating"
+                  className="block text-label-sm font-label-sm text-on-surface-variant"
+                >
+                  Minimum rating
+                </label>
+                <select
+                  id="attractions-min-rating"
+                  value={minRating ?? ''}
+                  onChange={(event) =>
+                    setMinRating(event.target.value === '' ? null : Number(event.target.value))
+                  }
+                  className={`${SELECT_CLASSES} w-full`}
+                >
+                  <option value="">Any rating</option>
+                  {RATING_OPTIONS.map((rating) => (
+                    <option key={rating} value={rating}>
+                      {rating}+ rating
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {hasActiveFilters && (
+                <div className="flex flex-wrap items-center gap-2 border-t border-outline-variant/20 pt-4 text-label-sm font-label-sm text-on-surface-variant">
+                  <span>Active filters:</span>
+                  {selectedCategoryLabels.map((label) => (
+                    <span
+                      key={label}
+                      className="px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                  {minRating !== null && (
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      {minRating}+ rating
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="ml-auto text-primary font-label-sm underline hover:no-underline"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+            </div>
+          </aside>
+
+          <div className="space-y-stack-lg min-w-0">
+            {sortedAttractions.length === 0 && (
+              <p className="text-on-surface-variant text-body-md">
+                No attractions match the selected filters.
+              </p>
             )}
 
-            <div className="flex items-center gap-2 md:flex-shrink-0 md:pt-6">
-              <label
-                htmlFor="attractions-min-rating"
-                className="text-label-sm font-label-sm text-on-surface-variant whitespace-nowrap"
-              >
-                Minimum rating
-              </label>
-              <select
-                id="attractions-min-rating"
-                value={minRating ?? ''}
-                onChange={(event) =>
-                  setMinRating(event.target.value === '' ? null : Number(event.target.value))
-                }
-                className={SELECT_CLASSES}
-              >
-                <option value="">Any rating</option>
-                {RATING_OPTIONS.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {rating}+ rating
-                  </option>
+            {sortedAttractions.length > 0 && (
+              // 2 columns beside the sidebar until xl, where the grid is wide enough for 3.
+              <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter items-stretch">
+                {sortedAttractions.map((attraction) => (
+                  <AttractionCard
+                    key={attraction.providerPlaceId}
+                    attraction={attraction}
+                    discoverSearch={discoverSearch}
+                  />
                 ))}
-              </select>
-            </div>
+              </ul>
+            )}
           </div>
-
-          {hasActiveFilters && (
-            <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-outline-variant/20 text-label-sm font-label-sm text-on-surface-variant">
-              <span>Active filters:</span>
-              {selectedCategoryLabels.map((label) => (
-                <span key={label} className="px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                  {label}
-                </span>
-              ))}
-              {minRating !== null && (
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                  {minRating}+ rating
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="ml-auto text-primary font-label-sm underline hover:no-underline"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
         </div>
-      )}
-
-      {query.data && attractions.length > 0 && sortedAttractions.length === 0 && (
-        <p className="text-on-surface-variant text-body-md">No attractions match the selected filters.</p>
-      )}
-
-      {sortedAttractions.length > 0 && (
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter items-stretch">
-          {sortedAttractions.map((attraction) => (
-            <AttractionCard
-              key={attraction.providerPlaceId}
-              attraction={attraction}
-              discoverSearch={discoverSearch}
-            />
-          ))}
-        </ul>
       )}
     </section>
   );

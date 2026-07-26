@@ -28,10 +28,12 @@ export function AppHeader() {
   const closeNav = () => setIsNavOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md shadow-sm">
+    // bg-surface/95, not /80: at 80% the chips and titles scrolling underneath showed through
+    // and read as a smudge behind the brand and nav.
+    <header className="sticky top-0 z-50 w-full bg-surface/95 backdrop-blur-md shadow-sm">
       <nav
         aria-label="Main"
-        className="relative flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max mx-auto"
+        className="relative flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max mx-auto min-h-[var(--app-header-height)]"
       >
         <Link to="/" className="flex items-center gap-stack-sm" onClick={closeNav}>
           <span className="material-symbols-outlined text-primary text-[28px]" aria-hidden="true">
