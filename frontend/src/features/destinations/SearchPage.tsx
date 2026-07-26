@@ -298,8 +298,15 @@ interface AttractionsGridProps {
 type SortOrder = 'recommended' | 'rating';
 
 const RATING_OPTIONS = [5, 7, 8, 9] as const;
-/** How many category chips show before the "Show all" toggle. */
-const VISIBLE_CATEGORY_LIMIT = 10;
+/**
+ * How many category chips show before the "Show all" toggle. Kept small on purpose: provider
+ * categories overlap heavily (e.g. religion/churches/cathedrals all describe the same places),
+ * and options are sorted most-frequent-first, so the long tail is mostly noise.
+ */
+const VISIBLE_CATEGORY_LIMIT = 6;
+
+const SELECT_CLASSES =
+  'border border-outline-variant rounded-lg px-3 py-1.5 text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all';
 
 const CATEGORY_PARAM = 'cat';
 const RATING_PARAM = 'rating';
@@ -438,14 +445,34 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
 
   return (
     <section className="space-y-stack-lg">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-headline-lg font-headline-lg text-on-surface">
           Attractions near {location.displayName}
         </h2>
         {query.data && attractions.length > 0 && (
-          <p className="text-label-md font-label-md text-on-surface-variant">
-            {sortedAttractions.length} of {attractions.length} attractions
-          </p>
+          // Sort lives next to the result count — it describes the list, not the filter set.
+          <div className="flex items-center gap-3">
+            <p className="text-label-md font-label-md text-on-surface-variant">
+              {hasActiveFilters
+                ? `${sortedAttractions.length} of ${attractions.length} attractions`
+                : `${attractions.length} attractions`}
+            </p>
+            <label
+              htmlFor="attractions-sort-order"
+              className="text-label-sm font-label-sm text-on-surface-variant whitespace-nowrap"
+            >
+              Sort by
+            </label>
+            <select
+              id="attractions-sort-order"
+              value={sortOrder}
+              onChange={(event) => setSortOrder(event.target.value as SortOrder)}
+              className={SELECT_CLASSES}
+            >
+              <option value="recommended">Recommended</option>
+              <option value="rating">Highest rating</option>
+            </select>
+          </div>
         )}
       </div>
 
@@ -465,12 +492,28 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
 
       {query.data && attractions.length > 0 && (
         <div className="bg-surface-container-lowest rounded-xl p-4 elevation-l1 border border-outline-variant/20 space-y-3">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             {categoryOptions.length > 0 && (
-              <fieldset className="min-w-0 flex-1">
-                <legend className="text-label-sm font-label-sm text-on-surface-variant mb-2">
-                  Category
-                </legend>
+              // role=group rather than fieldset/legend so the "Show all" toggle can sit on the
+              // label line instead of competing with the chips for attention.
+              <div role="group" aria-labelledby="category-filter-label" className="min-w-0 flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span
+                    id="category-filter-label"
+                    className="text-label-sm font-label-sm text-on-surface-variant"
+                  >
+                    Category
+                  </span>
+                  {hasMoreCategories && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCategories((current) => !current)}
+                      className="text-label-sm font-label-sm text-primary hover:underline"
+                    >
+                      {showAllCategories ? 'Show less' : `Show all (${categoryOptions.length})`}
+                    </button>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {visibleCategoryOptions.map((option) => {
                     const isSelected = selectedCategoryKeys.includes(option.key);
@@ -482,69 +525,50 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
                         onClick={() => toggleCategory(option.key)}
                         className={
                           isSelected
-                            ? 'px-3 py-1.5 rounded-full text-label-sm font-label-sm bg-primary text-on-primary transition-colors'
-                            : 'px-3 py-1.5 rounded-full text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors'
+                            ? 'flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-label-sm font-label-sm bg-primary text-on-primary transition-colors'
+                            : 'flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors'
                         }
                       >
-                        {option.label}
+                        <span>{option.label}</span>
+                        {/* Counts let users skip one-result categories without trying them. */}
+                        <span
+                          className={
+                            isSelected
+                              ? 'text-label-sm opacity-80'
+                              : 'text-label-sm text-outline'
+                          }
+                        >
+                          {option.count}
+                        </span>
                       </button>
                     );
                   })}
-                  {hasMoreCategories && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllCategories((current) => !current)}
-                      className="px-3 py-1.5 rounded-full text-label-sm font-label-sm text-primary hover:underline"
-                    >
-                      {showAllCategories ? 'Show less' : `Show all (${categoryOptions.length})`}
-                    </button>
-                  )}
                 </div>
-              </fieldset>
+              </div>
             )}
 
-            <div className="flex flex-wrap gap-3 md:flex-shrink-0">
-              <div className="space-y-1">
-                <label
-                  htmlFor="attractions-min-rating"
-                  className="block text-label-sm font-label-sm text-on-surface-variant"
-                >
-                  Minimum rating
-                </label>
-                <select
-                  id="attractions-min-rating"
-                  value={minRating ?? ''}
-                  onChange={(event) =>
-                    setMinRating(event.target.value === '' ? null : Number(event.target.value))
-                  }
-                  className="border border-outline-variant rounded-lg px-3 py-2 text-body-md bg-surface"
-                >
-                  <option value="">Any rating</option>
-                  {RATING_OPTIONS.map((rating) => (
-                    <option key={rating} value={rating}>
-                      {rating}+ rating
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label
-                  htmlFor="attractions-sort-order"
-                  className="block text-label-sm font-label-sm text-on-surface-variant"
-                >
-                  Sort by
-                </label>
-                <select
-                  id="attractions-sort-order"
-                  value={sortOrder}
-                  onChange={(event) => setSortOrder(event.target.value as SortOrder)}
-                  className="border border-outline-variant rounded-lg px-3 py-2 text-body-md bg-surface"
-                >
-                  <option value="recommended">Recommended</option>
-                  <option value="rating">Highest rating</option>
-                </select>
-              </div>
+            <div className="flex items-center gap-2 md:flex-shrink-0 md:pt-6">
+              <label
+                htmlFor="attractions-min-rating"
+                className="text-label-sm font-label-sm text-on-surface-variant whitespace-nowrap"
+              >
+                Minimum rating
+              </label>
+              <select
+                id="attractions-min-rating"
+                value={minRating ?? ''}
+                onChange={(event) =>
+                  setMinRating(event.target.value === '' ? null : Number(event.target.value))
+                }
+                className={SELECT_CLASSES}
+              >
+                <option value="">Any rating</option>
+                {RATING_OPTIONS.map((rating) => (
+                  <option key={rating} value={rating}>
+                    {rating}+ rating
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
