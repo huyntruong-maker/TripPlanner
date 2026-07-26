@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthContext';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
+import { AppHeader } from '../components/AppHeader';
 import { ToastProvider } from '../components/toast/ToastProvider';
 import { LoginPage } from '../features/auth/LoginPage';
 import { TripPlannerPage } from '../features/trips/TripPlannerPage';
@@ -15,7 +16,10 @@ export function signInForTest(email = 'jane@example.com') {
   localStorage.setItem('tripplanner.refreshToken', 'refresh-1');
 }
 
-/** Renders the real /login -> ProtectedRoute -> /trips, /trips/:tripId tree. */
+/**
+ * Renders the real /login -> ProtectedRoute -> /trips, /trips/:tripId tree, including the app
+ * header — the account menu (and therefore log out) lives there rather than on the page.
+ */
 export function renderTripsRoutes(initialEntries: string[]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -24,6 +28,7 @@ export function renderTripsRoutes(initialEntries: string[]) {
       <ToastProvider>
         <MemoryRouter initialEntries={initialEntries}>
           <AuthProvider>
+            <AppHeader />
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route element={<ProtectedRoute />}>
