@@ -3,16 +3,18 @@ using Application.Interfaces.Email;
 using Domain.Constants;
 using Domain.Helpers;
 using Domain.Messages;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Net.Mail;
 
 namespace Infrastructure.Email;
 
+/// <summary>
+/// Validates and batches outgoing mail, then delegates delivery to the configured
+/// <see cref="IEmailSender"/> transport. Adding a provider means adding an
+/// <see cref="IEmailSender"/> implementation — this class does not change.
+/// </summary>
 public class EmailService(
-    ILogger<EmailService> logger,
-    IConfiguration configuration) : IEmailService
+    IEmailSender emailSender,
+    ILogger<EmailService> logger) : IEmailService
 {
     public async Task<string> SendEmail(SendEmailReqDto request)
     {
@@ -34,81 +36,29 @@ public class EmailService(
             return EmailControllerMsg.Create.ValidateBccEmailFailed;
         }
 
-        var (smtpConfig, isValid) = LoadSmtpConfig();
-        if (smtpConfig == null || !isValid) return EmailControllerMsg.Create.ConfigurationLoadFailed;
+        var i = 0;
+        var toEmailsChunk = request.ToEmails
+            .GroupBy(_ => i++ / GlobalConstants.MaxBatchSize.MaxBatch100)
+            .Select(s => s.ToList())
+            .ToArray();
 
-        var mailMessage = new MailMessage
+        foreach (var toEmails in toEmailsChunk)
         {
-            From = new MailAddress(smtpConfig.From),
-            Subject = request.Subject,
-            Body = request.Body,
-            IsBodyHtml = true
-        };
+            var error = await emailSender.Send(BuildBatchRequest(request, toEmails));
+            if (!string.IsNullOrEmpty(error)) return error;
 
-        if (request.CcEmails?.Count > 0) request.CcEmails.ForEach(mailMessage.CC.Add);
-
-        if (request.BccEmails?.Count > 0) request.BccEmails.ForEach(mailMessage.Bcc.Add);
-
-        try
-        {
-            var smtpClient = new SmtpClient(smtpConfig.Host)
-            {
-                Port = smtpConfig.Port,
-                Credentials = new NetworkCredential(smtpConfig.Username, smtpConfig.Password),
-                EnableSsl = smtpConfig.EnableSsl
-            };
-
-            var i = 0;
-            var toEmailsChunk = request.ToEmails
-                .GroupBy(_ => i++ / GlobalConstants.MaxBatchSize.MaxBatch100)
-                .Select(s => s.ToList())
-                .ToArray();
-
-            foreach (var toEmails in toEmailsChunk)
-            {
-                toEmails.ForEach(mailMessage.To.Add);
-
-                await smtpClient.SendMailAsync(mailMessage);
-
-                logger.LogInformation("Send email to {emails} successfully", string.Join(", ", toEmails));
-            }
-
-            return string.Empty;
+            logger.LogInformation("Send email to {emails} successfully", string.Join(", ", toEmails));
         }
-        catch (Exception ex)
-        {
-            logger.LogError("Send email failed. Exception: {ex}", ex);
 
-            return EmailControllerMsg.Create.Exception;
-        }
+        return string.Empty;
     }
 
-    private (SmtpConfig?, bool) LoadSmtpConfig()
+    private static SendEmailReqDto BuildBatchRequest(SendEmailReqDto request, List<string> toEmails) => new()
     {
-        var smtpFromEmail = configuration.GetSection(ConfigKeys.Smtp.From).Value;
-        var smtpUserName = configuration.GetSection(ConfigKeys.Smtp.Username).Value;
-        var smtpPassword = configuration.GetSection(ConfigKeys.Smtp.Password).Value;
-        var smtpHost = configuration.GetSection(ConfigKeys.Smtp.Host).Value;
-        var smtpPort = configuration.GetSection(ConfigKeys.Smtp.Port).Get<int?>();
-        var smtpEnableSsl = configuration.GetSection(ConfigKeys.Smtp.EnableSsl).Get<bool?>();
-
-        if (string.IsNullOrWhiteSpace(smtpFromEmail)
-            || string.IsNullOrWhiteSpace(smtpUserName)
-            || string.IsNullOrWhiteSpace(smtpPassword)
-            || string.IsNullOrWhiteSpace(smtpHost)
-            || smtpPort == null)
-            return (null, false);
-
-        var result = new SmtpConfig
-        {
-            From = smtpFromEmail,
-            Username = smtpUserName,
-            Host = smtpHost,
-            Port = smtpPort.Value,
-            Password = smtpPassword,
-            EnableSsl = smtpEnableSsl ?? true
-        };
-
-        return (result, true);
-    }
+        ToEmails = toEmails,
+        CcEmails = request.CcEmails,
+        BccEmails = request.BccEmails,
+        Subject = request.Subject,
+        Body = request.Body
+    };
 }
