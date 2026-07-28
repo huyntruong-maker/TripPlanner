@@ -27,6 +27,14 @@
 }
 .elevation-l1 { box-shadow: 0px 4px 20px rgba(30, 58, 138, 0.05); }
 .elevation-l2 { box-shadow: 0px 10px 30px rgba(30, 58, 138, 0.08); }
+/*
+ * For overlays that float above white cards (menus, popovers). l1/l2 are tuned for cards sitting
+ * on the page background; over another white surface they are too soft to read as a separate
+ * layer, so this adds a tighter contact shadow under the diffuse one.
+ */
+.elevation-overlay {
+  box-shadow: 0px 2px 6px rgba(30, 58, 138, 0.12), 0px 12px 32px rgba(30, 58, 138, 0.18);
+}
 /* `hover:elevation-l2` isn't a Tailwind utility, so the variant prefix needs an explicit rule. */
 .hover\:elevation-l2:hover { box-shadow: 0px 10px 30px rgba(30, 58, 138, 0.08); }
 .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }

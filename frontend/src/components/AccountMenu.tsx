@@ -57,7 +57,9 @@ export function AccountMenu() {
           aria-label="Account"
           // mt-4 (not mt-2) clears the header's own bottom padding: the trigger sits 16px above
           // the header's edge, so a smaller offset makes the panel overlap the header band.
-          className="absolute right-0 mt-4 w-64 bg-surface-container-lowest rounded-xl elevation-l2 border border-outline-variant/30 py-2 z-50"
+          // Solid border + overlay shadow so it reads as a floating layer rather than merging
+          // into the white cards it covers.
+          className="absolute right-0 mt-4 w-64 bg-surface-container-lowest rounded-xl elevation-overlay border border-outline-variant py-2 z-50"
         >
           <p className="px-4 py-2 text-label-sm text-on-surface-variant break-words">
             Signed in as{' '}

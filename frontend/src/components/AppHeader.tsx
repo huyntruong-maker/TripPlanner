@@ -44,26 +44,30 @@ export function AppHeader() {
           </span>
         </Link>
 
-        <div
-          id="app-nav-links"
-          className={`${isNavOpen ? 'flex' : 'hidden'} ${NAV_LINKS_CLASSES}`}
-        >
-          <NavLink to="/" end className={navLinkClassName} onClick={closeNav}>
-            Discover
-          </NavLink>
-          {isAuthenticated ? (
-            <NavLink to="/trips" className={navLinkClassName} onClick={closeNav}>
-              My trips
+        {/* Nav links, account and the mobile toggle share one flex child so `justify-between`
+            keeps them together on the right. As three separate children the links were pushed
+            to the centre of the header instead. */}
+        <div className="flex items-center gap-stack-md">
+          <div
+            id="app-nav-links"
+            className={`${isNavOpen ? 'flex' : 'hidden'} ${NAV_LINKS_CLASSES}`}
+          >
+            <NavLink to="/" end className={navLinkClassName} onClick={closeNav}>
+              Discover
             </NavLink>
-          ) : (
-            <NavLink to="/login" className={navLinkClassName} onClick={closeNav}>
-              Log in
-            </NavLink>
-          )}
-        </div>
+            {isAuthenticated ? (
+              <NavLink to="/trips" className={navLinkClassName} onClick={closeNav}>
+                My trips
+              </NavLink>
+            ) : (
+              <NavLink to="/login" className={navLinkClassName} onClick={closeNav}>
+                Log in
+              </NavLink>
+            )}
+          </div>
 
-        <div className="flex items-center gap-stack-sm">
           {isAuthenticated && <AccountMenu />}
+
           <button
             type="button"
             className="md:hidden w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors"
