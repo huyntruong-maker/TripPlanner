@@ -160,7 +160,6 @@ describe('TripPlannerPage', () => {
       const savedPlacesHeading = screen.getByRole('heading', { name: 'Saved Places' });
 
       expect(daysGrid.contains(savedPlacesHeading)).toBe(false);
-      // Saved Places sits in its own sticky sidebar, a sibling of (not inside) the days grid.
       expect(savedPlacesHeading.closest('aside')).not.toBeNull();
       expect(daysGrid.closest('aside')).toBeNull();
     });
@@ -173,7 +172,6 @@ describe('TripPlannerPage', () => {
       const savedPlacesCard = screen.getByRole('heading', { name: 'Saved Places' }).closest('div');
       const dayOneCard = screen.getByRole('heading', { name: 'Day 1 — 2026-09-01' }).closest('div');
       const dayTwoCard = screen.getByRole('heading', { name: 'Day 2 — 2026-09-02' }).closest('div');
-      // Day 2 is empty; it must share the same min-height class as the populated cards.
       expect(savedPlacesCard).toHaveClass('min-h-[160px]');
       expect(dayOneCard).toHaveClass('min-h-[160px]');
       expect(dayTwoCard).toHaveClass('min-h-[160px]');
@@ -183,7 +181,6 @@ describe('TripPlannerPage', () => {
       renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
 
       const heading = await screen.findByRole('heading', { name: 'Day 1 — 2026-09-01' });
-      // Accessible name (aria-label) stays the full date; visible text is the compact form.
       expect(heading).toHaveTextContent('Day 1 · Sep 1');
       expect(heading).toHaveClass('truncate');
       expect(heading).toHaveAttribute('title', 'Day 1 — 2026-09-01');

@@ -5,7 +5,6 @@ import { verifyEmail } from '../../api/auth';
 import { getApiErrorCode, getApiErrorMessage } from '../../api/errors';
 
 const ALREADY_VERIFIED_ERROR_CODE = 'Auth.VerifyEmail.AlreadyVerified';
-/** How long the success state waits before auto-redirecting to /login. */
 const REDIRECT_DELAY_SECONDS = 3;
 
 /** Reads `?token=` and shows success / invalid / expired / already-verified / missing-token state; auto-redirects to /login on success. */

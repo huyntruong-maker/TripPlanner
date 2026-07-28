@@ -1,6 +1,3 @@
-// Shared types mirroring the backend DTOs (see docs/API.md).
-
-/** Response envelope every API endpoint returns. */
 export interface ApiEnvelope<TResult> {
   success: boolean;
   errorCode: string | null;
@@ -21,13 +18,11 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-/** Paginated list result shared by the search and attractions endpoints. */
 export interface PagedResult<TItem> {
   items: TItem[];
   totalCount: number;
 }
 
-/** Result of GET /destinations/locations/search. */
 export interface LocationSuggestion {
   name: string;
   displayName: string;
@@ -37,7 +32,6 @@ export interface LocationSuggestion {
   country: string;
 }
 
-/** A single item from GET /destinations/attractions. */
 export interface AttractionSummary {
   providerPlaceId: string;
   name: string;
@@ -73,7 +67,6 @@ export interface DestinationDetail {
   longitude: number;
 }
 
-/** One destination scheduled within a trip. */
 export interface TripDestination {
   id: string;
   tripId: string;
@@ -87,7 +80,6 @@ export interface TripDestination {
   position: number;
 }
 
-/** One calendar day of a trip, ordered by `dayIndex`. */
 export interface ItineraryDay {
   id: string;
   date: string;

@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Nominatim;
 
-/// <summary>Geocodes a free-text location query using the OpenStreetMap Nominatim search API.</summary>
 public class NominatimGeocodingProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
@@ -68,7 +67,6 @@ public class NominatimGeocodingProvider(
         }
     }
 
-    /// <summary>Maps a single jsonv2 search result to a <see cref="LocationDto"/>; null when it fails validation or the filter.</summary>
     private static LocationDto? ParseLocation(JsonElement item)
     {
         if (!item.TryGetProperty("name", out var nameProp) ||

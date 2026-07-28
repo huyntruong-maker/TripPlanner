@@ -54,7 +54,6 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-          {/* Authenticated area (Feature 3). */}
           <Route element={<ProtectedRoute />}>
             <Route path="/trips" element={<TripsPage />} />
             <Route path="/trips/:tripId" element={<TripPlannerPage />} />

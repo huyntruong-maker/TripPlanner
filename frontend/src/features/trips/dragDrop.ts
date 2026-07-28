@@ -5,8 +5,7 @@ export const SAVED_PLACES_COLUMN_ID = 'saved-places';
 
 export interface PlannerColumn {
   id: string;
-  /** Full text, e.g. "Day 1 — 2026-08-01" — used as the column's accessible name (`aria-label`)
-   * and hover tooltip (`title`) so shortening the visible heading never loses information. */
+  /** Full text, e.g. "Day 1 — 2026-08-01"; used as the column's `aria-label` and `title` so the shortened heading never loses information. */
   title: string;
   /** Compact one-line visible heading, e.g. "Day 1 · Aug 1" (same as `title` for Saved Places). */
   shortTitle: string;
@@ -25,7 +24,6 @@ function formatShortDate(isoDate: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-/** Projects a trip into the planner board's columns: Saved Places, then one column per itinerary day. */
 export function buildPlannerColumns(trip: Trip): PlannerColumn[] {
   return [
     {
@@ -51,15 +49,7 @@ export interface MoveVariables {
   position: number | null;
 }
 
-/**
- * Maps a dnd-kit drag-end (`active`/`over` ids) onto move-mutation variables,
- * given the board's current columns. `overId` may be either a column's own id
- * (dropped on empty column space — appends at the end) or another
- * destination's id (dropped near an item — inserts before it).
- *
- * Returns `null` when the drop isn't actionable (no `over`, unknown ids, or a
- * no-op drop back onto its original slot).
- */
+/** Maps dnd-kit's active/over ids to move variables (over a column id appends, over an item id inserts before it); null if not actionable. */
 export function resolveDropTarget(
   columns: PlannerColumn[],
   activeId: string,

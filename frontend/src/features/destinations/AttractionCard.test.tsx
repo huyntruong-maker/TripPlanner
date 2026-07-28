@@ -16,7 +16,7 @@ import { AttractionCard } from './AttractionCard';
 const BASE_URL = 'http://localhost:5080/api/v1';
 
 function renderCard(attraction: AttractionSummary) {
-  // The real app's shared QueryClient — its mutationCache wires failures to the global error toast, which QuickSaveControl relies on.
+  // real app QueryClient: its mutationCache wires failures to the global error toast, which QuickSaveControl relies on
   const queryClient = createAppQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
@@ -170,16 +170,13 @@ describe('AttractionCard — "Save place" hover/focus icon (trip-only quick save
       'aria-expanded',
       'true',
     );
-    // No day/itinerary picker anywhere in this popover.
     expect(screen.queryByLabelText('Day')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trip')).not.toBeInTheDocument();
 
     const tripButton = await screen.findByRole('button', { name: 'Paris 2026' });
     await user.click(tripButton);
 
-    // Success confirmation is the green/status tone, not the red/alert error tone.
     expect(await screen.findByRole('status')).toHaveTextContent('Saved to Paris 2026.');
-    // Popover closes and focus returns to the trigger.
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Paris 2026' })).not.toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Save place' })).toHaveFocus();
   });
@@ -244,7 +241,6 @@ describe('AttractionCard — "Save place" hover/focus icon (trip-only quick save
     await user.click(await screen.findByRole('button', { name: 'Paris 2026' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not save this destination.');
-    // Stays open — the save failed, so there's nothing to confirm.
     expect(screen.getByRole('button', { name: 'Paris 2026' })).toBeInTheDocument();
   });
 

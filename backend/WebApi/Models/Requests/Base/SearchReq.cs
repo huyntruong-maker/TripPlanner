@@ -23,10 +23,8 @@ public class SearchReq : IPaginator, ISorting
         set => _keyword = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 
-    /// <summary>Default: 1.</summary>
     public int Start { get; set; }
 
-    /// <summary>Default: 10.</summary>
     public int Length { get; set; }
 
     public string Column { get; set; }

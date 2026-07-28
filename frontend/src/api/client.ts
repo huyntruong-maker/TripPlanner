@@ -4,7 +4,7 @@ import type { ApiEnvelope, AuthTokens } from '../types';
 const TOKEN_STORAGE_KEY = 'tripplanner.token';
 const REFRESH_TOKEN_STORAGE_KEY = 'tripplanner.refreshToken';
 
-/** Shared axios instance; response interceptor refreshes an expired token once via PUT /auth/refresh and retries. */
+// response interceptor refreshes an expired token once via PUT /auth/refresh, then retries
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5080/api/v1',
   headers: { 'Content-Type': 'application/json' },
@@ -34,7 +34,7 @@ export function getStoredTokens(): AuthTokens | null {
   return token && refreshToken ? { token, refreshToken } : null;
 }
 
-/** Registered by AuthProvider so the refresh-failure path can clear session state. */
+// set by AuthProvider to clear session state after a failed refresh
 let onSessionExpired: (() => void) | null = null;
 
 export function registerSessionExpiredHandler(handler: () => void): void {
@@ -53,7 +53,7 @@ interface RetriableRequestConfig extends InternalAxiosRequestConfig {
   _retriedAfterRefresh?: boolean;
 }
 
-/** Marks an error as already handled by the session-expiry flow, so the global query-error toast skips it. */
+// marks an error as already handled so the global query-error toast skips it
 export interface SessionExpiredError {
   isSessionExpired?: boolean;
 }

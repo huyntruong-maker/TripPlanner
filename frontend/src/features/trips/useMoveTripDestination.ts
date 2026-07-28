@@ -20,13 +20,7 @@ interface MoveMutationContext {
 
 const MOVE_FALLBACK_MESSAGE = 'Could not move this destination. Please try again.';
 
-/**
- * Moves/reorders a trip destination between Saved Places and itinerary days
- * (F3-US4/US5/US6). Updates the query cache optimistically in `onMutate` so
- * the board reflects the change immediately (NFR-4), rolls back on failure,
- * and shows an error toast with a Retry action (F3-US9) instead of the
- * generic global toast (this mutation opts out via `meta.suppressGlobalToast`).
- */
+/** Optimistically updates the cache in `onMutate` (NFR-4), rolls back on failure, and shows its own error toast with Retry via `meta.suppressGlobalToast`. */
 export function useMoveTripDestination(tripId: string) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();

@@ -2,7 +2,7 @@ import { delay, http, HttpResponse } from 'msw';
 import type { Trip, TripDestination } from '../../../types';
 
 const BASE_URL = 'http://localhost:5080/api/v1';
-// Small but nonzero so the F3-US9 "Saving…" indicator has an observable in-flight window.
+// Small but nonzero so the "Saving…" indicator has an observable in-flight window.
 const MUTATION_DELAY_MS = 30;
 
 export const EXISTING_TRIP_ID = 'trip-with-dates';
@@ -12,7 +12,6 @@ export const TRIP_NOT_FOUND_ID = 'trip-does-not-exist';
 export const DUPLICATE_NAME_TRIGGER = 'DuplicateTripNameTrigger';
 export const EXISTING_DESTINATION_ID = 'existing-destination';
 
-// Planner (drag-and-drop) board fixture, F3-US4/US5/US6/US9.
 export const PLANNER_TRIP_ID = 'planner-trip';
 export const PLANNER_DAY_1_ID = 'planner-day-1';
 export const PLANNER_DAY_2_ID = 'planner-day-2';
@@ -155,13 +154,11 @@ function defaultTrips(): Trip[] {
 let tripsState: Trip[] = defaultTrips();
 let retriedOnceIds = new Set<string>();
 
-/** Test-only helper: restore the default fixture between tests. */
 export function resetTripsFixture() {
   tripsState = defaultTrips();
   retriedOnceIds = new Set<string>();
 }
 
-/** Test-only helper: simulate a user with no saved trips. */
 export function clearTripsFixture() {
   tripsState = [];
 }

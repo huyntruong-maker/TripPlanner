@@ -5,14 +5,13 @@ const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 interface ModalProps {
-  /** Id applied to the title element; wire it via `aria-labelledby`. */
   titleId: string;
   title: string;
   onClose: () => void;
   children: ReactNode;
 }
 
-/** Centered modal dialog with a focus trap, Escape/backdrop close, and focus restore on close; rendered via a portal so it isn't clipped by an ancestor's overflow/stacking context. */
+// rendered via a portal so it isn't clipped by an ancestor's overflow/stacking context
 export function Modal({ titleId, title, onClose, children }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 

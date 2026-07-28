@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Trips.Commands.MoveTripDestinationCommand;
 
-/// <summary>Moves/reorders a destination between itinerary days (or Saved Places) and repositions it (F3-US4/US5/US6).</summary>
 public record MoveTripDestinationCommand : ICommand<(string, TripDto?)>
 {
     public required Guid TripId { get; init; }
@@ -78,7 +77,6 @@ public class MoveTripDestinationCommandHandler(IWriteUnitOfWork writeUnitOfWork)
         if (!isSameBucket)
             targetBucket.RemoveAll(d => d.Id == destination.Id);
 
-        // Null, <1, or > bucket size appends at the end.
         var insertIndex = request.Position.HasValue &&
                            request.Position.Value >= 1 &&
                            request.Position.Value <= targetBucket.Count + 1
@@ -87,7 +85,7 @@ public class MoveTripDestinationCommandHandler(IWriteUnitOfWork writeUnitOfWork)
 
         targetBucket.Insert(insertIndex, destination);
 
-        // Persist the bucket change explicitly — ReindexBucket below only touches rows whose Position changes, but ItineraryDayId must always be saved when the destination moves between buckets.
+        // ItineraryDayId must be saved explicitly; ReindexBucket below only persists rows whose Position changed.
         destination.ItineraryDayId = targetDayId;
         destination.UpdatedAt = DateTimeOffset.UtcNow;
         destination.UpdatedBy = request.UserId;
@@ -112,7 +110,6 @@ public class MoveTripDestinationCommandHandler(IWriteUnitOfWork writeUnitOfWork)
         return (string.Empty, TripDtoMapper.ToDetailDto(trip));
     }
 
-    /// <summary>Reassigns contiguous 1-based positions in bucket order and persists changed rows.</summary>
     private static async Task ReindexBucket(
         IBaseWriteRepository<TripDestination> destinationRepo,
         IReadOnlyList<TripDestination> bucket,

@@ -14,7 +14,7 @@ public class DestinationCacheConfiguration : IEntityTypeConfiguration<Destinatio
             .IsRequired()
             .HasMaxLength(256);
 
-        // Store as jsonb on PostgreSQL for efficient JSON querying
+        // jsonb (not text) for efficient JSON querying on PostgreSQL.
         builder.Property(c => c.PayloadJson)
             .IsRequired()
             .HasColumnType("jsonb");

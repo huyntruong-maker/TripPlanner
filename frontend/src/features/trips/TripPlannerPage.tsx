@@ -35,13 +35,11 @@ const BACK_LINK_CLASSES =
 const INPUT_CLASSES =
   'w-full h-12 px-4 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-body-md outline-none';
 
-/** Set dates, view the itinerary board (Saved Places + day columns, drag-and-drop), add/remove destinations. */
 export function TripPlannerPage() {
   const { tripId } = useParams<{ tripId: string }>();
   const queryClient = useQueryClient();
   const tripQuery = useTrip(tripId);
   const [datesWarning, setDatesWarning] = useState<string | null>(null);
-  // Saved Places is a sticky sidebar on desktop, but a collapsible section on narrow screens.
   const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(true);
 
   const removeMutation = useMutation({
@@ -230,7 +228,6 @@ function SavingIndicator({ tripId }: { tripId: string }) {
 interface PlannerColumnViewProps {
   column: PlannerColumn;
   onRemove: (tripDestinationId: string) => void;
-  /** The id of the destination currently being removed, if any. */
   removingId: string | null;
   emptyMessage: string;
 }

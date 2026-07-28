@@ -68,7 +68,6 @@ describe('AuthContext', () => {
     localStorage.setItem('tripplanner.refreshToken', 'refresh-1');
 
     const { wrapper, queryClient } = createWrapper();
-    // Simulate cached server data from the signed-in user's session.
     queryClient.setQueryData(['trips'], [{ id: 'trip-1', name: "Jane's Paris Trip" }]);
 
     const { result } = renderHook(() => useAuth(), { wrapper });

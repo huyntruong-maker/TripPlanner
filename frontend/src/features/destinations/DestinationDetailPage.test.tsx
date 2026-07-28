@@ -50,12 +50,11 @@ describe('DestinationDetailPage', () => {
     renderDetailPage(FULL_DETAIL_ID);
 
     expect(await screen.findByRole('heading', { name: 'Eiffel Tower', level: 1 })).toBeInTheDocument();
-    // Categories/tags are humanized from the raw provider slug (e.g. "cultural" -> "Cultural").
     expect(screen.getAllByText('Cultural').length).toBeGreaterThan(0);
     expect(screen.getByText('Landmark')).toBeInTheDocument();
     expect(screen.getByText('Rating 9.5')).toBeInTheDocument();
     expect(screen.getByText(/Famous iron lattice tower/)).toBeInTheDocument();
-    // Shown both in "Visiting Info" and next to the map (F2-US3).
+    // appears in both "Visiting Info" and next to the map, hence getAllByText
     expect(screen.getAllByText('Champ de Mars, Paris, France').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Visit website' })).toHaveAttribute(
       'href',

@@ -8,7 +8,6 @@ using MediatR;
 
 namespace Application.Features.Trips.Commands.AddDestinationToTripCommand;
 
-/// <summary>Adds a destination to the trip; null <see cref="ItineraryDayId"/> saves it to "Saved Places" (F3-US3/US4).</summary>
 public record AddDestinationToTripCommand : ICommand<(string, TripDestinationDto?)>
 {
     public required Guid TripId { get; init; }
@@ -45,7 +44,7 @@ public class AddDestinationToTripCommandHandler(IWriteUnitOfWork writeUnitOfWork
 
         var destinationRepo = writeUnitOfWork.GetRepository<TripDestination>();
 
-        // Null ItineraryDayId targets the Saved Places bucket; otherwise verify the day belongs to this trip (prevents cross-trip injection).
+        // Null targets Saved Places; otherwise verify the day belongs to this trip (prevents cross-trip injection).
         if (request.ItineraryDayId is not null)
         {
             var dayRepo = writeUnitOfWork.GetRepository<ItineraryDay>();
@@ -62,7 +61,6 @@ public class AddDestinationToTripCommandHandler(IWriteUnitOfWork writeUnitOfWork
                 return (TripControllerMsg.AddDestination.DuplicateInDay, null);
         }
 
-        // Compute the next position within the target bucket (the day, or Saved Places when null).
         var existingInBucket = await destinationRepo.QueryCondition(
             d => d.TripId == request.TripId && d.ItineraryDayId == request.ItineraryDayId);
         var nextPosition = existingInBucket.Any() ? existingInBucket.Max(d => d.Position) + 1 : 1;

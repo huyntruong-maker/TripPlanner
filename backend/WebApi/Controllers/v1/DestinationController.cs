@@ -19,7 +19,6 @@ public class DestinationController(
     ILogger<DestinationController> logger,
     IMapper mapper) : BaseController(logger, mapper)
 {
-    /// <summary>Searches for cities/countries matching the query; up to 5 ranked results, exact matches first.</summary>
     [HttpGet("locations/search")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.LocationSearchResultDto>), StatusCodes.Status200OK)]
@@ -59,7 +58,6 @@ public class DestinationController(
         }
     }
 
-    /// <summary>Ranked, paginated attractions near a coordinate; empty list (not an error) when none found.</summary>
     [HttpGet("attractions")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.AttractionSearchResultDto>), StatusCodes.Status200OK)]
@@ -117,7 +115,7 @@ public class DestinationController(
         }
     }
 
-    /// <summary>Full destination detail by provider ID; NFR-3: served from 24h cache on repeat requests.</summary>
+    /// <summary>NFR-3: served from a 24h cache on repeat requests.</summary>
     [HttpGet("{providerPlaceId}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ResultRes<Application.Dtos.Destinations.DestinationDetailDto>), StatusCodes.Status200OK)]

@@ -73,7 +73,7 @@ const LOUVRE: AttractionSummary = {
   address: null,
 };
 
-// F1-US1: a query with more matches than the 5-suggestion cap.
+// more matches than the 5-suggestion cap
 const MANY_MATCHES_LOCATIONS: LocationSuggestion[] = Array.from({ length: 7 }, (_, index) => ({
   name: `ManyMatches${index}`,
   displayName: `ManyMatches ${index}, Testland`,
@@ -92,7 +92,7 @@ const FILTER_SORT_CITY: LocationSuggestion = {
   country: 'Testland',
 };
 
-// F1-US4/US5: distinct categories and a mix of ratings (including a missing one) to exercise filter/sort.
+// distinct categories and a mix of ratings, including a missing one, to exercise filter/sort
 const MUSEUM_ALPHA: AttractionSummary = {
   providerPlaceId: 'F1',
   name: 'Museum Alpha',

@@ -30,12 +30,7 @@ interface AddToTripControlProps {
   destination: AddableDestination;
 }
 
-/**
- * "Add to Trip" action (trip + day picker) — opens as a centered modal dialog, reused across
- * pages; disabled (not hidden) when logged out, with a login link that returns here after.
- * Strictly trip + day: see `QuickSaveControl` for the card's separate hover "Save place"
- * (trip-only, straight to Saved Places) shortcut — the two are intentionally kept apart.
- */
+/** Trip + day picker modal; disabled (not hidden) when logged out. See `QuickSaveControl` for the card's separate trip-only shortcut. */
 export function AddToTripControl({ destination }: AddToTripControlProps) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();

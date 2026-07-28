@@ -4,7 +4,6 @@ import { searchLocations } from '../../api/destinations';
 const MIN_QUERY_LENGTH = 2;
 const LOCATIONS_STALE_TIME_MS = 60_000;
 
-/** Requires at least 2 characters before querying (F1-US1 autocomplete). */
 export function useLocationSearch(query: string) {
   const trimmedQuery = query.trim();
 

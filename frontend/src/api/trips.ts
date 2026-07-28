@@ -19,7 +19,6 @@ export interface CreateTripPayload {
   name: string;
 }
 
-/** Creates a trip without dates. */
 export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
   const { data } = await apiClient.post<ApiEnvelope<Trip>>('/trips', payload);
   return data.result;
@@ -59,7 +58,6 @@ export interface AddTripDestinationPayload {
   lng: number;
 }
 
-/** Adds a destination to a specific itinerary day, or to Saved Places when `itineraryDayId` is null. */
 export async function addTripDestination(
   tripId: string,
   payload: AddTripDestinationPayload,
@@ -88,7 +86,7 @@ export interface MoveTripDestinationPayload {
   position: number | null;
 }
 
-/** Moves/reorders a destination between Saved Places and itinerary days (F3-US4/US5/US6); returns the full updated trip. */
+/** Returns the full updated trip, not just the moved destination. */
 export async function moveTripDestination(
   tripId: string,
   tripDestinationId: string,

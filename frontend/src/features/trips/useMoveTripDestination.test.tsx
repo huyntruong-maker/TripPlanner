@@ -32,7 +32,7 @@ function createWrapper() {
   return { queryClient, wrapper };
 }
 
-/** Loads the real fixture trip from the MSW-backed API, so this test can't drift from the fixture. */
+// loads the real fixture trip from the MSW-backed API, so this test can't drift from the fixture
 async function seedTripInCache(queryClient: QueryClient) {
   const trip = await getTrip(PLANNER_TRIP_ID);
   queryClient.setQueryData(tripQueryKey(PLANNER_TRIP_ID), trip);
@@ -54,7 +54,7 @@ describe('useMoveTripDestination', () => {
       });
     });
 
-    // Applied to the cache well before the (artificially delayed) server responds — the onMutate projection.
+    // applied before the (artificially delayed) server responds — this is the onMutate projection
     await waitFor(() => {
       const currentTrip = queryClient.getQueryData<Trip>(tripQueryKey(PLANNER_TRIP_ID));
       const day2 = currentTrip?.itineraryDays.find((day) => day.id === PLANNER_DAY_2_ID);
@@ -67,7 +67,7 @@ describe('useMoveTripDestination', () => {
     expect(finalTrip).toEqual(result.current.data);
     const finalDay2 = finalTrip?.itineraryDays.find((day) => day.id === PLANNER_DAY_2_ID);
     expect(finalDay2?.tripDestinations.map((item) => item.id)).toEqual([PLANNER_SAVED_PLACE_ID]);
-    expect(trip.id).toBe(PLANNER_TRIP_ID); // sanity: the fixture was loaded
+    expect(trip.id).toBe(PLANNER_TRIP_ID);
   });
 
   it('rolls back the optimistic update and toasts a friendly message on Trip.MoveDestination.DuplicateInDay', async () => {
@@ -77,7 +77,7 @@ describe('useMoveTripDestination', () => {
     const { result } = renderHook(() => useMoveTripDestination(PLANNER_TRIP_ID), { wrapper });
 
     act(() => {
-      // Moving the saved "duplicate source" into Day 1, which already has a destination with the same providerPlaceId.
+      // Day 1 already has a destination with the same providerPlaceId as this saved "duplicate source"
       result.current.mutate({
         tripDestinationId: PLANNER_DUPLICATE_SAVED_PLACE_ID,
         itineraryDayId: PLANNER_DAY_1_ID,

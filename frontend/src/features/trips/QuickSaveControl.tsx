@@ -11,20 +11,18 @@ import type { AddableDestination } from './AddToTripControl';
 import { useTrips } from './useTrips';
 import { tripQueryKey } from './useTrip';
 
-/** Circular icon-only trigger (the card "quick-save" affordance); visibility/position come from `className`. */
 const ICON_TRIGGER_BASE_CLASSES =
   'inline-flex items-center justify-center w-9 h-9 rounded-full bg-on-surface/70 text-on-primary hover:bg-on-surface/90 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
-/** Hidden until the card is hovered/keyboard-focused; always shown on small (touch-first) breakpoints as a fallback affordance. */
+// hidden until hover/keyboard-focus; always shown on touch-first breakpoints as a fallback affordance
 const ICON_TRIGGER_HIDDEN_CLASSES =
   'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-100';
 
 interface QuickSaveControlProps {
   destination: AddableDestination;
-  /** Positions the trigger (e.g. `"absolute top-3 left-3 z-20"`). */
   className?: string;
 }
 
-/** The card's hover/focus "Save place" shortcut — picks only a trip (no day step) and saves straight to Saved Places (`itineraryDayId: null`); use `AddToTripControl` for the day picker. */
+// picks only a trip (no day step), saves straight to Saved Places; use AddToTripControl for the day picker
 export function QuickSaveControl({ destination, className }: QuickSaveControlProps) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
@@ -81,7 +79,7 @@ function QuickSavePopover({ destination, onClose }: QuickSavePopoverProps) {
   const tripsQuery = useTrips();
   const firstTripButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Keyboard accessibility: move focus into the list as soon as it's available.
+  // move focus into the list as soon as it's available (keyboard accessibility)
   useEffect(() => {
     firstTripButtonRef.current?.focus();
   }, [tripsQuery.data]);

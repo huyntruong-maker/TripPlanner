@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.Destinations.Queries.GetAttractionsQuery;
 
-/// <summary>Ranked, paginated attractions near a coordinate; radius defaults to 20 km, page size capped at 20.</summary>
+/// <summary>PageSize is capped at 20 by the provider regardless of the value requested here.</summary>
 public record GetAttractionsQuery : IQuery<AttractionSearchResultDto>
 {
     public required double Latitude { get; init; }
