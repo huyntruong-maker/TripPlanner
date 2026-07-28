@@ -12,13 +12,21 @@ public static class GenericRepositoryFake
     {
         var repo = Substitute.For<IBaseWriteRepository<T>>();
         var idProperty = typeof(T).GetProperty("Id");
+        var isDeletedProperty = typeof(T).GetProperty("IsDeleted");
+
+        bool IsNotDeleted(T item) =>
+            isDeletedProperty is null || !(bool)(isDeletedProperty.GetValue(item) ?? false);
+
+        IQueryable<T> NotDeletedQueryable() => store.Where(IsNotDeleted).AsQueryable();
 
         repo.FindById(Arg.Any<Guid>())
             .Returns(callInfo =>
             {
                 beforeRead?.Invoke();
                 var id = callInfo.ArgAt<Guid>(0);
-                var match = store.FirstOrDefault(item => idProperty != null && Equals(idProperty.GetValue(item), id));
+                var match = store
+                    .Where(IsNotDeleted)
+                    .FirstOrDefault(item => idProperty != null && Equals(idProperty.GetValue(item), id));
                 return Task.FromResult(match);
             });
 
@@ -31,7 +39,7 @@ public static class GenericRepositoryFake
             {
                 beforeRead?.Invoke();
                 var predicate = callInfo.ArgAt<Expression<Func<T, bool>>?>(0);
-                var query = store.AsQueryable();
+                var query = NotDeletedQueryable();
                 if (predicate != null) query = query.Where(predicate);
                 return Task.FromResult(query.FirstOrDefault());
             });
@@ -41,7 +49,7 @@ public static class GenericRepositoryFake
             {
                 beforeRead?.Invoke();
                 var predicate = callInfo.ArgAt<Expression<Func<T, bool>>>(0);
-                return Task.FromResult<IQueryable<T>>(new TestAsyncEnumerable<T>(store.AsQueryable().Where(predicate)));
+                return Task.FromResult<IQueryable<T>>(new TestAsyncEnumerable<T>(NotDeletedQueryable().Where(predicate)));
             });
 
         repo.Any(Arg.Any<Expression<Func<T, bool>>>())
@@ -49,14 +57,14 @@ public static class GenericRepositoryFake
             {
                 beforeRead?.Invoke();
                 var predicate = callInfo.ArgAt<Expression<Func<T, bool>>>(0);
-                return Task.FromResult(store.AsQueryable().Any(predicate));
+                return Task.FromResult(NotDeletedQueryable().Any(predicate));
             });
 
         repo.QueryAll(Arg.Any<bool>())
             .Returns(_ =>
             {
                 beforeRead?.Invoke();
-                return Task.FromResult<IQueryable<T>>(new TestAsyncEnumerable<T>(store.AsQueryable()));
+                return Task.FromResult<IQueryable<T>>(new TestAsyncEnumerable<T>(NotDeletedQueryable()));
             });
 
         repo.Add(Arg.Any<T>())

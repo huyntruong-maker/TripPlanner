@@ -73,9 +73,13 @@ public class MoveTripDestinationCommandHandlerTests
         var trip = NewTrip(ownerId);
         var destination = new TripDestination { Id = Guid.NewGuid(), TripId = trip.Id, ProviderPlaceId = "p1", Name = "Place", Position = 1 };
 
+        var otherTrip = NewTrip(Guid.NewGuid());
+        var dayInOtherTrip = new ItineraryDay { Id = Guid.NewGuid(), TripId = otherTrip.Id, Date = new DateOnly(2026, 1, 1), DayIndex = 1 };
+
         var fixture = new TripFixture(trip, destinations: [destination]);
         var writeUnitOfWork = UnitOfWorkFake.CreateWrite();
         fixture.Wire(writeUnitOfWork);
+        writeUnitOfWork.RegisterRepository([dayInOtherTrip]);
         var handler = new MoveTripDestinationCommandHandler(writeUnitOfWork);
 
         var (errorCode, tripDto) = await handler.Handle(
@@ -84,7 +88,7 @@ public class MoveTripDestinationCommandHandlerTests
                 TripId = trip.Id,
                 TripDestinationId = destination.Id,
                 UserId = ownerId,
-                ItineraryDayId = Guid.NewGuid()
+                ItineraryDayId = dayInOtherTrip.Id
             },
             CancellationToken.None);
 

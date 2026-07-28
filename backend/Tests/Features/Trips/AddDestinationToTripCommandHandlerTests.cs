@@ -60,15 +60,17 @@ public class AddDestinationToTripCommandHandlerTests
     {
         var ownerId = Guid.NewGuid();
         var trip = NewTrip(ownerId);
+        var otherTrip = NewTrip(Guid.NewGuid());
+        var dayInOtherTrip = new ItineraryDay { Id = Guid.NewGuid(), TripId = otherTrip.Id, Date = new DateOnly(2026, 1, 1), DayIndex = 1 };
 
         var writeUnitOfWork = UnitOfWorkFake.CreateWrite();
         writeUnitOfWork.RegisterRepository([trip]);
-        writeUnitOfWork.RegisterRepository<ItineraryDay>();
+        writeUnitOfWork.RegisterRepository([dayInOtherTrip]);
         writeUnitOfWork.RegisterRepository<TripDestination>();
         var handler = new AddDestinationToTripCommandHandler(writeUnitOfWork);
 
         var (errorCode, destination) = await handler.Handle(
-            Command(trip.Id, ownerId, itineraryDayId: Guid.NewGuid()),
+            Command(trip.Id, ownerId, itineraryDayId: dayInOtherTrip.Id),
             CancellationToken.None);
 
         errorCode.Should().Be(TripControllerMsg.AddDestination.ItineraryDayNotFound);

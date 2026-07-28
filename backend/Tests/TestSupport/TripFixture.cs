@@ -6,11 +6,6 @@ using NSubstitute;
 
 namespace Tests.TestSupport;
 
-/// <summary>
-/// Backs a single Trip aggregate with live ItineraryDay/TripDestination stores so that
-/// handler mutations (Add/FK changes) are reflected the next time the Trip is re-queried
-/// with Include, mirroring how a fresh EF query would reflect current row state.
-/// </summary>
 public sealed class TripFixture
 {
     public Trip Trip { get; }

@@ -58,14 +58,22 @@ public class RemoveDestinationFromTripCommandHandlerTests
     {
         var ownerId = Guid.NewGuid();
         var trip = NewTrip(ownerId);
+        var otherTrip = NewTrip(Guid.NewGuid());
+        var destinationInOtherTrip = new TripDestination
+        {
+            Id = Guid.NewGuid(),
+            TripId = otherTrip.Id,
+            ProviderPlaceId = "place-1",
+            Name = "Eiffel Tower"
+        };
 
         var writeUnitOfWork = UnitOfWorkFake.CreateWrite();
         writeUnitOfWork.RegisterRepository([trip]);
-        writeUnitOfWork.RegisterRepository<TripDestination>();
+        writeUnitOfWork.RegisterRepository([destinationInOtherTrip]);
         var handler = new RemoveDestinationFromTripCommandHandler(writeUnitOfWork);
 
         var (errorCode, success) = await handler.Handle(
-            new RemoveDestinationFromTripCommand { TripId = trip.Id, TripDestinationId = Guid.NewGuid(), UserId = ownerId },
+            new RemoveDestinationFromTripCommand { TripId = trip.Id, TripDestinationId = destinationInOtherTrip.Id, UserId = ownerId },
             CancellationToken.None);
 
         errorCode.Should().Be(TripControllerMsg.NotFound);

@@ -120,7 +120,9 @@ public class SetTripDatesCommandHandlerTests
 
         errorCode.Should().Be(string.Empty);
         result!.DestinationsUnscheduledCount.Should().Be(1);
+        result.Trip.ItineraryDays.Should().HaveCount(1);
         result.Trip.ItineraryDays.Should().ContainSingle(d => d.Id == day1.Id);
+        result.Trip.ItineraryDays.Should().NotContain(d => d.Id == day2.Id);
         day2.IsDeleted.Should().BeTrue();
     }
 
