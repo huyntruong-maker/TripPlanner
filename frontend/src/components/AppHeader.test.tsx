@@ -50,12 +50,12 @@ describe('AppHeader', () => {
       signInForTest('jane@example.com');
       renderHeader();
 
-      expect(screen.queryByRole('menuitem', { name: 'Log out' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: 'Account menu' }));
 
       expect(screen.getByText('jane@example.com')).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Log out' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
     });
 
     it('closes the account menu on Escape', async () => {
@@ -70,7 +70,7 @@ describe('AppHeader', () => {
       await user.keyboard('{Escape}');
 
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
-      expect(screen.queryByRole('menuitem', { name: 'Log out' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
     });
   });
 

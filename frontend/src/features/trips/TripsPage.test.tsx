@@ -124,7 +124,7 @@ describe('TripsPage', () => {
 
     await screen.findByRole('heading', { name: 'My trips' });
     await user.click(screen.getByRole('button', { name: 'Account menu' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Log out' }));
+    await user.click(screen.getByRole('button', { name: 'Log out' }));
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Log in' })).toBeInTheDocument());
   });
