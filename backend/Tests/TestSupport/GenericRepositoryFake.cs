@@ -11,6 +11,16 @@ public static class GenericRepositoryFake
         where T : class
     {
         var repo = Substitute.For<IBaseWriteRepository<T>>();
+        var idProperty = typeof(T).GetProperty("Id");
+
+        repo.FindById(Arg.Any<Guid>())
+            .Returns(callInfo =>
+            {
+                beforeRead?.Invoke();
+                var id = callInfo.ArgAt<Guid>(0);
+                var match = store.FirstOrDefault(item => idProperty != null && Equals(idProperty.GetValue(item), id));
+                return Task.FromResult(match);
+            });
 
         repo.Single(
                 Arg.Any<Expression<Func<T, bool>>?>(),
@@ -31,7 +41,7 @@ public static class GenericRepositoryFake
             {
                 beforeRead?.Invoke();
                 var predicate = callInfo.ArgAt<Expression<Func<T, bool>>>(0);
-                return Task.FromResult(store.AsQueryable().Where(predicate));
+                return Task.FromResult<IQueryable<T>>(new TestAsyncEnumerable<T>(store.AsQueryable().Where(predicate)));
             });
 
         repo.Any(Arg.Any<Expression<Func<T, bool>>>())
@@ -46,7 +56,7 @@ public static class GenericRepositoryFake
             .Returns(_ =>
             {
                 beforeRead?.Invoke();
-                return Task.FromResult(store.AsQueryable());
+                return Task.FromResult<IQueryable<T>>(new TestAsyncEnumerable<T>(store.AsQueryable()));
             });
 
         repo.Add(Arg.Any<T>())
