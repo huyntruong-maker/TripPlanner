@@ -1,21 +1,24 @@
 using Application.Dtos.Destinations;
 using Application.Interfaces.Providers;
 using Domain.Constants;
-using Infrastructure.Providers.OpenTripMap;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Foursquare;
 
 /// <summary>
-/// Runs whenever Providers:Destination:Provider is "OpenTripMap" (default) or unset. Wraps
-/// OpenTripMapDestinationProvider and enriches its results using FoursquareDestinationProvider
-/// (category/rating/photos/hours), matched by name + coordinates on every call rather than
-/// persisting the match (OpenTripMap xid stays the public ProviderPlaceId). See
-/// FoursquareDestinationProvider for its other, standalone use.
+/// Runs whenever Providers:Destination:Provider is "OpenTripMap" (default) or unset. Enriches
+/// the wrapped provider's results using FoursquareDestinationProvider (category/rating/photos/
+/// hours), matched by name + coordinates on every call rather than persisting the match
+/// (OpenTripMap xid stays the public ProviderPlaceId). See FoursquareDestinationProvider for its
+/// other, standalone use.
 /// </summary>
+/// <param name="inner">
+/// Depends on IDestinationProvider, not a concrete type, per DIP — but ProvidersInjection.cs
+/// always wires OpenTripMapDestinationProvider here today; nothing else is ever passed.
+/// </param>
 public class FoursquareEnrichedDestinationProvider(
-    OpenTripMapDestinationProvider openTripMap,
+    IDestinationProvider inner,
     FoursquareDestinationProvider foursquare,
     IConfiguration configuration,
     ILogger<FoursquareEnrichedDestinationProvider> logger) : IDestinationProvider
@@ -41,7 +44,7 @@ public class FoursquareEnrichedDestinationProvider(
         int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var result = await openTripMap.GetAttractionsAsync(latitude, longitude, radiusMeters, page, pageSize, cancellationToken);
+        var result = await inner.GetAttractionsAsync(latitude, longitude, radiusMeters, page, pageSize, cancellationToken);
 
         if (!IsEnabled)
         {
@@ -63,7 +66,7 @@ public class FoursquareEnrichedDestinationProvider(
         string providerPlaceId,
         CancellationToken cancellationToken = default)
     {
-        var detail = await openTripMap.GetAttractionDetailAsync(providerPlaceId, cancellationToken);
+        var detail = await inner.GetAttractionDetailAsync(providerPlaceId, cancellationToken);
         if (detail is null)
             return null;
 
