@@ -1,6 +1,6 @@
-import { Navigate, Route, Routes, Link, NavLink } from 'react-router-dom';
-import { useAuth } from './auth/AuthContext';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './auth/ProtectedRoute';
+import { AppHeader } from './components/AppHeader';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { VerifyEmailPage } from './features/auth/VerifyEmailPage';
@@ -10,41 +10,9 @@ import { TripPlannerPage } from './features/trips/TripPlannerPage';
 import { TripsPage } from './features/trips/TripsPage';
 
 export default function App() {
-  const { isAuthenticated } = useAuth();
-
-  const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
-    isActive
-      ? 'text-on-primary bg-primary px-4 py-1.5 font-label-md rounded-full transition-colors'
-      : 'text-on-surface-variant px-4 py-1.5 font-label-md hover:text-primary transition-colors rounded-full';
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-background font-body-md">
-      <header className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md shadow-sm">
-        <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max mx-auto">
-          <Link to="/" className="flex items-center gap-stack-sm">
-            <span className="material-symbols-outlined text-primary text-[28px]" aria-hidden="true">
-              flight_takeoff
-            </span>
-            <span className="text-headline-md font-headline-md font-extrabold text-primary">
-              TripPlanner
-            </span>
-          </Link>
-          <div className="hidden md:flex items-center gap-stack-md">
-            <NavLink to="/" end className={navLinkClassName}>
-              Discover
-            </NavLink>
-            {isAuthenticated ? (
-              <NavLink to="/trips" className={navLinkClassName}>
-                My trips
-              </NavLink>
-            ) : (
-              <NavLink to="/login" className={navLinkClassName}>
-                Log in
-              </NavLink>
-            )}
-          </div>
-        </nav>
-      </header>
+      <AppHeader />
 
       <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
         <Routes>

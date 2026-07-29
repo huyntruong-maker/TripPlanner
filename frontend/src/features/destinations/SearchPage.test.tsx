@@ -258,10 +258,11 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     const user = userEvent.setup();
     await selectFilterSortCity(user);
 
-    expect(screen.getByText('4 of 4 attractions')).toBeInTheDocument();
+    // Unfiltered, the "of" form would be noise — it only appears once a filter narrows the list.
+    expect(screen.getByText('4 attractions')).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: /Museum|Park|Landmark/ })).toHaveLength(4);
 
-    const museumChip = screen.getByRole('button', { name: 'Museum' });
+    const museumChip = screen.getByRole('button', { name: /^Museum/ });
     expect(museumChip).toHaveAttribute('aria-pressed', 'false');
     await user.click(museumChip);
     expect(museumChip).toHaveAttribute('aria-pressed', 'true');
@@ -289,11 +290,30 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     const user = userEvent.setup();
     await selectFilterSortCity(user);
 
-    await user.click(screen.getByRole('button', { name: 'Museum' }));
+    await user.click(screen.getByRole('button', { name: /^Museum/ }));
     await user.selectOptions(screen.getByLabelText('Minimum rating'), '9');
 
     expect(screen.getByRole('heading', { name: 'Museum Delta' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Museum Alpha' })).not.toBeInTheDocument();
+  });
+
+  it('labels each category chip with how many attractions it matches', async () => {
+    const user = userEvent.setup();
+    await selectFilterSortCity(user);
+
+    // Museum Alpha + Museum Delta both carry the museum category.
+    expect(screen.getByRole('button', { name: /^Museum\s*2$/ })).toBeInTheDocument();
+  });
+
+  it('switches the count to the "of" form only while a filter is narrowing the list', async () => {
+    const user = userEvent.setup();
+    await selectFilterSortCity(user);
+
+    await user.click(screen.getByRole('button', { name: /^Museum/ }));
+    expect(screen.getByText('2 of 4 attractions')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Clear all' }));
+    expect(screen.getByText('4 attractions')).toBeInTheDocument();
   });
 
   it('shows an active-filters summary with a Clear all action once something is selected', async () => {
@@ -302,7 +322,7 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
 
     expect(screen.queryByText('Active filters:')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Museum' }));
+    await user.click(screen.getByRole('button', { name: /^Museum/ }));
 
     const summary = screen.getByText('Active filters:').closest('div') as HTMLElement;
     expect(within(summary).getByText('Museum')).toBeInTheDocument();
@@ -314,7 +334,7 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     await selectFilterSortCity(user);
 
     await user.selectOptions(screen.getByLabelText('Minimum rating'), '9');
-    await user.click(screen.getByRole('button', { name: 'Park' }));
+    await user.click(screen.getByRole('button', { name: /^Park/ }));
 
     expect(
       await screen.findByText('No attractions match the selected filters.'),
@@ -325,13 +345,13 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
     const user = userEvent.setup();
     await selectFilterSortCity(user);
 
-    await user.click(screen.getByRole('button', { name: 'Museum' }));
+    await user.click(screen.getByRole('button', { name: /^Museum/ }));
     expect(screen.queryByRole('heading', { name: 'Park Beta' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Clear all' }));
 
     expect(screen.getByRole('heading', { name: 'Park Beta' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Museum' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: /^Museum/ })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('sorts by highest rating, with missing ratings last', async () => {
@@ -424,7 +444,7 @@ describe('SearchPage — search state survives navigation (URL search params)', 
     await user.click(await screen.findByRole('option', { name: 'FilterSortCity, Testland' }));
     await screen.findByRole('heading', { name: 'Museum Alpha' });
 
-    await user.click(screen.getByRole('button', { name: 'Museum' }));
+    await user.click(screen.getByRole('button', { name: /^Museum/ }));
 
     const params = new URLSearchParams(screen.getByTestId('url-params').textContent ?? '');
     expect(params.get('cat')).toBe('museum');

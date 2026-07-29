@@ -117,12 +117,13 @@ describe('TripsPage', () => {
     });
   });
 
-  it('logs out from the trip list', async () => {
+  it('logs out via the header account menu', async () => {
     const user = userEvent.setup();
     signInForTest();
     renderTripsRoutes(['/trips']);
 
     await screen.findByRole('heading', { name: 'My trips' });
+    await user.click(screen.getByRole('button', { name: 'Account menu' }));
     await user.click(screen.getByRole('button', { name: 'Log out' }));
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Log in' })).toBeInTheDocument());

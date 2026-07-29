@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../auth/AuthContext';
 import { getApiErrorMessage } from '../../api/errors';
 import { createTrip } from '../../api/trips';
 import { useToast } from '../../components/toast/ToastProvider';
@@ -14,7 +13,6 @@ const INPUT_CLASSES =
   'w-full border border-outline-variant rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none';
 
 export function TripsPage() {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -46,39 +44,10 @@ export function TripsPage() {
   }
 
   const tripCount = tripsQuery.data?.length ?? 0;
-  const avatarInitial = user?.email?.[0]?.toUpperCase() ?? '?';
 
   return (
-    <div className="max-w-[800px] mx-auto flex flex-col gap-12">
-      <section className="bg-surface-container-lowest rounded-xl p-8 elevation-l1 border border-outline-variant/30 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-6 text-center md:text-left">
-          <div
-            className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-headline-md flex-shrink-0"
-            aria-hidden="true"
-          >
-            {avatarInitial}
-          </div>
-          <div>
-            <h1 className="text-headline-md font-headline-md text-on-surface mb-1">My trips</h1>
-            <p className="text-body-md font-body-md text-on-surface-variant">
-              Signed in as <strong className="text-primary font-semibold">{user?.email}</strong>
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="group flex items-center gap-2 px-6 py-2.5 rounded-lg border border-primary text-primary font-label-md hover:bg-surface-container transition-all flex-shrink-0"
-          onClick={logout}
-        >
-          <span
-            className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform"
-            aria-hidden="true"
-          >
-            logout
-          </span>
-          <span>Log out</span>
-        </button>
-      </section>
+    <div className="max-w-[800px] mx-auto flex flex-col gap-8">
+      <h1 className="text-headline-md font-headline-md text-on-surface">My trips</h1>
 
       <section className="bg-surface-container-lowest rounded-xl p-8 elevation-l1 border border-outline-variant/30">
         <div className="flex items-center gap-3 mb-8">

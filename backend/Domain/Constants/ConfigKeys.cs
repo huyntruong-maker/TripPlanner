@@ -61,6 +61,12 @@ public static class ConfigKeys
         public const string ConnectTimeout = "Redis:ConnectTimeout";
     }
 
+    public struct Email
+    {
+        /// <summary>Selects the active <c>IEmailSender</c>: "Smtp" (default) or "Brevo".</summary>
+        public const string Provider = "Email:Provider";
+    }
+
     public struct Smtp
     {
         public const string From = "Smtp:From";
@@ -69,6 +75,14 @@ public static class ConfigKeys
         public const string Password = "Smtp:Password";
         public const string EnableSsl = "Smtp:EnableSsl";
         public const string Host = "Smtp:Host";
+    }
+
+    public struct Brevo
+    {
+        public const string ApiKey = "Brevo:ApiKey";
+        public const string SenderEmail = "Brevo:SenderEmail";
+        public const string SenderName = "Brevo:SenderName";
+        public const string BaseUrl = "Brevo:BaseUrl";
     }
 
     public struct Replication
