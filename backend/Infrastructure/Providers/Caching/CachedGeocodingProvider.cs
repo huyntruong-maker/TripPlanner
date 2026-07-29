@@ -1,18 +1,18 @@
 using Application.Dtos.Destinations;
 using Application.Interfaces.Caching;
 using Application.Interfaces.Providers;
+using Domain.Constants;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Caching;
 
-/// <summary>Caches location search results for 1 hour to meet NFR-1 (≤500 ms for 95% of requests).</summary>
 public class CachedGeocodingProvider(
     IGeocodingProvider inner,
     ICacheManager cacheManager,
+    IConfiguration configuration,
     ILogger<CachedGeocodingProvider> logger) : IGeocodingProvider
 {
-    private static readonly TimeSpan LocationTtl = TimeSpan.FromHours(1);
-
     public async Task<IReadOnlyList<LocationDto>> SearchLocationsAsync(
         string query,
         int maxResults = 5,
@@ -31,7 +31,13 @@ public class CachedGeocodingProvider(
         }
 
         var result = await inner.SearchLocationsAsync(query, maxResults, cancellationToken);
-        await cacheManager.SetData(cacheKey, result.ToList(), LocationTtl);
+        await cacheManager.SetData(cacheKey, result.ToList(), GetLocationTtl());
         return result;
+    }
+
+    private TimeSpan GetLocationTtl()
+    {
+        var hours = configuration.GetSection(ConfigKeys.Caching.Locations.TtlHours).Get<double?>();
+        return TimeSpan.FromHours(hours ?? 1);
     }
 }

@@ -102,6 +102,9 @@ public static class ConfigKeys
         {
             public const string BaseUrl = "Providers:Foursquare:BaseUrl";
             public const string ApiKey = "Providers:Foursquare:ApiKey";
+
+            /// <summary>Turns Foursquare enrichment on/off. Defaults to true.</summary>
+            public const string EnableEnrichment = "Providers:Foursquare:EnableEnrichment";
         }
 
         public struct Nominatim
@@ -113,6 +116,30 @@ public static class ConfigKeys
         {
             /// <summary>Selects the active <c>IGeocodingProvider</c>: "Nominatim" (default) or "OpenTripMap".</summary>
             public const string Provider = "Providers:Geocoding:Provider";
+        }
+
+        public struct Destination
+        {
+            /// <summary>Selects the active <c>IDestinationProvider</c>: "OpenTripMap" (default) or "Foursquare".</summary>
+            public const string Provider = "Providers:Destination:Provider";
+        }
+    }
+
+    public struct Caching
+    {
+        public struct Locations
+        {
+            /// <summary>Geocoding search-result cache TTL, in hours. Defaults to 1.</summary>
+            public const string TtlHours = "Caching:Locations:TtlHours";
+        }
+
+        public struct Destinations
+        {
+            /// <summary>Attraction list cache TTL, in minutes. Defaults to 30.</summary>
+            public const string AttractionListTtlMinutes = "Caching:Destinations:AttractionListTtlMinutes";
+
+            /// <summary>Attraction detail cache TTL, in hours. Defaults to 24.</summary>
+            public const string AttractionDetailTtlHours = "Caching:Destinations:AttractionDetailTtlHours";
         }
     }
 }

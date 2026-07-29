@@ -17,8 +17,15 @@ public class FoursquareEnrichedDestinationProvider(
     // Logged once for the app's lifetime (not per request) when no API key is configured.
     private static int _hasLoggedDisabled;
 
-    private bool IsEnabled =>
-        !string.IsNullOrWhiteSpace(configuration.GetSection(ConfigKeys.Providers.Foursquare.ApiKey).Value);
+    private bool IsEnabled
+    {
+        get
+        {
+            var hasApiKey = !string.IsNullOrWhiteSpace(configuration.GetSection(ConfigKeys.Providers.Foursquare.ApiKey).Value);
+            var enrichmentEnabled = configuration.GetSection(ConfigKeys.Providers.Foursquare.EnableEnrichment).Get<bool?>() ?? true;
+            return hasApiKey && enrichmentEnabled;
+        }
+    }
 
     public async Task<AttractionSearchResultDto> GetAttractionsAsync(
         double latitude,

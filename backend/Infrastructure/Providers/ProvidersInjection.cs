@@ -16,52 +16,67 @@ public static class ProvidersInjection
 {
     public static void AddProviders(this IServiceCollection collection)
     {
-        // Transient: these are stateless HTTP clients.
         collection.AddTransient<NominatimGeocodingProvider>();
         collection.AddTransient<OpenTripMapGeocodingProvider>();
         collection.AddTransient<OpenTripMapDestinationProvider>();
         collection.AddTransient<FoursquareDestinationProvider>();
 
-        // IGeocodingProvider: cached wrapper over Providers:Geocoding:Provider ("Nominatim" default — up to 5 ranked results, F1-US2; "OpenTripMap" — single best match only).
         collection.AddScoped<IGeocodingProvider>(sp =>
         {
             var configuration = sp.GetRequiredService<IConfiguration>();
             var logger = sp.GetRequiredService<ILogger<CachedGeocodingProvider>>();
             var providerName = configuration[ConfigKeys.Providers.Geocoding.Provider];
 
-            IGeocodingProvider inner = providerName?.Trim().ToLowerInvariant() switch
+            IGeocodingProvider primary = providerName?.Trim().ToLowerInvariant() switch
             {
                 "opentripmap" => sp.GetRequiredService<OpenTripMapGeocodingProvider>(),
                 "nominatim" or null or "" => sp.GetRequiredService<NominatimGeocodingProvider>(),
-                _ => LogUnknownProviderAndFallback(logger, providerName!, sp.GetRequiredService<NominatimGeocodingProvider>())
+                _ => LogUnknownGeocodingProviderAndFallback(logger, providerName!, sp.GetRequiredService<NominatimGeocodingProvider>())
             };
 
-            return new CachedGeocodingProvider(inner, sp.GetRequiredService<ICacheManager>(), logger);
+            return new CachedGeocodingProvider(primary, sp.GetRequiredService<ICacheManager>(), configuration, logger);
         });
 
-        // IDestinationProvider: Cached(Enriched(OpenTripMap, Foursquare)) — caching wraps the outermost, already-enriched result so enriched attractions are what gets cached.
         collection.AddScoped<IDestinationProvider>(sp =>
         {
-            var openTripMap = sp.GetRequiredService<OpenTripMapDestinationProvider>();
-            var foursquare = sp.GetRequiredService<FoursquareDestinationProvider>();
             var configuration = sp.GetRequiredService<IConfiguration>();
-            var enrichLogger = sp.GetRequiredService<ILogger<FoursquareEnrichedDestinationProvider>>();
-            var enriched = new FoursquareEnrichedDestinationProvider(openTripMap, foursquare, configuration, enrichLogger);
+            var destinationLogger = sp.GetRequiredService<ILogger<CachedDestinationProvider>>();
+            var providerName = configuration[ConfigKeys.Providers.Destination.Provider];
 
-            var cache = sp.GetRequiredService<ICacheManager>();
-            var cacheLogger = sp.GetRequiredService<ILogger<CachedDestinationProvider>>();
-            return new CachedDestinationProvider(enriched, cache, cacheLogger);
+            IDestinationProvider primary = providerName?.Trim().ToLowerInvariant() switch
+            {
+                "foursquare" => sp.GetRequiredService<FoursquareDestinationProvider>(),
+                "opentripmap" or null or "" => BuildFoursquareEnriched(sp, configuration),
+                _ => LogUnknownDestinationProviderAndFallback(destinationLogger, providerName!, BuildFoursquareEnriched(sp, configuration))
+            };
+
+            return new CachedDestinationProvider(primary, sp.GetRequiredService<ICacheManager>(), configuration, destinationLogger);
         });
     }
 
-    private static IGeocodingProvider LogUnknownProviderAndFallback(
+    private static IDestinationProvider BuildFoursquareEnriched(IServiceProvider sp, IConfiguration configuration)
+    {
+        var openTripMap = sp.GetRequiredService<OpenTripMapDestinationProvider>();
+        var foursquare = sp.GetRequiredService<FoursquareDestinationProvider>();
+        var logger = sp.GetRequiredService<ILogger<FoursquareEnrichedDestinationProvider>>();
+        return new FoursquareEnrichedDestinationProvider(openTripMap, foursquare, configuration, logger);
+    }
+
+    private static IGeocodingProvider LogUnknownGeocodingProviderAndFallback(
         ILogger<CachedGeocodingProvider> logger,
         string providerName,
         IGeocodingProvider fallback)
     {
-        logger.LogWarning(
-            "[Geocoding] Unknown Providers:Geocoding:Provider value '{ProviderName}'; falling back to Nominatim.",
-            providerName);
+        logger.LogWarning("[Geocoding] Unknown Providers:Geocoding:Provider value '{ProviderName}'; falling back to Nominatim.", providerName);
+        return fallback;
+    }
+
+    private static IDestinationProvider LogUnknownDestinationProviderAndFallback(
+        ILogger<CachedDestinationProvider> logger,
+        string providerName,
+        IDestinationProvider fallback)
+    {
+        logger.LogWarning("[Destination] Unknown Providers:Destination:Provider value '{ProviderName}'; falling back to OpenTripMap.", providerName);
         return fallback;
     }
 }
