@@ -186,12 +186,12 @@ describe('TripPlannerPage', () => {
       expect(heading).toHaveAttribute('title', 'Day 1 — 2026-09-01');
     });
 
-    it('truncates a long item name to a single line instead of wrapping/growing the row', async () => {
+    it('wraps a long item name in full instead of truncating it', async () => {
       renderTripsRoutes([`/trips/${PLANNER_TRIP_ID}`]);
 
       const itemName = await screen.findByText('Louvre Museum');
-      expect(itemName).toHaveClass('truncate');
-      expect(itemName).toHaveAttribute('title', 'Louvre Museum');
+      expect(itemName).not.toHaveClass('truncate');
+      expect(itemName).toHaveClass('break-words');
     });
 
     it('offers a mobile collapse toggle for Saved Places, expanded by default', async () => {
