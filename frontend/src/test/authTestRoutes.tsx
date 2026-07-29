@@ -4,8 +4,8 @@ import { MemoryRouter, Route, Routes, type InitialEntry } from 'react-router-dom
 import { AuthProvider } from '../auth/AuthContext';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { ToastProvider } from '../components/toast/ToastProvider';
-import { LoginPage } from '../features/auth/LoginPage';
-import { RegisterPage } from '../features/auth/RegisterPage';
+import { LoginPage } from '../features/auth/pages/LoginPage';
+import { RegisterPage } from '../features/auth/pages/RegisterPage';
 
 function TripsPageMarker() {
   return <p>Trips page content</p>;

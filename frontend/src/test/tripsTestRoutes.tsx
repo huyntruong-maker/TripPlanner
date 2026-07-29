@@ -5,9 +5,9 @@ import { AuthProvider } from '../auth/AuthContext';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { AppHeader } from '../components/AppHeader';
 import { ToastProvider } from '../components/toast/ToastProvider';
-import { LoginPage } from '../features/auth/LoginPage';
-import { TripPlannerPage } from '../features/trips/TripPlannerPage';
-import { TripsPage } from '../features/trips/TripsPage';
+import { LoginPage } from '../features/auth/pages/LoginPage';
+import { TripPlannerPage } from '../features/trips/pages/TripPlannerPage';
+import { TripsPage } from '../features/trips/pages/TripsPage';
 import { buildFakeJwt } from './buildFakeJwt';
 
 export function signInForTest(email = 'jane@example.com') {

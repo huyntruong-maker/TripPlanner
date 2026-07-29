@@ -1,13 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AppHeader } from './components/AppHeader';
-import { LoginPage } from './features/auth/LoginPage';
-import { RegisterPage } from './features/auth/RegisterPage';
-import { VerifyEmailPage } from './features/auth/VerifyEmailPage';
-import { DestinationDetailPage } from './features/destinations/DestinationDetailPage';
-import { SearchPage } from './features/destinations/SearchPage';
-import { TripPlannerPage } from './features/trips/TripPlannerPage';
-import { TripsPage } from './features/trips/TripsPage';
+import { LoginPage } from './features/auth/pages/LoginPage';
+import { RegisterPage } from './features/auth/pages/RegisterPage';
+import { VerifyEmailPage } from './features/auth/pages/VerifyEmailPage';
+import { DestinationDetailPage } from './features/destinations/pages/DestinationDetailPage';
+import { SearchPage } from './features/destinations/pages/SearchPage';
+import { TripPlannerPage } from './features/trips/pages/TripPlannerPage';
+import { TripsPage } from './features/trips/pages/TripsPage';
 
 export default function App() {
   return (
