@@ -26,12 +26,10 @@ public class EmailVerificationTokenConfiguration : IEntityTypeConfiguration<Emai
 
         builder.HasQueryFilter(t => !t.IsDeleted);
 
-        // Fast look-up by token value (e.g. when a user clicks the verification link)
         builder.HasIndex(t => t.Token)
             .HasDatabaseName("IX_EmailVerificationTokens_Token")
             .IsUnique();
 
-        // Fast look-up of all tokens for a given user
         builder.HasIndex(t => t.UserId)
             .HasDatabaseName("IX_EmailVerificationTokens_UserId");
     }

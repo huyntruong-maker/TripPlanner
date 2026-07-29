@@ -21,7 +21,6 @@ public class ItineraryDayConfiguration : IEntityTypeConfiguration<ItineraryDay>
 
         builder.HasQueryFilter(d => !d.IsDeleted);
 
-        // Enforce a single ItineraryDay per (trip, day-index) pair
         builder.HasIndex(d => new { d.TripId, d.DayIndex })
             .HasDatabaseName("IX_ItineraryDays_TripId_DayIndex")
             .IsUnique();

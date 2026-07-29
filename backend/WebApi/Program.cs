@@ -59,7 +59,6 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Configuration.GetSection(ConfigKeys.EnableSwagger).Get<bool>())
     app.UseSwaggers();
 

@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.Destinations.Queries.SearchLocationsQuery;
 
-/// <summary>Free-text city/country search; exact matches ranked first.</summary>
+/// <summary>Exact-name matches are ranked first by the provider.</summary>
 public record SearchLocationsQuery : IQuery<LocationSearchResultDto>
 {
     public required string Query { get; init; }

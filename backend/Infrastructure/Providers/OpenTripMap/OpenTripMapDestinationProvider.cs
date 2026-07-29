@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.OpenTripMap;
 
-/// <summary>Fetches POIs via the OpenTripMap Radius API, enriched with detail-endpoint thumbnails.</summary>
 public class OpenTripMapDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
@@ -82,9 +81,7 @@ public class OpenTripMapDestinationProvider(
         }
     }
 
-    // OpenTripMap's free tier rate-limits bursts; a full page fired 20 concurrent detail calls
-    // and the throttled ones silently lost their thumbnail (visible as "No photo" cards whose
-    // detail page later showed an image). Cap the concurrency and retry once per item.
+    // OpenTripMap's free tier rate-limits bursts, silently dropping thumbnails; cap concurrency and retry once per item.
     private const int ThumbnailEnrichmentConcurrency = 4;
     private const int ThumbnailRetryDelayMs = 400;
 

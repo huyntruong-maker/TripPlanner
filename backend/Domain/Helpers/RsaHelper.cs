@@ -14,7 +14,6 @@ public static class RsaHelper
         return (privateKey, publicKey);
     }
 
-    /// <summary>Encrypts data using the public key.</summary>
     public static string Encrypt(this string data, string publicKey)
     {
         var rsa = new RSACryptoServiceProvider();
@@ -40,7 +39,6 @@ public static class RsaHelper
         return sb.ToString().Base64Encode();
     }
 
-    /// <summary>Decrypts base64 data using the private key.</summary>
     public static string Decrypt(this string data, string privateKey)
     {
         var decoded = data.Base64Decode();
@@ -60,7 +58,6 @@ public static class RsaHelper
         return encoder.GetString(decryptedByte);
     }
 
-    /// <summary>Encrypts data using a single AES secret key.</summary>
     public static string EncryptSingleKey(this string data, string secretKey)
     {
         var aes = Aes.Create();
@@ -78,7 +75,6 @@ public static class RsaHelper
         return Convert.ToBase64String(memoryStream.ToArray());
     }
 
-    /// <summary>Decrypts base64 data using a single AES secret key.</summary>
     public static string DecryptSingleKey(this string data, string secretKey)
     {
         var aes = Aes.Create();

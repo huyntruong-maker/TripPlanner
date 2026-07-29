@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Trips.Queries.GetTripDetailQuery;
 
-/// <summary>Full trip detail with ordered days, destinations, and Saved Places; null if not found or not owned (NFR-6).</summary>
+/// <summary>Null if not found or not owned by the caller (NFR-6).</summary>
 public record GetTripDetailQuery : IQuery<TripDto?>
 {
     public required Guid TripId { get; init; }

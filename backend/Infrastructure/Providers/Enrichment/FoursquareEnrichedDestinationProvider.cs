@@ -119,7 +119,6 @@ public class FoursquareEnrichedDestinationProvider(
         if (string.IsNullOrWhiteSpace(detail.Description) && !string.IsNullOrWhiteSpace(match.Description))
             detail.Description = match.Description;
 
-        // Append unique Foursquare photos after OpenTripMap's own.
         if (match.Photos.Count == 0)
             return;
 

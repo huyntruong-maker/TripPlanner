@@ -1,6 +1,5 @@
 // User-facing text per backend errorCode (docs/API.md); `.Exception` codes are unmapped — callers show their own fallback.
 export const apiErrorMessages: Record<string, string> = {
-  // Auth
   'Auth.Login.InvalidCredential': 'Incorrect username or password.',
   'Auth.Login.WillBeLockedOut': 'Incorrect password — one more failed attempt will lock your account.',
   'Auth.Login.LockedOut': 'Your account is temporarily locked. Please try again later.',
@@ -37,7 +36,6 @@ export const apiErrorMessages: Record<string, string> = {
   'Auth.VerifyEmail.TokenExpired': 'The verification link has expired.',
   'Auth.VerifyEmail.AlreadyVerified': 'This email is already verified.',
 
-  // Destinations
   'Destination.SearchLocations.QueryRequired': 'Enter a destination to search.',
   'Destination.GetAttractions.LatitudeRequired': 'Invalid location coordinates.',
   'Destination.GetAttractions.LongitudeRequired': 'Invalid location coordinates.',
@@ -45,7 +43,6 @@ export const apiErrorMessages: Record<string, string> = {
   'Destination.GetDetail.ProviderPlaceIdRequired': 'This destination could not be found.',
   'Destination.GetDetail.NotFound': 'This destination could not be found.',
 
-  // Trips
   'Trip.NotFound': 'This trip no longer exists or you do not have access to it.',
   'Trip.CreateTrip.NameRequired': 'Enter a trip name.',
   'Trip.SetDates.StartDateRequired': 'Select a start date.',

@@ -6,7 +6,6 @@ using MediatR;
 
 namespace Application.Features.Trips.Queries.GetTripsQuery;
 
-/// <summary>Lists the authenticated user's trips (top-level fields only); empty list if none.</summary>
 public record GetTripsQuery : IQuery<IReadOnlyList<TripDto>>
 {
     public required Guid UserId { get; init; }

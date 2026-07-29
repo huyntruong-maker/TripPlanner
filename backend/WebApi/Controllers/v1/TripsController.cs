@@ -27,7 +27,6 @@ public class TripsController(
     ILogger<TripsController> logger,
     IMapper mapper) : BaseController(logger, mapper)
 {
-    /// <summary>Returns the authenticated user's trip list; empty list when the user has no trips (F3-US10).</summary>
     [HttpGet]
     [ProducesResponseType(typeof(ResultRes<IReadOnlyList<TripDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -62,7 +61,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>Full trip detail (days + destinations); 404 when not found or not owned (NFR-6).</summary>
+    /// <summary>404 when not found or not owned, not 403 — avoids leaking trip existence (NFR-6).</summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status404NotFound)]
@@ -109,7 +108,6 @@ public class TripsController(
         }
     }
 
-    /// <summary>Creates a trip without dates (F3-US1); use PUT /trips/{id}/dates to set them.</summary>
     [HttpPost]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status400BadRequest)]
@@ -162,7 +160,6 @@ public class TripsController(
         }
     }
 
-    /// <summary>Sets the trip's date range (F3-US2); shortening it unschedules destinations that lose their day.</summary>
     [HttpPut("{id:guid}/dates")]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status400BadRequest)]
@@ -222,7 +219,6 @@ public class TripsController(
             response.Result = setDatesResult!.Trip;
             response.Success = true;
 
-            // Warn the caller when scheduled destinations were moved to Saved Places.
             if (setDatesResult.DestinationsUnscheduledCount > 0)
                 response.ErrorCode = TripControllerMsg.DatesDestinationsUnscheduled;
 
@@ -236,7 +232,6 @@ public class TripsController(
         }
     }
 
-    /// <summary>Adds a destination to the trip (F3-US3); a null <c>itineraryDayId</c> saves it to "Saved Places" (F3-US4).</summary>
     [HttpPost("{id:guid}/destinations")]
     [ProducesResponseType(typeof(ResultRes<TripDestinationDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ResultRes<TripDestinationDto>), StatusCodes.Status400BadRequest)]
@@ -306,7 +301,6 @@ public class TripsController(
         }
     }
 
-    /// <summary>Moves/reorders a destination between itinerary days or Saved Places (F3-US4/US5/US6); returns full trip detail.</summary>
     [HttpPut("{id:guid}/destinations/{tripDestinationId:guid}")]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ResultRes<TripDto>), StatusCodes.Status400BadRequest)]
@@ -362,7 +356,7 @@ public class TripsController(
         }
     }
 
-    /// <summary>Removes a destination from the trip (F3-US7); 404 when not found/owned (NFR-6).</summary>
+    /// <summary>404 when not found or not owned, not 403 — avoids leaking trip existence (NFR-6).</summary>
     [HttpDelete("{id:guid}/destinations/{tripDestinationId:guid}")]
     [ProducesResponseType(typeof(ResultRes<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ResultRes<bool>), StatusCodes.Status404NotFound)]

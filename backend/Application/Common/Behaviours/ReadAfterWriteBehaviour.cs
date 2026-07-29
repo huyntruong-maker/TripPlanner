@@ -18,7 +18,6 @@ public class ReadAfterWriteBehaviour<TRequest, TResponse>(
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        // Skip for normal queries and commands
         if (request is not IConsistentQuery<TResponse>)
         {
             return await next();
@@ -30,7 +29,6 @@ public class ReadAfterWriteBehaviour<TRequest, TResponse>(
             return await next();
         }
 
-        // Allow to read from the write database
         var writeDb = configuration.GetSection(ConfigKeys.Databases.WriteDatabase).Get<string>()!;
         unitOfWork.ChangeDatabase(writeDb);
 

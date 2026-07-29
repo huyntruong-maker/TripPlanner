@@ -51,6 +51,5 @@ public static class TripControllerMsg
     /// <summary>Shared code for missing-or-not-owned trips; prevents trip-ID enumeration.</summary>
     public const string NotFound = "Trip.NotFound";
 
-    /// <summary>Warning code when setting dates unschedules destinations whose day was removed.</summary>
     public const string DatesDestinationsUnscheduled = "Trip.SetDates.DestinationsUnscheduled";
 }

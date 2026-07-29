@@ -2,7 +2,7 @@ using System.Net;
 
 namespace Application.Common.Email;
 
-/// <summary>Composes TripPlanner's transactional email bodies as self-contained, table-based HTML with inline styles only, for consistent rendering across email clients.</summary>
+// Inline styles only (no <style> blocks): many email clients strip them, breaking rendering.
 public static class EmailTemplates
 {
     public const string VerificationSubject = "Verify your email address";

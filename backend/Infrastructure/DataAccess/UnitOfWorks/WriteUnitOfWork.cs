@@ -92,7 +92,6 @@ public class WriteUnitOfWork : IWriteUnitOfWork
 
     private void SaveChangesInternal(EntityEntry[] entries, EntityState state)
     {
-        // Enforce type defaults for all entities
         foreach (var item in entries)
             foreach (var p in item.Properties)
             {
@@ -100,7 +99,7 @@ public class WriteUnitOfWork : IWriteUnitOfWork
 
                 switch (p.Metadata.ClrType.Name)
                 {
-                    case "String": // Replace all empty strings with null
+                    case "String":
                         var emptyString = string.IsNullOrWhiteSpace(p.CurrentValue.ToString());
                         p.CurrentValue = emptyString ? null : p.CurrentValue;
                         break;
@@ -113,30 +112,25 @@ public class WriteUnitOfWork : IWriteUnitOfWork
             PropertyEntry? propertyEntry;
             if (state == EntityState.Added)
             {
-                // CreatedBy
                 propertyEntry = item.Properties.FirstOrDefault(p => p.Metadata.Name == "CreatedBy");
                 if (propertyEntry != null)
                     if (_httpContextAccessor?.HttpContext?.User != null
                         && (Guid?)propertyEntry.CurrentValue == Guid.Empty)
                         propertyEntry.CurrentValue = _httpContextAccessor.HttpContext.User.Claims.GetUserIdNullable();
 
-                // CreatedAt
                 propertyEntry = item.Properties.FirstOrDefault(p => p.Metadata.Name == "CreatedAt");
                 if (propertyEntry != null) propertyEntry.CurrentValue = now;
             }
 
-            // UpdatedBy
             propertyEntry = item.Properties.FirstOrDefault(p => p.Metadata.Name == "UpdatedBy");
             if (propertyEntry != null)
                 if (_httpContextAccessor?.HttpContext?.User != null
                     && (Guid?)propertyEntry.CurrentValue == Guid.Empty)
                     propertyEntry.CurrentValue = _httpContextAccessor.HttpContext.User.Claims.GetUserIdNullable();
 
-            // UpdatedAt
             propertyEntry = item.Properties.FirstOrDefault(p => p.Metadata.Name == "UpdatedAt");
             if (propertyEntry != null) propertyEntry.CurrentValue = now;
 
-            // Trim String Entries Before Saving
             var propertyValues = item.Properties
                 .Where(p => p.CurrentValue is string && !string.IsNullOrEmpty(Convert.ToString(p.CurrentValue)));
             foreach (var propertyValue in propertyValues)
@@ -150,10 +144,9 @@ public class WriteUnitOfWork : IWriteUnitOfWork
         {
             if (item.Entity is not IIsDeletedEntity entity) continue;
 
-            // Set the entity to unchanged (if we mark the whole entity as Modified, every field gets sent to Db as an update)
+            // Unchanged (not Modified) so only the IsDeleted flag below is sent to the DB, not every field.
             item.State = EntityState.Unchanged;
 
-            // Only update the IsDeleted flag - only this will get sent to the Db
             entity.IsDeleted = true;
 
             if (item.Entity is not IBaseEntity baseEntity) continue;

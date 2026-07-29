@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Foursquare;
 
-/// <summary>Fetches attraction data (categories, ratings, photos) from the new Foursquare Places API (places-api.foursquare.com).</summary>
+/// <summary>Uses the new Foursquare Places API (places-api.foursquare.com), not the legacy one.</summary>
 public class FoursquareDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,

@@ -26,7 +26,6 @@ function firstStringClaim(claims: Record<string, unknown>, keys: string[]): stri
   return null;
 }
 
-/** Decodes id/email from the token's claims; returns null (treat as signed out) if malformed or missing. */
 export function decodeUserFromToken(token: string): AuthenticatedUser | null {
   try {
     const claims = jwtDecode<Record<string, unknown>>(token);

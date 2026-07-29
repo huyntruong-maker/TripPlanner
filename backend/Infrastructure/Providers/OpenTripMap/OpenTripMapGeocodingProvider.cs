@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.OpenTripMap;
 
-/// <summary>Geocodes a free-text location query using the OpenTripMap Geoname API.</summary>
 public class OpenTripMapGeocodingProvider(
     IRestfulService restfulService,
     IConfiguration configuration,

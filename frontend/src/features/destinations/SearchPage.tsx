@@ -19,7 +19,6 @@ const LOCATION_LISTBOX_ID = 'location-suggestions-listbox';
 const DROPDOWN_MESSAGE_CLASSES =
   'absolute z-10 top-full left-0 right-0 mt-2 bg-surface-container-lowest border border-outline-variant rounded-lg elevation-l1 px-4 py-3 text-body-md';
 
-// URL search-param keys — keep the selected location and active filters/sort shareable and restorable across navigation.
 const QUERY_PARAM = 'q';
 const LAT_PARAM = 'lat';
 const LNG_PARAM = 'lng';
@@ -31,7 +30,6 @@ function optionId(index: number): string {
   return `location-option-${index}`;
 }
 
-/** Reconstructs the selected location from the URL, if a full/valid set of params is present. */
 function locationFromSearchParams(params: URLSearchParams): LocationSuggestion | null {
   const displayName = params.get(QUERY_PARAM);
   const latitude = Number(params.get(LAT_PARAM));
@@ -62,7 +60,6 @@ function locationToSearchParams(location: LocationSuggestion): URLSearchParams {
   return params;
 }
 
-/** Public page — users can browse destinations and attractions before logging in. */
 export function SearchPage() {
   const { isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -100,7 +97,7 @@ export function SearchPage() {
 
   const discoverSearch = searchParams.toString() ? `?${searchParams.toString()}` : '';
 
-  // Belt-and-suspenders fallback for BackToSearchButton: history/Link state can both be lost (e.g. a dev-server reload), so also keep the last search in sessionStorage.
+  // fallback for BackToSearchButton when history/Link state is lost (e.g. a dev-server reload)
   useEffect(() => {
     if (discoverSearch) {
       saveLastDiscoverSearch(discoverSearch);
@@ -122,7 +119,7 @@ export function SearchPage() {
     setQuery(location.displayName);
     setIsDropdownDismissed(true);
     setActiveIndex(-1);
-    // A genuinely new search — worth its own Back stop — so this pushes, dropping any filter/sort params from a previous location.
+    // pushes (not replaces) so a new search gets its own Back stop, dropping stale filter/sort params
     setSearchParams(locationToSearchParams(location));
   }
 
@@ -238,7 +235,7 @@ export function SearchPage() {
       </section>
 
       {selectedLocation && (
-        // Keyed by coordinates so switching locations remounts the grid with fresh filters/sort.
+        // keyed by coordinates so switching locations remounts the grid with fresh filters/sort
         <AttractionsGrid
           key={`${selectedLocation.latitude},${selectedLocation.longitude}`}
           location={selectedLocation}
@@ -325,11 +322,7 @@ interface AttractionsGridProps {
 type SortOrder = 'recommended' | 'rating';
 
 const RATING_OPTIONS = [5, 7, 8, 9] as const;
-/**
- * How many category chips show before the "Show all" toggle. Kept small on purpose: provider
- * categories overlap heavily (e.g. religion/churches/cathedrals all describe the same places),
- * and options are sorted most-frequent-first, so the long tail is mostly noise.
- */
+// Kept small: provider categories overlap heavily (e.g. religion/churches/cathedrals), and options are sorted most-frequent-first, so the long tail is mostly noise.
 const VISIBLE_CATEGORY_LIMIT = 6;
 
 const SELECT_CLASSES =
@@ -362,13 +355,12 @@ interface CategoryOption {
   count: number;
 }
 
-/** Raw category/tag values an attraction is associated with (category is usually the first tag, but not always — see Louvre fixture). */
+// category is usually the first tag but not always, so both are collected separately
 function categoriesFor(attraction: AttractionSummary): string[] {
   const values = attraction.category ? [attraction.category, ...attraction.tags] : attraction.tags;
   return [...new Set(values)];
 }
 
-/** Builds the category chip list from the loaded attractions: case-insensitive dedup, most-frequent first. */
 function buildCategoryOptions(attractions: AttractionSummary[]): CategoryOption[] {
   const byKey = new Map<string, { label: string; count: number }>();
 
@@ -401,8 +393,7 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
   // Only drives the sub-lg collapse; from lg up the sidebar is always shown.
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Mirrors filters/sort into the URL (replace, no history spam); writes only when the URL actually
-  // differs so StrictMode's double-invoked effects can't wipe a freshly-pushed ?q/lat with a stale `previous`.
+  // Writes only when the URL actually differs, so StrictMode's double-invoked effect can't wipe a freshly-pushed ?q/lat.
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
     if (selectedCategoryKeys.length > 0) {
@@ -447,7 +438,6 @@ function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridPro
     if (sortOrder === 'recommended') {
       return filteredAttractions;
     }
-    // Highest rating first; missing ratings sort last.
     return [...filteredAttractions].sort((a, b) => {
       if (a.rating === null && b.rating === null) return 0;
       if (a.rating === null) return 1;

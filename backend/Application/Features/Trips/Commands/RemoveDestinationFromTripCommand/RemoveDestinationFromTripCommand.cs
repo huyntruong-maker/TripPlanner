@@ -6,7 +6,6 @@ using MediatR;
 
 namespace Application.Features.Trips.Commands.RemoveDestinationFromTripCommand;
 
-/// <summary>Soft-deletes a destination from a trip owned by the caller (NFR-6); NotFound code if not found.</summary>
 public record RemoveDestinationFromTripCommand : ICommand<(string, bool)>
 {
     public required Guid TripId { get; init; }

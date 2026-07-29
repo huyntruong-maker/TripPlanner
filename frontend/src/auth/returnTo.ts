@@ -1,7 +1,6 @@
 const RETURN_TO_PARAM = 'returnTo';
 const DEFAULT_RETURN_TO = '/trips';
 
-/** Builds a /login URL that remembers where to send the user back to after sign-in. */
 export function buildLoginUrl(currentPath: string): string {
   return `/login?${RETURN_TO_PARAM}=${encodeURIComponent(currentPath)}`;
 }

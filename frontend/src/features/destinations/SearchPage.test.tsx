@@ -211,16 +211,16 @@ describe('SearchPage — attractions grid (F1/US3)', () => {
     await user.click(await screen.findByRole('option', { name: 'Paris, France' }));
 
     expect(await screen.findByRole('heading', { name: 'Eiffel Tower' })).toBeInTheDocument();
-    // Thumbnail is decorative (alt=""); assert the image directly instead of by accessible name.
+    // thumbnail is decorative (alt=""), so assert the image directly instead of by accessible name
     const thumbnail = document.querySelector('img.attraction-thumbnail');
     expect(thumbnail).toHaveAttribute('src', 'https://example.test/eiffel.jpg');
     expect(thumbnail).toHaveAttribute('alt', '');
-    // Categories/tags are humanized; "Cultural"/"Landmark" also appear as filter-chip labels, so there may be more than one match.
+    // "Cultural"/"Landmark" also appear as filter-chip labels, hence getAllByText
     expect(screen.getAllByText('Cultural').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Landmark').length).toBeGreaterThan(0);
     expect(screen.getByText('★ 9.5')).toBeInTheDocument();
 
-    // Louvre has no thumbnail/rating — placeholder + no rating line, not a crash.
+    // Louvre fixture has no thumbnail/rating — verifies placeholder path, not a crash
     expect(screen.getByRole('heading', { name: 'Louvre Museum' })).toBeInTheDocument();
     expect(screen.getByText('No photo')).toBeInTheDocument();
   });
@@ -370,7 +370,7 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
   });
 });
 
-/** Exposes the current URL's search params for assertions — SearchPage itself doesn't render them. */
+// exposes the current URL's search params for assertions — SearchPage itself doesn't render them
 function SearchParamsProbe() {
   const [searchParams] = useSearchParams();
   return <div data-testid="url-params">{searchParams.toString()}</div>;
@@ -402,7 +402,6 @@ describe('SearchPage — search state survives navigation (URL search params)', 
     });
     renderSearchPage([`/?${params.toString()}`]);
 
-    // The search box already shows the restored location — no need to type/select again.
     expect(screen.getByDisplayValue('Paris, France')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Eiffel Tower' })).toBeInTheDocument();
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();

@@ -14,10 +14,9 @@ namespace Infrastructure.Providers;
 
 public static class ProvidersInjection
 {
-    /// <summary>Registers the external provider clients and their caching decorators.</summary>
     public static void AddProviders(this IServiceCollection collection)
     {
-        // Raw provider implementations (transient — stateless HTTP clients).
+        // Transient: these are stateless HTTP clients.
         collection.AddTransient<NominatimGeocodingProvider>();
         collection.AddTransient<OpenTripMapGeocodingProvider>();
         collection.AddTransient<OpenTripMapDestinationProvider>();
@@ -55,7 +54,6 @@ public static class ProvidersInjection
         });
     }
 
-    /// <summary>Logs an unrecognized <c>Providers:Geocoding:Provider</c> value and falls back to Nominatim.</summary>
     private static IGeocodingProvider LogUnknownProviderAndFallback(
         ILogger<CachedGeocodingProvider> logger,
         string providerName,

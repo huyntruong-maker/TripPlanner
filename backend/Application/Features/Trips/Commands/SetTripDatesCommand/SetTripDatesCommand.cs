@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Trips.Commands.SetTripDatesCommand;
 
-/// <summary>Sets a trip's date range, regenerating one itinerary day per date; shortening soft-deletes days and unschedules their destinations (SetNull cascade) rather than deleting them.</summary>
+/// <summary>Shortening soft-deletes days and unschedules their destinations (SetNull cascade) rather than deleting them.</summary>
 public record SetTripDatesCommand : ICommand<(string, SetTripDatesResult?)>
 {
     public required Guid TripId { get; init; }
@@ -24,7 +24,6 @@ public class SetTripDatesResult
 {
     public required TripDto Trip { get; init; }
 
-    /// <summary>Number of TripDestinations unscheduled because their itinerary day was removed.</summary>
     public int DestinationsUnscheduledCount { get; init; }
 }
 
@@ -36,7 +35,7 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
         var tripRepo = writeUnitOfWork.GetRepository<Trip>();
         var dayRepo = writeUnitOfWork.GetRepository<ItineraryDay>();
 
-        // Load the trip with its current itinerary days — ownership is verified here (UserId filter).
+        // Ownership is verified via the UserId filter here (NFR-6).
         var trip = await tripRepo.Single(
             predicate: t => t.Id == request.TripId && t.UserId == request.UserId,
             include: q => q.Include(t => t.ItineraryDays));
@@ -54,10 +53,9 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
         var existingDates = existingDays.Select(d => d.Date).ToHashSet();
         var newDatesSet = newDates.ToHashSet();
 
-        // Soft-delete days that fall outside the new range.
         var daysToRemove = existingDays.Where(d => !newDatesSet.Contains(d.Date)).ToList();
 
-        // Count destinations that will become unscheduled, before the cascading delete happens.
+        // Must count before the soft-delete below runs, since that cascades to unschedule these destinations.
         var destinationRepo = writeUnitOfWork.GetRepository<TripDestination>();
         var dayIdsToRemove = daysToRemove.Select(d => d.Id).ToHashSet();
         int unscheduledCount = 0;
@@ -78,7 +76,6 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
             await dayRepo.Update(day);
         }
 
-        // Add days that are new in the requested range.
         var datesToAdd = newDates.Where(date => !existingDates.Contains(date)).ToList();
         var newDayEntities = new List<ItineraryDay>();
 
@@ -99,7 +96,6 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
             }
             else
             {
-                // Update DayIndex for existing days in case the range shifted.
                 var existingDay = existingDays.First(d => d.Date == date);
                 if (existingDay.DayIndex != index)
                 {
@@ -119,7 +115,7 @@ public class SetTripDatesCommandHandler(IWriteUnitOfWork writeUnitOfWork)
 
         await writeUnitOfWork.SaveChanges();
 
-        // Reload the days after save to get accurate state including newly created IDs.
+        // Re-query rather than reuse tracked entities so newly generated IDs are included.
         var updatedDays = (await dayRepo.QueryCondition(d => d.TripId == request.TripId))
             .OrderBy(d => d.DayIndex)
             .Select(d => new ItineraryDayDto

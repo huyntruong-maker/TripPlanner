@@ -13,7 +13,7 @@ interface AttractionCardProps {
 
 const MAX_VISIBLE_TAGS = 3;
 
-/** One attraction result card: thumbnail, category/tags, rating, and two save actions — hover/focus "Save place" (trip-only) and the footer "Add to Trip" control (trip + day picker). */
+// hover/focus "Save place" (trip-only) is distinct from the footer "Add to Trip" (trip + day picker)
 export function AttractionCard({ attraction, discoverSearch }: AttractionCardProps) {
   // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = attraction.tags.filter((tag) => tag !== attraction.category);

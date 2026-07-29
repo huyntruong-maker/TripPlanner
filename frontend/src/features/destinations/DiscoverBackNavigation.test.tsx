@@ -8,7 +8,7 @@ import { CITY_WITH_ATTRACTIONS_QUERY } from '../../test/msw/handlers/destination
 import { DestinationDetailPage } from './DestinationDetailPage';
 import { SearchPage } from './SearchPage';
 
-/** Stands in for the browser's own Back button/gesture — same mechanism react-router uses for it (a POP navigation), without depending on a real browser. */
+// stands in for the browser's Back gesture (a POP navigation) without depending on a real browser
 function SimulateBrowserBack() {
   const navigate = useNavigate();
   return (
@@ -25,7 +25,7 @@ function renderApp(initialEntries: string[] = ['/']) {
       <MemoryRouter initialEntries={initialEntries}>
         <AuthProvider>
           <SimulateBrowserBack />
-          {/* Mirrors App.tsx's real route config for these two routes. */}
+          {/* mirrors App.tsx's real route config for these two routes */}
           <Routes>
             <Route path="/" element={<SearchPage />} />
             <Route path="/destinations/:providerPlaceId" element={<DestinationDetailPage />} />
@@ -44,7 +44,6 @@ describe('Discover -> destination detail -> Back preserves search state (real na
     await user.click(await screen.findByRole('option', { name: 'Paris, France' }));
     await screen.findByRole('heading', { name: 'Eiffel Tower' });
 
-    // Real navigation via the card's own <Link>, not a manually-typed URL.
     await user.click(screen.getByRole('link', { name: /Eiffel Tower/ }));
     expect(
       await screen.findByRole('heading', { name: 'Eiffel Tower', level: 1 }),
@@ -64,7 +63,7 @@ describe('Discover -> destination detail -> Back preserves search state (real na
     const user = userEvent.setup();
     await searchSelectAndOpenDetail(user);
 
-    // What a user actually clicks — this was the bug: it pushed a fresh, param-less "/".
+    // regression: this button used to push a fresh, param-less "/"
     await user.click(screen.getByRole('button', { name: 'Back to search' }));
 
     await expectDiscoverStateRestored();
@@ -91,7 +90,7 @@ describe('Discover -> destination detail -> Back preserves search state (real na
         '?q=Paris%2C+France&lat=48.8566&lng=2.3522&name=Paris&locationType=city&country=France',
       );
 
-      // The detail URL is the FIRST history entry — location.key is 'default', navigate(-1) has nowhere to go.
+      // detail URL is the first history entry — location.key is 'default', navigate(-1) has nowhere to go
       renderApp(['/destinations/W214242']);
       await screen.findByRole('heading', { name: 'Eiffel Tower', level: 1 });
 

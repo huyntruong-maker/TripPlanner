@@ -11,7 +11,7 @@ import { PhotoCarousel } from './PhotoCarousel';
 
 const BACK_LINK_CLASSES = 'inline-flex items-center gap-2 text-primary font-label-md hover:underline';
 
-/** Goes back to wherever the user came from, preserving Discover's search/filter state; falls back to router state then sessionStorage when there's no in-app history to pop. */
+// falls back to router state, then sessionStorage, when there's no in-app history to pop
 function BackToSearchButton() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,7 +42,6 @@ function BackToSearchButton() {
   );
 }
 
-/** Must render even when every optional field is null or empty (graceful partial data). */
 export function DestinationDetailPage() {
   const { providerPlaceId } = useParams<{ providerPlaceId: string }>();
 
@@ -73,7 +72,7 @@ export function DestinationDetailPage() {
 
   // Category is already the first tag; exclude it to avoid showing it twice.
   const additionalTags = data.tags.filter((tag) => tag !== data.category);
-  // F2-US3: only render the map when the provider actually gave us usable coordinates.
+  // Only render the map when the provider actually gave us usable coordinates.
   const hasCoordinates = Number.isFinite(data.latitude) && Number.isFinite(data.longitude);
 
   return (

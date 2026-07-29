@@ -25,7 +25,6 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
 
         builder.HasQueryFilter(t => !t.IsDeleted);
 
-        // Optional: prevent a user from having two trips with the same name
         builder.HasIndex(t => new { t.UserId, t.Name })
             .HasDatabaseName("IX_Trips_UserId_Name")
             .IsUnique();

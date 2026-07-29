@@ -37,7 +37,6 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Extracts the backend's `errorCode` (docs/API.md), e.g. `Auth.VerifyEmail.AlreadyVerified`. */
 export function getApiErrorCode(error: unknown): string | null {
   if (!axios.isAxiosError(error)) {
     return null;

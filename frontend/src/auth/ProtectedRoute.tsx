@@ -2,7 +2,6 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { buildLoginUrl } from './returnTo';
 
-/** Redirects anonymous visitors to login with a `returnTo` back-link. */
 export function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
   const location = useLocation();

@@ -17,13 +17,11 @@ const markerIcon = L.divIcon({
 interface MapViewProps {
   latitude: number;
   longitude: number;
-  /** Used for the marker popup and the map's accessible label. */
   name: string;
-  /** Address/area label shown near the map when the provider supplies one. */
   label?: string | null;
 }
 
-/** Plain-Leaflet map (no react-leaflet, for React 19 peer-dep safety) with a single marker. */
+// plain Leaflet, not react-leaflet, for React 19 peer-dep safety
 export function MapView({ latitude, longitude, name, label }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 

@@ -14,7 +14,6 @@ const TOAST_AUTO_DISMISS_MS = 3000;
 export type ToastTone = 'success' | 'error';
 
 export interface ToastAction {
-  /** Button label, e.g. "Retry". */
   label: string;
   onAction: () => void;
 }
@@ -33,13 +32,12 @@ interface ToastItem {
 }
 
 interface ToastContextValue {
-  /** Shows a popup with the given message; defaults to the error tone, optionally with an action button (e.g. Retry). */
   showToast: (message: string, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-/** Tone-specific styling — success is green with `role="status"`, error is red with `role="alert"` (WCAG: errors need assertive announcement, confirmations don't). */
+// error uses role="alert" (assertive) vs status for success — WCAG requires errors to interrupt, confirmations don't
 const TONE_STYLES: Record<
   ToastTone,
   { container: string; text: string; icon: string; iconColor: string; role: 'status' | 'alert' }
@@ -60,7 +58,7 @@ const TONE_STYLES: Record<
   },
 };
 
-/** App-wide popup: shown automatically for query/mutation failures, or explicitly via useToast().showToast() for direct API calls (login, register, create-trip, set-dates, quick-save). */
+// shown automatically for query/mutation failures, or explicitly via useToast().showToast()
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);

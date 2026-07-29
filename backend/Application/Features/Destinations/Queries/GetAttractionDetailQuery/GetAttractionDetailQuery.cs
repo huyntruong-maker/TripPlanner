@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.Destinations.Queries.GetAttractionDetailQuery;
 
-/// <summary>Full attraction detail by provider ID; null when not recognised (results in 404). NFR-3: 24h cache TTL.</summary>
+/// <summary>Null when not recognised (results in 404). NFR-3: 24h cache TTL.</summary>
 public record GetAttractionDetailQuery : IQuery<DestinationDetailDto?>
 {
     public required string ProviderPlaceId { get; init; }

@@ -3,10 +3,9 @@ using Domain.Entities;
 
 namespace Application.Features.Trips.Shared;
 
-/// <summary>Maps a fully-loaded <see cref="Trip"/> (itinerary days + destinations) to its detail DTO.</summary>
 public static class TripDtoMapper
 {
-    /// <summary>Requires trip.ItineraryDays.TripDestinations and the trip-level TripDestinations (Saved Places) to be already loaded/included.</summary>
+    /// <summary>Requires ItineraryDays.TripDestinations and the trip-level TripDestinations to already be included; not loaded here.</summary>
     public static TripDto ToDetailDto(Trip trip)
     {
         var itineraryDays = trip.ItineraryDays

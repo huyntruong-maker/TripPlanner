@@ -14,7 +14,7 @@ export interface SearchLocationsParams {
   maxResults?: number;
 }
 
-/** GET /destinations/locations/search — up to 5 ranked city/country matches. */
+/** Returns up to 5 ranked matches. */
 export async function searchLocations({
   query,
   maxResults,
@@ -42,7 +42,6 @@ export interface GetAttractionsParams {
   pageSize?: number;
 }
 
-/** GET /destinations/attractions — paginated list; empty `items` when none found. */
 export async function getAttractions(
   params: GetAttractionsParams,
 ): Promise<PagedResult<AttractionSummary>> {

@@ -10,16 +10,12 @@ import { TripPlannerPage } from '../features/trips/TripPlannerPage';
 import { TripsPage } from '../features/trips/TripsPage';
 import { buildFakeJwt } from './buildFakeJwt';
 
-/** Seeds a persisted session so tests can render already-logged-in. */
 export function signInForTest(email = 'jane@example.com') {
   localStorage.setItem('tripplanner.token', buildFakeJwt({ nameid: 'user-1', unique_name: email }));
   localStorage.setItem('tripplanner.refreshToken', 'refresh-1');
 }
 
-/**
- * Renders the real /login -> ProtectedRoute -> /trips, /trips/:tripId tree, including the app
- * header — the account menu (and therefore log out) lives there rather than on the page.
- */
+/** Includes the app header — the account menu (and log out) live there, not on the page. */
 export function renderTripsRoutes(initialEntries: string[]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 

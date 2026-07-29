@@ -19,9 +19,7 @@ function accessToken() {
 describe('apiClient response interceptor — silent token refresh', () => {
   beforeEach(() => {
     localStorage.clear();
-    registerSessionExpiredHandler(() => {
-      // no-op default; individual tests override when they need to observe it
-    });
+    registerSessionExpiredHandler(() => {});
   });
 
   it('retries the original request once after a successful silent refresh', async () => {
@@ -98,7 +96,7 @@ describe('apiClient response interceptor — silent token refresh', () => {
           { status: 401 },
         ),
       ),
-      // No override for PUT /auth/refresh — the default handler always fails, matching an expired refresh token.
+      // no override: default MSW handler for PUT /auth/refresh always fails, simulating an expired refresh token
     );
 
     await expect(apiClient.get('/trips')).rejects.toBeTruthy();

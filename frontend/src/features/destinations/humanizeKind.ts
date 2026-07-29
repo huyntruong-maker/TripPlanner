@@ -1,10 +1,4 @@
-/**
- * Turns a raw provider category/tag value (e.g. `"other_buildings_and_structures"`,
- * `"SKYSCRAPERS"`) into a human-readable label (`"Other buildings and structures"`,
- * `"Skyscrapers"`). Use this everywhere a category or tag is rendered — filter chips,
- * the attraction card's category eyebrow and tag chips, and the destination detail page —
- * so labels are consistent across the app instead of leaking raw provider slugs.
- */
+/** Turns a raw provider slug (e.g. `"SKYSCRAPERS"`) into a human label (`"Skyscrapers"`); use everywhere a category/tag renders, for consistency. */
 export function humanizeKind(value: string): string {
   const normalized = value
     .replace(/[_-]+/g, ' ')

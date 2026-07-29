@@ -7,7 +7,6 @@ export interface MoveDestinationTarget {
   position: number | null;
 }
 
-/** Internal key used to address either Saved Places or a specific itinerary day's list. */
 const SAVED_PLACES_KEY = '__saved-places__';
 
 function keyFor(itineraryDayId: string | null): string {
@@ -29,7 +28,6 @@ function findOwnerKey(trip: Trip, tripDestinationId: string): string | null {
   return owningDay ? owningDay.id : null;
 }
 
-/** Renumbers a list's `position` field to 1-based, in its current order. */
 function renumber(list: TripDestination[]): TripDestination[] {
   return list.map((item, index) => ({ ...item, position: index + 1 }));
 }
@@ -38,15 +36,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-/**
- * Pure client-side projection of a move — used for the optimistic cache update
- * in `useMoveTripDestination` so the board reflects the change in well under
- * NFR-4's 100ms budget, before the server responds. Mirrors the backend's
- * position semantics: 1-based, `null` position appends at the end,
- * `itineraryDayId: null` means Saved Places.
- *
- * Returns `trip` unchanged if `tripDestinationId` isn't found anywhere in it.
- */
+/** Optimistic-cache projection of a move for useMoveTripDestination (NFR-4: under 100ms); returns `trip` unchanged if not found. */
 export function moveDestinationInTrip(
   trip: Trip,
   tripDestinationId: string,

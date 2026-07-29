@@ -6,12 +6,12 @@ using MediatR;
 
 namespace Application.Features.Trips.Commands.CreateTripCommand;
 
-/// <summary>Creates a new trip without dates; dates are set in a separate step (F3-US2).</summary>
+/// <summary>Dates are set in a separate step (F3-US2).</summary>
 public record CreateTripCommand : ICommand<(string, TripDto)>
 {
     public required string Name { get; init; }
 
-    /// <summary>The authenticated user's ID — set from JWT claims in the controller, never from the request body.</summary>
+    /// <summary>Set from JWT claims in the controller, never from the request body.</summary>
     public required Guid UserId { get; init; }
 }
 

@@ -28,7 +28,6 @@ public class TripDestination : BaseEntity, IIsDeletedEntity
 
     public double Lng { get; set; }
 
-    /// <summary>Ordering position within the itinerary day (or saved places list).</summary>
     public int Position { get; set; }
 
     public bool IsDeleted { get; set; }

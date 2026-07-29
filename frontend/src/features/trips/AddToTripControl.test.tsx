@@ -86,7 +86,6 @@ describe('AddToTripControl', () => {
       await user.click(screen.getByRole('button', { name: 'Add' }));
 
       expect(await screen.findByRole('status')).toHaveTextContent('Added to Paris 2026.');
-      // The dialog closes once the destination is added.
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
@@ -133,7 +132,7 @@ describe('AddToTripControl', () => {
       await user.click(screen.getByRole('button', { name: 'Add to Trip' }));
       const dialog = await screen.findByRole('dialog');
 
-      // The backdrop is the dialog's own positioning parent — click it directly, not the content.
+      // backdrop is the dialog's own positioning parent — click it directly, not the content
       await user.click(dialog.parentElement as HTMLElement);
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

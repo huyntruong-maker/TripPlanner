@@ -18,7 +18,6 @@ public static class CommonHelper
 {
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _propertyCache = new();
 
-    /// <summary>Returns the first regex match, or a specific group of it when <c>idx</c> is given.</summary>
     public static string RegexGroupValue(this string text, string pattern, int? idx = null)
     {
         var regex = new Regex(pattern);
@@ -26,7 +25,6 @@ public static class CommonHelper
         return idx != null ? match.Groups[idx.Value].Value : match.Value;
     }
 
-    /// <summary>Returns the last regex match, or a specific group of it when <c>idx</c> is given.</summary>
     public static string RegexGroupValueLast(this string text, string pattern, int? idx = null)
     {
         var regex = new Regex(pattern);
@@ -34,7 +32,6 @@ public static class CommonHelper
         return idx != null ? matches.Last().Groups[idx.Value].Value : matches.Last().Value;
     }
 
-    /// <summary>Computes an MD5 hash of the object's JSON representation.</summary>
     public static string ComputeHash(this object toCompute)
     {
         using var md5 = MD5.Create();
@@ -46,7 +43,6 @@ public static class CommonHelper
         return sb.ToString();
     }
 
-    /// <summary>Computes an MD5 hash of the string.</summary>
     public static string ComputeHash(this string text)
     {
         using var md5 = MD5.Create();
@@ -63,14 +59,12 @@ public static class CommonHelper
         return string.IsNullOrEmpty(source) ? string.IsNullOrEmpty(toCompare) : source.Equals(toCompare);
     }
 
-    /// <summary>Converts zero to an empty string; used for data exportation formatting.</summary>
     public static string ConvertZeroToEmpty(this double? source, string format = "0.00")
     {
         if (source == null) return string.Empty;
         return source == 0 ? string.Empty : source.Value.ToString(format);
     }
 
-    /// <summary>Parses a double, optionally transforming input first; falls back to default on failure.</summary>
     public static double? TryParseDoubleNullable(this string source, Func<string, string>? func,
         double? defaultValue = 0.0)
     {
@@ -111,7 +105,6 @@ public static class CommonHelper
         return source.Replace(" ", "");
     }
 
-    /// <summary>Checks file existence, retrying up to 5 times with a 3s delay.</summary>
     public static async Task<bool> CheckFileExistence(string filePath, CancellationToken? cancelToken = null)
     {
         var attempt = 5;
@@ -233,7 +226,6 @@ public static class CommonHelper
         return Encoding.UTF8.GetString(base64EncodedBytes);
     }
 
-    /// <summary>Recursively trims all string properties in an object and its nested objects.</summary>
     public static void TrimData<T>(this T obj, ILogger? logger = null)
     {
         if (obj == null || obj is ValueType || obj is string) return;
@@ -256,10 +248,9 @@ public static class CommonHelper
             return;
         }
 
-        // Get cached properties or add them to cache if not present
         var properties = _propertyCache.GetOrAdd(type, t =>
             t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-             .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0) // Skip indexers
+             .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0)
              .ToArray());
 
         foreach (var property in properties)
@@ -269,7 +260,6 @@ public static class CommonHelper
                 var value = property.GetValue(obj);
                 if (value == null) continue;
 
-                // Trim string properties
                 if (value is string strValue && !string.IsNullOrWhiteSpace(strValue))
                 {
                     property.SetValue(obj, strValue.Trim());
@@ -296,7 +286,6 @@ public static class CommonHelper
         return year >= minYear && year <= maxYear;
     }
 
-    /// <summary>Validates a month is in range 1-12.</summary>
     public static bool IsValidMonth(int month)
     {
         return month >= 1 && month <= 12;
