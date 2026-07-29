@@ -24,26 +24,27 @@ export function SortableDestinationItem({ destination, onRemove, isRemoving }: S
     <li
       ref={setNodeRef}
       style={style}
-      className="min-h-[48px] p-2.5 rounded-lg bg-surface border border-outline-variant/30 flex items-center gap-2"
+      className="p-2.5 rounded-lg bg-surface border border-outline-variant/30 flex flex-col gap-2"
     >
+      <div className="flex items-start gap-2">
+        <button
+          type="button"
+          className="material-symbols-outlined text-outline cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+          aria-label={`Reorder ${destination.name}`}
+          {...attributes}
+          {...listeners}
+        >
+          drag_indicator
+        </button>
+        {/* No truncation: the full name is the whole point of the list, and the column is narrow
+            enough that ellipsis was hiding almost everything past the first word. */}
+        <span className="font-label-md text-on-surface flex-grow min-w-0 break-words">
+          {destination.name}
+        </span>
+      </div>
       <button
         type="button"
-        className="material-symbols-outlined text-outline cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
-        aria-label={`Reorder ${destination.name}`}
-        {...attributes}
-        {...listeners}
-      >
-        drag_indicator
-      </button>
-      <span
-        className="font-label-md text-on-surface flex-grow min-w-0 truncate"
-        title={destination.name}
-      >
-        {destination.name}
-      </span>
-      <button
-        type="button"
-        className="text-error bg-error-container/20 px-3 py-1 rounded-full text-label-sm hover:bg-error-container/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0"
+        className="self-end text-error bg-error-container/20 px-3 py-1 rounded-full text-label-sm hover:bg-error-container/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0"
         onClick={() => onRemove(destination.id)}
         disabled={isRemoving}
       >
