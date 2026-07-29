@@ -47,6 +47,7 @@ public class FoursquareDestinationProvider(
         [PlacesApiVersionHeaderName] = PlacesApiVersion
     };
 
+    /// <summary>Only runs when this class is the primary (Providers:Destination:Provider = "Foursquare"). Not called by FoursquareEnrichedDestinationProvider — see FindNearestMatchAsync below for that path.</summary>
     public async Task<AttractionSearchResultDto> GetAttractionsAsync(
         double latitude,
         double longitude,
@@ -91,7 +92,7 @@ public class FoursquareDestinationProvider(
         }
     }
 
-    /// <summary>Finds the Foursquare place nearest the given coordinates matching name, to enrich an OpenTripMap POI (xid stays the public ProviderPlaceId); best-effort — returns null when disabled, not found, or on request/parse failure.</summary>
+    /// <summary>Runs by default (Providers:Destination:Provider = "OpenTripMap" or unset) — this is what FoursquareEnrichedDestinationProvider calls to enrich each attraction. Finds the Foursquare place nearest the given coordinates matching name; best-effort, returns null when disabled, not found, or on request/parse failure.</summary>
     public async Task<AttractionDto?> FindNearestMatchAsync(
         string name,
         double latitude,
@@ -134,6 +135,7 @@ public class FoursquareDestinationProvider(
         }
     }
 
+    /// <summary>Only runs when this class is the primary (Providers:Destination:Provider = "Foursquare"). Not called by FoursquareEnrichedDestinationProvider — see FindNearestMatchAsync above for that path.</summary>
     public async Task<AttractionDto?> GetAttractionDetailAsync(
         string providerPlaceId,
         CancellationToken cancellationToken = default)

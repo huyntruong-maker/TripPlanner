@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Caching;
 
+/// <summary>Always runs — this is the actual value IDestinationProvider resolves to in DI (see ProvidersInjection.cs), wrapping whichever primary was selected.</summary>
 public class CachedDestinationProvider(
     IDestinationProvider inner,
     ICacheManager cacheManager,

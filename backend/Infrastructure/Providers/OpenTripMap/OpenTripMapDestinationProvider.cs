@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.OpenTripMap;
 
+/// <summary>Runs whenever Providers:Destination:Provider is "OpenTripMap" (default) or unset — always wrapped by FoursquareEnrichedDestinationProvider. Never runs when set to "Foursquare".</summary>
 public class OpenTripMapDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
