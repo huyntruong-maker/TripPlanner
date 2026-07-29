@@ -98,14 +98,29 @@ export function TripPlannerPage() {
         Back to my trips
       </Link>
 
-      <div className="bg-primary text-on-primary rounded-xl p-8 md:p-10 elevation-l1">
-        <p className="flex items-center gap-2 text-label-sm font-label-sm uppercase tracking-wider opacity-80 mb-2">
-          <span className="material-symbols-outlined text-sm" aria-hidden="true">
-            flight_takeoff
-          </span>
-          Trip
-        </p>
-        <h1 className="text-display font-display leading-tight">{trip.name}</h1>
+      <div className="relative overflow-hidden bg-primary text-on-primary rounded-xl p-8 md:p-10 elevation-l1">
+        {/* Decorative only (no per-trip photo in the data model yet) — a diagonal tint plus an
+            oversized, cropped plane glyph so the banner reads as designed rather than empty. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10"
+        />
+        <span
+          aria-hidden="true"
+          className="material-symbols-outlined pointer-events-none absolute -right-6 -bottom-10 text-[11rem] leading-none text-on-primary/10 rotate-[10deg] select-none"
+        >
+          flight_takeoff
+        </span>
+
+        <div className="relative">
+          <p className="flex items-center gap-2 text-label-sm font-label-sm uppercase tracking-wider opacity-80 mb-2">
+            <span className="material-symbols-outlined text-sm" aria-hidden="true">
+              flight_takeoff
+            </span>
+            Trip
+          </p>
+          <h1 className="text-display font-display leading-tight">{trip.name}</h1>
+        </div>
       </div>
 
       <div className="bg-surface-container-lowest rounded-xl p-8 elevation-l1 border border-outline-variant/30 space-y-stack-lg">
