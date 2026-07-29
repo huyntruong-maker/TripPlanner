@@ -9,7 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Foursquare;
 
-/// <summary>Uses the new Foursquare Places API (places-api.foursquare.com), not the legacy one.</summary>
+/// <summary>
+/// Raw Foursquare Places API client (places-api.foursquare.com). Used two ways: as a full
+/// standalone IDestinationProvider when Providers:Destination:Provider is "Foursquare", or as
+/// the data source FoursquareEnrichedDestinationProvider calls to enrich OpenTripMap results
+/// otherwise (see that class).
+/// </summary>
 public class FoursquareDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,

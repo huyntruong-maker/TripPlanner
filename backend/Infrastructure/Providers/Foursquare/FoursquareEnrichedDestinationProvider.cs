@@ -7,7 +7,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers.Foursquare;
 
-/// <summary>Enriches OpenTripMap attractions with Foursquare categories/reviews/photos/hours; matches by name + coordinates on every call rather than persisting the match (OpenTripMap xid stays the public ProviderPlaceId).</summary>
+/// <summary>
+/// Wraps OpenTripMapDestinationProvider and enriches its results using
+/// FoursquareDestinationProvider (category/rating/photos/hours), matched by name + coordinates
+/// on every call rather than persisting the match (OpenTripMap xid stays the public
+/// ProviderPlaceId). See FoursquareDestinationProvider for its other, standalone use.
+/// </summary>
 public class FoursquareEnrichedDestinationProvider(
     OpenTripMapDestinationProvider openTripMap,
     FoursquareDestinationProvider foursquare,
