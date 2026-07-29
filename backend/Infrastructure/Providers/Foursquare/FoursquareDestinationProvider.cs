@@ -18,7 +18,7 @@ namespace Infrastructure.Providers.Foursquare;
 public class FoursquareDestinationProvider(
     IRestfulService restfulService,
     IConfiguration configuration,
-    ILogger<FoursquareDestinationProvider> logger) : IDestinationProvider
+    ILogger<FoursquareDestinationProvider> logger) : IDestinationProvider, IPlaceEnrichmentSource
 {
     private const int MaxPageSize = 20;
 

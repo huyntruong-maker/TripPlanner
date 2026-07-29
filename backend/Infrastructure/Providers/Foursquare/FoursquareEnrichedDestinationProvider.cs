@@ -17,9 +17,14 @@ namespace Infrastructure.Providers.Foursquare;
 /// Depends on IDestinationProvider, not a concrete type, per DIP — but ProvidersInjection.cs
 /// always wires OpenTripMapDestinationProvider here today; nothing else is ever passed.
 /// </param>
+/// <param name="enrichmentSource">
+/// Depends on IPlaceEnrichmentSource, not FoursquareDestinationProvider directly, so this class
+/// only sees the one method it actually needs (FindNearestMatchAsync). ProvidersInjection.cs
+/// always wires FoursquareDestinationProvider here today.
+/// </param>
 public class FoursquareEnrichedDestinationProvider(
     IDestinationProvider inner,
-    FoursquareDestinationProvider foursquare,
+    IPlaceEnrichmentSource enrichmentSource,
     IConfiguration configuration,
     ILogger<FoursquareEnrichedDestinationProvider> logger) : IDestinationProvider
 {
@@ -78,7 +83,7 @@ public class FoursquareEnrichedDestinationProvider(
 
         try
         {
-            var match = await foursquare.FindNearestMatchAsync(detail.Name, detail.Latitude, detail.Longitude, cancellationToken);
+            var match = await enrichmentSource.FindNearestMatchAsync(detail.Name, detail.Latitude, detail.Longitude, cancellationToken);
             if (match is not null)
                 ApplyDetailEnrichment(detail, match);
         }
@@ -94,7 +99,7 @@ public class FoursquareEnrichedDestinationProvider(
     {
         try
         {
-            var match = await foursquare.FindNearestMatchAsync(attraction.Name, attraction.Latitude, attraction.Longitude, cancellationToken);
+            var match = await enrichmentSource.FindNearestMatchAsync(attraction.Name, attraction.Latitude, attraction.Longitude, cancellationToken);
             if (match is not null)
                 ApplyListEnrichment(attraction, match);
         }
