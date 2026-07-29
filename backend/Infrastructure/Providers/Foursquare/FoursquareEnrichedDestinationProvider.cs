@@ -1,6 +1,7 @@
 using Application.Dtos.Destinations;
 using Application.Interfaces.Providers;
 using Domain.Constants;
+using Infrastructure.Providers.OpenTripMap;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -8,7 +9,7 @@ namespace Infrastructure.Providers.Foursquare;
 
 /// <summary>Enriches OpenTripMap attractions with Foursquare categories/reviews/photos/hours; matches by name + coordinates on every call rather than persisting the match (OpenTripMap xid stays the public ProviderPlaceId).</summary>
 public class FoursquareEnrichedDestinationProvider(
-    IDestinationProvider inner,
+    OpenTripMapDestinationProvider openTripMap,
     FoursquareDestinationProvider foursquare,
     IConfiguration configuration,
     ILogger<FoursquareEnrichedDestinationProvider> logger) : IDestinationProvider
@@ -34,7 +35,7 @@ public class FoursquareEnrichedDestinationProvider(
         int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var result = await inner.GetAttractionsAsync(latitude, longitude, radiusMeters, page, pageSize, cancellationToken);
+        var result = await openTripMap.GetAttractionsAsync(latitude, longitude, radiusMeters, page, pageSize, cancellationToken);
 
         if (!IsEnabled)
         {
@@ -56,7 +57,7 @@ public class FoursquareEnrichedDestinationProvider(
         string providerPlaceId,
         CancellationToken cancellationToken = default)
     {
-        var detail = await inner.GetAttractionDetailAsync(providerPlaceId, cancellationToken);
+        var detail = await openTripMap.GetAttractionDetailAsync(providerPlaceId, cancellationToken);
         if (detail is null)
             return null;
 
