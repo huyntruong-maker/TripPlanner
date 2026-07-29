@@ -1,11 +1,10 @@
 using Application.Dtos.Destinations;
 using Application.Interfaces.Providers;
 using Domain.Constants;
-using Infrastructure.Providers.Foursquare;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Infrastructure.Providers.Enrichment;
+namespace Infrastructure.Providers.Foursquare;
 
 /// <summary>Enriches OpenTripMap attractions with Foursquare categories/reviews/photos/hours; matches by name + coordinates on every call rather than persisting the match (OpenTripMap xid stays the public ProviderPlaceId).</summary>
 public class FoursquareEnrichedDestinationProvider(

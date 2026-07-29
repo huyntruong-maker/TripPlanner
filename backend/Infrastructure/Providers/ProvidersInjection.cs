@@ -2,7 +2,6 @@ using Application.Interfaces.Caching;
 using Application.Interfaces.Providers;
 using Domain.Constants;
 using Infrastructure.Providers.Caching;
-using Infrastructure.Providers.Enrichment;
 using Infrastructure.Providers.Foursquare;
 using Infrastructure.Providers.Nominatim;
 using Infrastructure.Providers.OpenTripMap;
