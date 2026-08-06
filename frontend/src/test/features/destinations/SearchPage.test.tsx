@@ -12,6 +12,7 @@ import {
   LOCATION_SEARCH_ERROR_QUERY,
   MANY_MATCHES_QUERY,
   NO_MATCHING_LOCATIONS_QUERY,
+  PAGINATED_CITY_QUERY,
   SLOW_CITY_QUERY,
 } from '../../msw/handlers/destinations';
 import { SearchPage } from '../../../features/destinations/pages/SearchPage';
@@ -367,6 +368,45 @@ describe('SearchPage — filter and sort attractions (F1-US4/US5)', () => {
       'Park Beta',
       'Landmark Gamma',
     ]);
+  });
+});
+
+describe('SearchPage — attractions pagination', () => {
+  it('shows 9 attractions per page with working Previous/Next controls', async () => {
+    const user = userEvent.setup();
+    renderSearchPage();
+
+    await typeQuery(user, PAGINATED_CITY_QUERY);
+    await user.click(await screen.findByRole('option', { name: 'PaginatedCity, Testland' }));
+
+    expect(await screen.findByRole('heading', { name: 'Attraction 1' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Attraction 9' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Attraction 10' })).not.toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(await screen.findByRole('heading', { name: 'Attraction 10' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Attraction 11' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Attraction 1' })).not.toBeInTheDocument();
+    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Previous' }));
+
+    expect(await screen.findByRole('heading', { name: 'Attraction 1' })).toBeInTheDocument();
+  });
+
+  it('hides pagination controls when everything fits on one page', async () => {
+    const user = userEvent.setup();
+    renderSearchPage();
+
+    await typeQuery(user, CITY_WITH_ATTRACTIONS_QUERY);
+    await user.click(await screen.findByRole('option', { name: 'Paris, France' }));
+
+    await screen.findByRole('heading', { name: 'Eiffel Tower' });
+    expect(screen.queryByRole('navigation', { name: 'Attractions pagination' })).not.toBeInTheDocument();
   });
 });
 

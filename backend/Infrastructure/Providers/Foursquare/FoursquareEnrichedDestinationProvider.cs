@@ -31,6 +31,9 @@ public class FoursquareEnrichedDestinationProvider(
     // Logged once for the app's lifetime (not per request) when no API key is configured.
     private static int _hasLoggedDisabled;
 
+    // Foursquare rate-limits bursts; cap concurrency like OpenTripMapDestinationProvider's thumbnail enrichment.
+    private const int EnrichmentConcurrency = 4;
+
     private bool IsEnabled
     {
         get
@@ -61,7 +64,8 @@ public class FoursquareEnrichedDestinationProvider(
             return result;
 
         // Concurrent, best-effort, per-item enrichment; NFR-2 trade-off accepted since CachedDestinationProvider's 30-min list TTL keeps repeat-query p95 within budget without per-call timeout support.
-        var tasks = result.Items.Select(attraction => EnrichListItemAsync(attraction, cancellationToken));
+        using var throttle = new SemaphoreSlim(EnrichmentConcurrency);
+        var tasks = result.Items.Select(attraction => EnrichListItemAsync(attraction, throttle, cancellationToken));
         await Task.WhenAll(tasks);
 
         return result;
@@ -95,8 +99,9 @@ public class FoursquareEnrichedDestinationProvider(
         return detail;
     }
 
-    private async Task EnrichListItemAsync(AttractionDto attraction, CancellationToken cancellationToken)
+    private async Task EnrichListItemAsync(AttractionDto attraction, SemaphoreSlim throttle, CancellationToken cancellationToken)
     {
+        await throttle.WaitAsync(cancellationToken);
         try
         {
             var match = await enrichmentSource.FindNearestMatchAsync(attraction.Name, attraction.Latitude, attraction.Longitude, cancellationToken);
@@ -106,6 +111,10 @@ public class FoursquareEnrichedDestinationProvider(
         catch (Exception ex)
         {
             logger.LogWarning("[Foursquare enrich] List enrichment failed for '{Name}': {Ex}", attraction.Name, ex.Message);
+        }
+        finally
+        {
+            throttle.Release();
         }
     }
 

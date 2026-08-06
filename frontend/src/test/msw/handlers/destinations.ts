@@ -12,6 +12,7 @@ export const NO_MATCHING_LOCATIONS_QUERY = 'Zzzzz';
 export const SLOW_CITY_QUERY = 'SlowCity';
 export const MANY_MATCHES_QUERY = 'ManyMatches';
 export const FILTER_SORT_CITY_QUERY = 'FilterSortCity';
+export const PAGINATED_CITY_QUERY = 'PaginatedCity';
 
 const PARIS: LocationSuggestion = {
   name: 'Paris',
@@ -91,6 +92,28 @@ const FILTER_SORT_CITY: LocationSuggestion = {
   locationType: 'city',
   country: 'Testland',
 };
+
+const PAGINATED_CITY: LocationSuggestion = {
+  name: 'PaginatedCity',
+  displayName: 'PaginatedCity, Testland',
+  latitude: 30,
+  longitude: 30,
+  locationType: 'city',
+  country: 'Testland',
+};
+
+// more attractions than one 9-item page, to exercise Previous/Next
+const PAGINATED_ATTRACTIONS: AttractionSummary[] = Array.from({ length: 11 }, (_, index) => ({
+  providerPlaceId: `P${index + 1}`,
+  name: `Attraction ${index + 1}`,
+  category: 'landmark',
+  tags: ['landmark'],
+  rating: null,
+  thumbnailUrl: null,
+  latitude: 30 + index * 0.01,
+  longitude: 30 + index * 0.01,
+  address: null,
+}));
 
 // distinct categories and a mix of ratings, including a missing one, to exercise filter/sort
 const MUSEUM_ALPHA: AttractionSummary = {
@@ -218,6 +241,16 @@ export const destinationHandlers = [
       });
     }
 
+    if (query === PAGINATED_CITY_QUERY) {
+      return HttpResponse.json({
+        success: true,
+        errorCode: null,
+        error: null,
+        validates: [],
+        result: { items: [PAGINATED_CITY], totalCount: 1 },
+      });
+    }
+
     return HttpResponse.json({
       success: true,
       errorCode: null,
@@ -228,7 +261,8 @@ export const destinationHandlers = [
   }),
 
   http.get(`${BASE_URL}/destinations/attractions`, async ({ request }) => {
-    const latitude = Number(new URL(request.url).searchParams.get('latitude'));
+    const url = new URL(request.url);
+    const latitude = Number(url.searchParams.get('latitude'));
 
     if (latitude === NOWHEREVILLE.latitude) {
       return HttpResponse.json({
@@ -272,6 +306,22 @@ export const destinationHandlers = [
         result: {
           items: [MUSEUM_ALPHA, PARK_BETA, LANDMARK_GAMMA, MUSEUM_DELTA],
           totalCount: 4,
+        },
+      });
+    }
+
+    if (latitude === PAGINATED_CITY.latitude) {
+      const page = Number(url.searchParams.get('page') ?? '1');
+      const pageSize = Number(url.searchParams.get('pageSize') ?? '9');
+      const start = (page - 1) * pageSize;
+      return HttpResponse.json({
+        success: true,
+        errorCode: null,
+        error: null,
+        validates: [],
+        result: {
+          items: PAGINATED_ATTRACTIONS.slice(start, start + pageSize),
+          totalCount: PAGINATED_ATTRACTIONS.length,
         },
       });
     }

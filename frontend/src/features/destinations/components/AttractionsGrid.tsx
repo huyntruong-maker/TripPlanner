@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { UseQueryResult } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { getApiErrorMessage } from '../../../api/errors';
-import type { AttractionSummary, LocationSuggestion, PagedResult } from '../../../types';
+import type { LocationSuggestion } from '../../../types';
+import { ATTRACTIONS_PAGE_SIZE, useAttractions } from '../hooks/useAttractions';
 import {
   applyFiltersToSearchParams,
   categoryKeysFromSearchParams,
@@ -16,14 +16,15 @@ import { AttractionFilters, FILTER_SELECT_CLASSES } from './AttractionFilters';
 
 interface AttractionsGridProps {
   location: LocationSuggestion;
-  query: UseQueryResult<PagedResult<AttractionSummary>>;
   /** Current Discover URL search string, threaded onto each card's Link as router state so Back can restore it. */
   discoverSearch: string;
 }
 
-/** Results for the selected location: heading, sort, the filter column and the card grid. */
-export function AttractionsGrid({ location, query, discoverSearch }: AttractionsGridProps) {
+/** Results for the selected location: heading, sort, the filter column, the card grid and pagination. */
+export function AttractionsGrid({ location, discoverSearch }: AttractionsGridProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(1);
+  const query = useAttractions({ latitude: location.latitude, longitude: location.longitude }, page);
   const [selectedCategoryKeys, setSelectedCategoryKeys] = useState<string[]>(() =>
     categoryKeysFromSearchParams(searchParams),
   );
@@ -61,6 +62,10 @@ export function AttractionsGrid({ location, query, discoverSearch }: Attractions
   );
 
   const hasActiveFilters = selectedCategoryKeys.length > 0 || minRating !== null;
+
+  const totalCount = query.data?.totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / ATTRACTIONS_PAGE_SIZE));
+  const hasMultiplePages = totalPages > 1;
 
   function toggleCategory(key: string) {
     setSelectedCategoryKeys((current) =>
@@ -150,6 +155,33 @@ export function AttractionsGrid({ location, query, discoverSearch }: Attractions
             )}
           </div>
         </div>
+      )}
+
+      {query.data && hasMultiplePages && (
+        <nav
+          aria-label="Attractions pagination"
+          className="flex items-center justify-center gap-4 pt-2"
+        >
+          <button
+            type="button"
+            onClick={() => setPage((current) => current - 1)}
+            disabled={page <= 1}
+            className="px-4 py-2 rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-lowest"
+          >
+            Previous
+          </button>
+          <p className="text-label-md font-label-md text-on-surface-variant whitespace-nowrap">
+            Page {page} of {totalPages}
+          </p>
+          <button
+            type="button"
+            onClick={() => setPage((current) => current + 1)}
+            disabled={page >= totalPages}
+            className="px-4 py-2 rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-lowest"
+          >
+            Next
+          </button>
+        </nav>
       )}
     </section>
   );

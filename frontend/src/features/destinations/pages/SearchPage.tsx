@@ -7,7 +7,6 @@ import {
   LocationSuggestionList,
   locationOptionId,
 } from '../components/LocationSuggestionList';
-import { useAttractions } from '../hooks/useAttractions';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useLocationSearch } from '../hooks/useLocationSearch';
 import { saveLastDiscoverSearch } from '../lib/discoverSearchStorage';
@@ -36,11 +35,6 @@ export function SearchPage() {
   const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
 
   const locationsQuery = useLocationSearch(debouncedQuery);
-  const attractionsQuery = useAttractions(
-    selectedLocation
-      ? { latitude: selectedLocation.latitude, longitude: selectedLocation.longitude }
-      : null,
-  );
 
   const suggestions = useMemo(
     () => (locationsQuery.data?.items ?? []).slice(0, MAX_SUGGESTIONS),
@@ -200,7 +194,6 @@ export function SearchPage() {
         <AttractionsGrid
           key={`${selectedLocation.latitude},${selectedLocation.longitude}`}
           location={selectedLocation}
-          query={attractionsQuery}
           discoverSearch={discoverSearch}
         />
       )}
