@@ -63,9 +63,11 @@ export function AttractionsGrid({ location, discoverSearch }: AttractionsGridPro
 
   const hasActiveFilters = selectedCategoryKeys.length > 0 || minRating !== null;
 
-  const totalCount = query.data?.totalCount ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / ATTRACTIONS_PAGE_SIZE));
-  const hasMultiplePages = totalPages > 1;
+  // Providers report TotalCount as just this response's item count, not the true match count for
+  // the search, so "next page exists" can only be inferred from a full page — not from totalCount.
+  const hasPreviousPage = page > 1;
+  const hasNextPage = attractions.length === ATTRACTIONS_PAGE_SIZE;
+  const showPagination = hasPreviousPage || hasNextPage;
 
   function toggleCategory(key: string) {
     setSelectedCategoryKeys((current) =>
@@ -157,7 +159,7 @@ export function AttractionsGrid({ location, discoverSearch }: AttractionsGridPro
         </div>
       )}
 
-      {query.data && hasMultiplePages && (
+      {query.data && showPagination && (
         <nav
           aria-label="Attractions pagination"
           className="flex items-center justify-center gap-4 pt-2"
@@ -165,18 +167,18 @@ export function AttractionsGrid({ location, discoverSearch }: AttractionsGridPro
           <button
             type="button"
             onClick={() => setPage((current) => current - 1)}
-            disabled={page <= 1}
+            disabled={!hasPreviousPage}
             className="px-4 py-2 rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-lowest"
           >
             Previous
           </button>
           <p className="text-label-md font-label-md text-on-surface-variant whitespace-nowrap">
-            Page {page} of {totalPages}
+            Page {page}
           </p>
           <button
             type="button"
             onClick={() => setPage((current) => current + 1)}
-            disabled={page >= totalPages}
+            disabled={!hasNextPage}
             className="px-4 py-2 rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-lowest"
           >
             Next

@@ -382,16 +382,18 @@ describe('SearchPage — attractions pagination', () => {
     expect(await screen.findByRole('heading', { name: 'Attraction 1' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Attraction 9' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Attraction 10' })).not.toBeInTheDocument();
-    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+    expect(screen.getByText('Page 1')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled();
 
     await user.click(screen.getByRole('button', { name: 'Next' }));
 
     expect(await screen.findByRole('heading', { name: 'Attraction 10' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Attraction 11' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Attraction 1' })).not.toBeInTheDocument();
-    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+    expect(screen.getByText('Page 2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeEnabled();
 
     await user.click(screen.getByRole('button', { name: 'Previous' }));
 
