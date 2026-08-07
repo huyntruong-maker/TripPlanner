@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
 import { AuthProvider } from '../../../auth/AuthContext';
-import { CITY_WITH_ATTRACTIONS_QUERY } from '../../msw/handlers/destinations';
+import { CITY_WITH_ATTRACTIONS_QUERY, PAGINATED_CITY_QUERY } from '../../msw/handlers/destinations';
 import { DestinationDetailPage } from '../../../features/destinations/pages/DestinationDetailPage';
 import { SearchPage } from '../../../features/destinations/pages/SearchPage';
 
@@ -76,6 +76,27 @@ describe('Discover -> destination detail -> Back preserves search state (real na
     await user.click(screen.getByRole('button', { name: 'Simulate browser Back' }));
 
     await expectDiscoverStateRestored();
+  });
+
+  it('restores the current page (not page 1) after opening a card from page 2 and going Back', async () => {
+    const user = userEvent.setup();
+    renderApp(['/']);
+
+    await user.type(screen.getByLabelText('Search a city or country'), PAGINATED_CITY_QUERY);
+    await user.click(await screen.findByRole('option', { name: 'PaginatedCity, Testland' }));
+    await screen.findByRole('heading', { name: 'Attraction 1' });
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('heading', { name: 'Attraction 10' });
+
+    await user.click(screen.getByRole('link', { name: /Attraction 10/ }));
+    await screen.findByRole('heading', { name: 'Attraction 10', level: 1 });
+
+    await user.click(screen.getByRole('button', { name: 'Back to search' }));
+
+    expect(await screen.findByRole('heading', { name: 'Attraction 10' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Attraction 1' })).not.toBeInTheDocument();
+    expect(screen.getByText('Page 2')).toBeInTheDocument();
   });
 
   describe('when the detail page has no in-app history (e.g. after a dev-server full reload)', () => {

@@ -66,6 +66,33 @@ export const destinationDetailHandlers = [
       });
     }
 
+    // Matches the PAGINATED_ATTRACTIONS fixture ids ('P1'..'P11') from destinations.ts, so the
+    // pagination + Back navigation test can open a real detail page for a page-2 attraction.
+    const paginatedMatch = typeof providerPlaceId === 'string' && /^P(\d+)$/.exec(providerPlaceId);
+    if (paginatedMatch) {
+      const index = Number(paginatedMatch[1]);
+      return HttpResponse.json({
+        success: true,
+        errorCode: null,
+        error: null,
+        validates: [],
+        result: {
+          providerPlaceId,
+          name: `Attraction ${index}`,
+          category: 'landmark',
+          tags: ['landmark'],
+          description: null,
+          photos: [],
+          address: null,
+          website: null,
+          openingHours: null,
+          rating: null,
+          latitude: 30 + (index - 1) * 0.01,
+          longitude: 30 + (index - 1) * 0.01,
+        } satisfies DestinationDetail,
+      });
+    }
+
     if (providerPlaceId === SERVER_ERROR_ID) {
       return HttpResponse.json(
         {

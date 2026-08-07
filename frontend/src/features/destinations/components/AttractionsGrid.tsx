@@ -7,6 +7,7 @@ import {
   applyFiltersToSearchParams,
   categoryKeysFromSearchParams,
   minRatingFromSearchParams,
+  pageFromSearchParams,
   sortOrderFromSearchParams,
   type SortOrder,
 } from '../lib/attractionFilterParams';
@@ -23,7 +24,9 @@ interface AttractionsGridProps {
 /** Results for the selected location: heading, sort, the filter column, the card grid and pagination. */
 export function AttractionsGrid({ location, discoverSearch }: AttractionsGridProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [page, setPage] = useState(1);
+  // Seeded from the URL (not hardcoded to 1) so opening a card from page 3 and hitting Back/Back
+  // to search restores page 3 instead of resetting to page 1.
+  const [page, setPage] = useState(() => pageFromSearchParams(searchParams));
   const query = useAttractions({ latitude: location.latitude, longitude: location.longitude }, page);
   const [selectedCategoryKeys, setSelectedCategoryKeys] = useState<string[]>(() =>
     categoryKeysFromSearchParams(searchParams),
@@ -42,11 +45,12 @@ export function AttractionsGrid({ location, discoverSearch }: AttractionsGridPro
       categoryKeys: selectedCategoryKeys,
       minRating,
       sortOrder,
+      page,
     });
     if (next.toString() !== searchParams.toString()) {
       setSearchParams(next, { replace: true });
     }
-  }, [selectedCategoryKeys, minRating, sortOrder, searchParams, setSearchParams]);
+  }, [selectedCategoryKeys, minRating, sortOrder, page, searchParams, setSearchParams]);
 
   const attractions = query.data?.items ?? [];
   const categoryOptions = useMemo(() => buildCategoryOptions(attractions), [attractions]);
