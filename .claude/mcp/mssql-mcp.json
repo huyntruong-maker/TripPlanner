@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mssql": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/mssql-mcp-server"],
+      "env": {
+        "CONNECTION_STRING": "${CONNECTION_STRING}"
+      }
+    }
+  }
+}
